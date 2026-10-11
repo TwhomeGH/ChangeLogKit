@@ -1,6 +1,6 @@
 {
   "cli.desc": "変更履歴：Web GUI + CLI",
-  "cli.locale": "言語（zh-TW／zh-CN／ja／en；既定はシステムに従う）",
+  "cli.locale": "UI 言語（既定はシステムに従う。changelogkit locales で一覧）",
   "cli.serve.help": "ローカル Web GUI を起動",
   "cli.serve.port": "ポート（既定 8710）",
   "cli.serve.no_browser": "ブラウザを自動で開かない",

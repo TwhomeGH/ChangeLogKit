@@ -1,6 +1,6 @@
 {
   "cli.desc": "变更历史：网页 GUI + CLI",
-  "cli.locale": "语言（zh-TW／zh-CN／ja／en；默认跟随系统）",
+  "cli.locale": "界面语言（默认跟随系统；用 changelogkit locales 查看）",
   "cli.serve.help": "启动本地网页 GUI",
   "cli.serve.port": "端口（默认 8710）",
   "cli.serve.no_browser": "不自动打开浏览器",

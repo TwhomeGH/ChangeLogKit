@@ -1,3 +1,15 @@
+## 2026.10.11 changelogkit 0.1.8 發佈
+
+**類型**: 優化 · **檔案**: `lang/*.json`、`assets/dev.js`、`Docs/*.md`
+
+### 修改
+
+- `--locale` 的說明改為**泛用描述**（「介面語系（預設跟隨系統；用 changelogkit locales 查詢）」），**不再逐一列出語系**——避免日後新增語系時說明越堆越長、與實際不同步。
+- 移除 `dev.js` 中已被 `markdown.js` 取代的 `mdDoc`（死碼）。
+- 文件（`architecture.md`／`usage.md`）的語系清單更新為四個，並修正語系判定說明（`zh*` 依 Hant／Hans 判 zh-TW／zh-CN、`ja*` → ja）。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.7 發佈
 
 **類型**: 功能 · **檔案**: `index.py`、`scanners/javascript.py`、`assets/dev.js`、`assets/dev.css`、`export.py`

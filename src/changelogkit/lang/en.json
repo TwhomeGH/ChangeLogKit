@@ -1,6 +1,6 @@
 {
   "cli.desc": "Change history: web GUI + CLI",
-  "cli.locale": "Language (zh-TW/zh-CN/ja/en; defaults to system)",
+  "cli.locale": "UI language (defaults to system; list with changelogkit locales)",
   "cli.serve.help": "Start the local web GUI",
   "cli.serve.port": "Port (default 8710)",
   "cli.serve.no_browser": "Do not open the browser automatically",
