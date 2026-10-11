@@ -15,6 +15,50 @@ pipx install changelogkit          # 建議：隔離安裝並提供全域指令
 pip install changelogkit
 ```
 
+## 在 PyPI 上線前如何使用
+
+套件尚未發佈到 PyPI 時，有三種本機用法（擇一）。以下把 `<ChangeLogTools>` 換成套件所在目錄。
+
+### 1. 零安裝（最快；改程式即時生效）
+
+用**絕對路徑**的 `PYTHONPATH` 指向套件的 `src/`，即可在任何 repo 內執行：
+
+```powershell
+$env:PYTHONPATH = "<ChangeLogTools>\src"     # PowerShell；路徑要用絕對路徑
+cd D:\某個repo
+python -m changelogkit serve --no-browser
+python -m changelogkit list
+```
+
+（可在該 repo 放一個薄殼 `change_log.cmd` 包住上述指令，之後雙擊即可。）
+
+### 2. 可編輯安裝（開發套件本身）
+
+```powershell
+cd <ChangeLogTools>
+pip install -e .
+changelogkit serve
+```
+
+### 3. 全域 CLI、又保持隔離（推薦）
+
+```powershell
+pipx install <ChangeLogTools>
+# 之後更新程式：
+pipx install --force <ChangeLogTools>
+# 或直接從 git（不經 PyPI）：
+pipx install git+https://github.com/TwhomeGH/ChangeLogKit.git
+```
+
+### 驗證「使用者真正拿到的成品」
+
+```powershell
+python -m build
+python -m venv .venv
+.\.venv\Scripts\pip install dist\changelogkit-0.1.0-py3-none-any.whl
+.\.venv\Scripts\changelogkit --help
+```
+
 ## 使用
 
 在任何 repo 目錄下執行：

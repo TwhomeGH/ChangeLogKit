@@ -111,14 +111,14 @@ def _render_symbols(symbols, blob_base):
 
 
 def _render_documents(documents):
-    """文件卡片（摘要預覽）。"""
+    """文件卡片（摘要預覽）；標題連到靜態文件頁 ``docs/<i>.html``。"""
     out = []
-    for doc in documents:
+    for i, doc in enumerate(documents):
         text = doc["text"]
         preview = text[:260] + (" …" if len(text) > 260 else "")
-        out.append('<article class="card"><h2>%s</h2><div class="meta">%s</div>'
-                   '<div class="preview">%s</div></article>'
-                   % (_esc(doc["name"]), _esc(doc["repo"]), _esc(preview)))
+        out.append('<article class="card"><h2><a href="../docs/%d.html">%s</a></h2>'
+                   '<div class="meta">%s</div><div class="preview">%s</div></article>'
+                   % (i, _esc(doc["name"]), _esc(doc["repo"]), _esc(preview)))
     return "\n".join(out)
 
 
@@ -144,11 +144,10 @@ def _render_repos(repos):
     return "\n".join(parts)
 
 
-def _render_dev(blob_base):
+def _render_dev(data, blob_base):
     """開發索引頁內容；回傳 (HTML, symbols, documents, sources 計數)。"""
-    data = index.snapshot()
     blocks = ['<h1>API 宣告</h1>' + _render_symbols(data["symbols"], blob_base),
-              '<h1>文件</h1>' + _render_documents(data["documents"]),
+              '<h1 id="docs">文件</h1>' + _render_documents(data["documents"]),
               '<h1>近期改動／版本</h1>' + _render_repos(data["repos"])]
     if data["features"]:
         cards = "".join(
@@ -157,6 +156,16 @@ def _render_dev(blob_base):
             for f in data["features"])
         blocks.insert(0, '<h1>功能與接入</h1>' + cards)
     return ("\n".join(blocks), len(data["symbols"]), len(data["documents"]), len(data["repos"]))
+
+
+def _write_docs(out, documents):
+    """為每份 Markdown 文件產生一個靜態檢視頁 ``docs/<i>.html``。"""
+    docs_dir = out / "docs"
+    docs_dir.mkdir()
+    for i, doc in enumerate(documents):
+        (docs_dir / ("%d.html" % i)).write_text(assets.render(
+            "static_doc.html", docname=_esc(doc["name"]), title=_esc(config.load().title),
+            content=_esc(doc["text"])), encoding="utf-8")
 
 
 def export(out_dir, branch="main"):
@@ -170,16 +179,19 @@ def export(out_dir, branch="main"):
     for name in STATIC_ASSETS:
         shutil.copyfile(assets.path(name), out / "assets" / name)
     blob_base = _github_base(branch)
+    data = index.snapshot()
 
     hist_content, count = _render_history(cfg)
     (out / "index.html").write_text(assets.render(
         "static_history.html", title=_esc(cfg.title), content=hist_content, count=str(count)),
         encoding="utf-8")
 
-    dev_content, symbols, documents, sources = _render_dev(blob_base)
+    dev_content, symbols, documents, sources = _render_dev(data, blob_base)
     (out / "development" / "index.html").write_text(assets.render(
         "static_dev.html", title=_esc(cfg.title), content=dev_content,
         symbols=str(symbols), documents=str(documents), sources=str(sources)), encoding="utf-8")
+
+    _write_docs(out, data["documents"])
 
     (out / ".nojekyll").write_text("", encoding="utf-8")
     return out
