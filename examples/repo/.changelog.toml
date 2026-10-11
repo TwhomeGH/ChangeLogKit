@@ -1,0 +1,14 @@
+# 這個 repo 的 changelogkit 設定。全部欄位皆可省略（省略時用預設值）。
+[tool.changelog]
+title    = "範例專案變更歷史"
+history  = "Docs/ChangeHistory.md"
+features = "Docs/development/features.json"
+# assets  = "Scripts/changelog-overrides"   # 選填：覆寫預設網頁資產的目錄
+
+# 開發索引要一起看的來源；未設定時預設為單一來源（name = "app", path = "."）。
+# [[tool.changelog.sources]]
+# name = "app"
+# path = "."
+# [[tool.changelog.sources]]
+# name = "lib"
+# path = "${SOME_LIB_ROOT}"     # 支援 ${ENV} 展開；不存在就略過

@@ -1,0 +1,153 @@
+"""changelogkit 單元測試：設定載入、歷史解析／寫入、開發索引路由、資產覆寫。
+
+以暫存 git repo 為測試對象（不觸碰真實專案）。
+"""
+
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from changelogkit import assets, config, history, index  # noqa: E402
+
+SAMPLE = """# 變更歷史
+
+## 2026.01.02 10:00 第二筆
+
+**類型**: 修正 · **檔案**: `a.swift`
+
+### 問題 - 有問題
+細節
+
+---
+
+## 2026.01.01 第一筆
+
+**類型**: 功能
+
+### 修改 - 新功能
+- 細節
+
+---
+"""
+
+SWIFT = """/// 一個測試型別。
+public struct Thing {
+    /// 執行。
+    public func run() {}
+}
+"""
+
+TOML = """[tool.changelog]
+title = "測試專案"
+history = "Docs/ChangeHistory.md"
+"""
+
+
+def _git(root, *args):
+    subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+
+
+class TempRepo:
+    """建立含 Git、變更歷史、Swift 與設定的暫存 repo。"""
+
+    def __enter__(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        root = self.root = Path(self._tmp.name)
+        (root / "Docs").mkdir(parents=True)
+        (root / "Docs" / "ChangeHistory.md").write_text(SAMPLE, encoding="utf-8")
+        (root / "Sources").mkdir()
+        (root / "Sources" / "Thing.swift").write_text(SWIFT, encoding="utf-8")
+        (root / "Package.resolved").write_text(
+            json.dumps({"pins": [{"identity": "x", "state": {"revision": "abc123"}}]}),
+            encoding="utf-8")
+        (root / ".changelog.toml").write_text(TOML, encoding="utf-8")
+        _git(root, "init", "-q")
+        _git(root, "add", "-A")
+        _git(root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "init")
+        config.reset()
+        config.load(root)
+        return self
+
+    def __exit__(self, *exc):
+        config.reset()
+        self._tmp.cleanup()
+
+
+class ConfigTests(unittest.TestCase):
+    def test_loads_table(self):
+        with TempRepo() as repo:
+            cfg = config.load()
+            self.assertEqual(cfg.title, "測試專案")
+            self.assertEqual(cfg.root, repo.root.resolve())
+            self.assertEqual(cfg.history, repo.root / "Docs/ChangeHistory.md")
+            self.assertEqual([s.name for s in cfg.sources], ["app"])
+
+
+class HistoryTests(unittest.TestCase):
+    def test_parse(self):
+        with TempRepo():
+            entries = history.parse_entries()
+            self.assertEqual([e["title"] for e in entries], ["第二筆", "第一筆"])
+            self.assertEqual(entries[0]["date"], "2026.01.02")
+            self.assertEqual(entries[0]["time"], "10:00")
+
+    def test_insert_prepends(self):
+        with TempRepo():
+            history.insert_block(history.build_block("2026.02.01", "新紀錄", "功能", "b.swift"))
+            self.assertEqual(history.parse_entries()[0]["title"], "新紀錄")
+
+    def test_git_changed_files(self):
+        with TempRepo() as repo:
+            (repo.root / "new.txt").write_text("x", encoding="utf-8")
+            self.assertIn("new.txt", history.git_changed_files())
+
+
+class IndexTests(unittest.TestCase):
+    def test_roots_and_symbols(self):
+        with TempRepo() as repo:
+            self.assertEqual(index.roots(), {"app": repo.root.resolve()})
+            data = index.snapshot()
+            self.assertTrue(any(s["name"] == "Thing" for s in data["symbols"]))
+            self.assertEqual(data["lockedPackages"], [{"identity": "x", "revision": "abc123"}])
+
+    def test_validate_absent_features(self):
+        with TempRepo():
+            self.assertEqual(index.validate(), [])  # 沒有 features.json → 空清單
+
+    def test_routes(self):
+        with TempRepo():
+            code, body, mime = index.route("/development/data", "")
+            self.assertEqual(code, 200)
+            self.assertIn("application/json", mime)
+            self.assertIn("repos", json.loads(body))
+            self.assertEqual(index.route("/development/diff", "repo=app&worktree=1")[0], 200)
+            self.assertEqual(index.route("/development/diff", "repo=app&hash=zzz")[0], 400)
+            self.assertEqual(index.route("/development/file", "repo=app&path=../x")[0], 400)
+
+
+class AssetTests(unittest.TestCase):
+    def test_default_asset(self):
+        config.reset()
+        self.assertIn("--accent", assets.read("theme.css"))
+
+    def test_override_wins(self):
+        with tempfile.TemporaryDirectory() as d:
+            override = Path(d)
+            (override / "theme.css").write_text("/* custom */", encoding="utf-8")
+            cfg = config.load()
+            original = cfg.assets
+            cfg.assets = override
+            try:
+                self.assertEqual(assets.read("theme.css"), "/* custom */")
+                self.assertIn("#tabs", assets.read("dev.css"))  # 未覆寫者仍用預設
+            finally:
+                cfg.assets = original
+
+
+if __name__ == "__main__":
+    unittest.main()

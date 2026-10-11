@@ -1,0 +1,13 @@
+[
+  {
+    "id": "sample-feature",
+    "name": "範例功能",
+    "summary": "示範功能清單的一筆。",
+    "replaykit": "支援",
+    "screencapturekit": "支援",
+    "ui": "設定頁",
+    "verification": "待驗證",
+    "files": ["Sources/Sample.swift"],
+    "docs": ["Docs/ChangeHistory.md"]
+  }
+]
