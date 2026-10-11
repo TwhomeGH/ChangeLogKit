@@ -125,6 +125,8 @@
   "about.intro": "通用變更歷史與開發索引工具。",
   "about.version": "版本",
   "about.commit": "來源 commit",
+  "about.locales": "UI 語系",
+  "about.na": "未知",
   "about.home": "專案首頁",
   "about.unknown": "（無法判定；可能非 git 安裝）",
   "about.load_failed": "讀取失敗",

@@ -4,7 +4,10 @@ const REPO = "https://github.com/TwhomeGH/ChangeLogKit";
 fetch("/api/buildinfo")
   .then((r) => r.json())
   .then((b) => {
-    document.getElementById("version").textContent = b.version || "未知";
+    document.getElementById("version").textContent = b.version || CK_T("about.na");
+    /* UI 語系清單，* 標示目前生效者。 */
+    document.getElementById("locales").textContent =
+      (b.locales || []).map((l) => l + (l === b.locale ? " *" : "")).join("   ");
     const raw = b.commit || "";
     if (!raw) {
       document.getElementById("commit").textContent = CK_T("about.unknown");

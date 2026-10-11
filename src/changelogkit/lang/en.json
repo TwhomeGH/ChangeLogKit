@@ -125,6 +125,8 @@
   "about.intro": "A generic change-history and dev-index tool.",
   "about.version": "Version",
   "about.commit": "Source commit",
+  "about.locales": "UI languages",
+  "about.na": "n/a",
   "about.home": "Homepage",
   "about.unknown": "(unknown; possibly not a git install)",
   "about.load_failed": "Load failed",

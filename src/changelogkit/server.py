@@ -53,7 +53,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, self._page("about.html"), "text/html; charset=utf-8")
         if u.path == "/api/buildinfo":
             return self._send(200, json.dumps(
-                {"version": buildinfo.version(), "commit": buildinfo.commit()}, ensure_ascii=False))
+                {"version": buildinfo.version(), "commit": buildinfo.commit(),
+                 "locale": i18n.current(), "locales": i18n.available()}, ensure_ascii=False))
         if u.path == "/favicon.ico":
             return self._send(204, b"")
         if u.path == "/api/entries":
