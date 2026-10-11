@@ -1,3 +1,14 @@
+## 2026.10.11 changelogkit 0.1.1 發佈
+
+**類型**: 功能 · **檔案**: `pyproject.toml`、`src/changelogkit/__init__.py`
+
+### 修改 - 發佈 0.1.1（含建置蓋章）
+
+- `__version__` 改為讀取**安裝中介資料**（單一來源＝`pyproject.toml`），避免版本雙軌。
+- 自此版起，**從 PyPI 安裝**的版本 `changelogkit --version` 會附上來源 commit（建置蓋章）。
+
+---
+
 ## 2026.10.11 建置蓋章：`--version` 可報來源 commit
 
 **類型**: 功能 · **檔案**: `hatch_build.py`、`src/changelogkit/buildinfo.py`、`.github/workflows/publish.yml`
