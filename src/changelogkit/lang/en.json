@@ -20,6 +20,7 @@
   "cli.show.help": "Show one entry in full (index or keyword)",
   "cli.show.query": "Index or keyword",
   "cli.languages.help": "List supported programming languages",
+  "cli.locales.help": "List supported UI languages",
   "cli.symbols.help": "Query API declarations (language/kind/keyword)",
   "cli.symbols.query": "Keyword (optional)",
   "cli.symbols.lang": "Restrict to a language (e.g. Python)",

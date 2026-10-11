@@ -20,6 +20,7 @@
   "cli.show.help": "顯示單筆完整內容（編號或關鍵字）",
   "cli.show.query": "編號或關鍵字",
   "cli.languages.help": "列出支援的程式語言",
+  "cli.locales.help": "列出支援的 UI 語系",
   "cli.symbols.help": "查詢 API 宣告（語言／種類／關鍵字）",
   "cli.symbols.query": "關鍵字（可省略）",
   "cli.symbols.lang": "限定語言（如 Python）",
