@@ -130,6 +130,20 @@ function renderFilters() {
     `</select></label>`;
 }
 
+/* 符號卡片：型別若有 members，收進可展開的「成員」區塊；成員卡片縮排呈現。 */
+function symbolCard(r, nested) {
+  const head = `<h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
+    `<div class="meta"><span class="kind">${esc(r.kind || kindOf(r.name))}</span>` +
+    `${esc(r.repo)} · ${esc(r.file)}:${r.line}</div>` +
+    (r.signature ? `<pre class="sig">${esc(r.signature)}</pre>` : "") +
+    `<div class="doc rendered">${r.comment ? window.renderMarkdown(r.comment) : '<p class="muted">' + CK_T("dev.no_comment") + '</p>'}</div>`;
+  const members = r.members || [];
+  const memberHtml = members.length
+    ? `<details class="members"><summary>${CK_T("dev.members")} (${members.length})</summary>` +
+      members.map((m) => symbolCard(m, true)).join("") + "</details>" : "";
+  return `<article class="card${nested ? " member" : ""}">${head}${memberHtml}</article>`;
+}
+
 function render() {
   if (!data) return;
   document.querySelectorAll("#tabs button").forEach((b) =>
@@ -139,7 +153,7 @@ function render() {
   const repo = $("#repo").value;
   const match = (r) => JSON.stringify(r).toLowerCase().includes(q) &&
     (!repo || r.repo === repo || (r.id && tab === "features")) &&
-    (tab !== "symbols" || ((!lang || r.lang === lang) && (!kind || r.kind === kind)));
+    (tab !== "symbols" || ((!lang || r.lang === lang) && (!kind || r.kind === kind || (r.members || []).some((m) => m.kind === kind))));
 
   const rows = (data[tab] || []).filter(match);
   const suffix = tab === "symbols" ? CK_T("dev.filter_hint") : "";
@@ -165,10 +179,7 @@ function render() {
         (fields ? `<dl>${fields}</dl>` : "") +
         `<h3>${CK_T("dev.files")}</h3><div class="files">${links(r.files)}${links(r.docs)}</div></article>`;
     } else if (tab === "symbols") {
-      out += `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
-        `<div class="meta"><span class="kind">${esc(r.kind || kindOf(r.name))}</span>${esc(r.repo)} · ${esc(r.file)}:${r.line}</div>` +
-        (r.signature ? `<pre class="sig">${esc(r.signature)}</pre>` : "") +
-        `<div class="doc rendered">${r.comment ? window.renderMarkdown(r.comment) : '<p class="muted">' + CK_T("dev.no_comment") + '</p>'}</div></article>`;
+      out += symbolCard(r);
     } else if (tab === "documents") {
       out += `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
         `<div class="meta">${esc(r.repo)}</div><div class="preview">${esc(r.text.slice(0, 260))}${r.text.length > 260 ? " …" : ""}</div></article>`;

@@ -102,18 +102,26 @@ def _render_history(cfg):
     return "\n".join(out), len(entries)
 
 
+def _symbol_card(sym, blob_base, nested):
+    """單一 API 宣告卡片；型別若有 ``members`` 則收進可展開的 details。"""
+    link = _file_link(sym["file"], blob_base)
+    signature = ('<pre class="sig">%s</pre>' % _esc(sym["signature"])) if sym.get("signature") else ""
+    comment = _md(sym["comment"]) if sym.get("comment") else '<p class="muted">' + i18n.t("dev.no_comment") + '</p>'
+    head = ('<h2>%s</h2><div class="meta"><span class="kind">%s</span>%s · %s:%s</div>%s%s'
+            % (_esc(sym["name"]), _esc(sym.get("kind", "")), _esc(sym["repo"]),
+               link, sym["line"], signature, comment))
+    members = sym.get("members") or []
+    block = ""
+    if members:
+        block = ('<details class="members"><summary>%s (%d)</summary>%s</details>'
+                 % (_esc(i18n.t("dev.members")), len(members),
+                    "".join(_symbol_card(m, blob_base, True) for m in members)))
+    return '<article class="card%s">%s%s</article>' % (" member" if nested else "", head, block)
+
+
 def _render_symbols(symbols, blob_base):
     """API 宣告卡片。"""
-    out = []
-    for sym in symbols:
-        link = _file_link(sym["file"], blob_base)
-        signature = ('<pre class="sig">%s</pre>' % _esc(sym["signature"])) if sym.get("signature") else ""
-        comment = _md(sym["comment"]) if sym.get("comment") else ""
-        out.append('<article class="card"><h2>%s</h2>'
-                   '<div class="meta"><span class="kind">%s</span>%s · %s:%s</div>%s%s</article>'
-                   % (_esc(sym["name"]), _esc(sym.get("kind", "")), _esc(sym["repo"]), link,
-                      sym["line"], signature, comment))
-    return "\n".join(out)
+    return "\n".join(_symbol_card(sym, blob_base, False) for sym in symbols)
 
 
 def _render_documents(documents):
@@ -165,7 +173,8 @@ def _render_dev(data, blob_base):
             % (_esc(f.get("name")), _esc(f.get("id")), _esc(f.get("summary")))
             for f in data["features"])
         blocks.insert(0, '<h1 data-i18n="tab.features">%s</h1>' % _esc(i18n.t("tab.features")) + cards)
-    return ("\n".join(blocks), len(data["symbols"]), len(data["documents"]), len(data["repos"]))
+    return ("\n".join(blocks), sum(1 for _ in index.iter_symbols(data["symbols"])),
+            len(data["documents"]), len(data["repos"]))
 
 
 def _write_docs(out, documents, footer):

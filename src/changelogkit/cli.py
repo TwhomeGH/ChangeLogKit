@@ -109,7 +109,7 @@ def cmd_symbols(args):
     from . import index
 
     data = index.snapshot()
-    symbols = data["symbols"]
+    symbols = list(index.iter_symbols(data["symbols"]))
     query = (args.query or "").lower()
     hits = [s for s in symbols if _symbol_matches(s, query, args.lang, args.kind, args.repo)]
     if args.limit:

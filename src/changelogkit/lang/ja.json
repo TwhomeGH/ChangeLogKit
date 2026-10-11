@@ -103,6 +103,7 @@
   "dev.locked": "ロックされたパッケージ",
   "dev.locked_note": "checkout とロック版は別途確認が必要です。これはインストール済みアプリの BuildInfo ではありません。.changelog.toml の sources で他の checkout を追加できます。",
   "dev.files": "コードとドキュメント",
+  "dev.members": "メンバー",
   "dev.no_comment": "直近のドキュメントコメントはありません",
   "dev.uncommitted": "未コミットの変更（未追跡を含む）",
   "dev.clean": "作業ツリーはクリーン",

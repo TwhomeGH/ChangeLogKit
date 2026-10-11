@@ -1,4 +1,9 @@
-/* 開發索引頁面版面。主題與共用元件在 theme.css。 */
+/* 類別成員：型別卡片內可展開的「成員」區塊；成員卡片縮排、縮小。 */
+.card .members { margin-top: 10px }
+.card .members > summary { cursor: pointer; color: var(--mut); font-size: 13px; padding: 4px 0 }
+.card .members > summary:hover { color: var(--accent) }
+.card.member { margin: 8px 0 8px 16px; padding: 12px 14px; border-left: 3px solid var(--accent) }
+.card.member h2 { font-size: 15px }
 main { max-width: 1100px; margin: auto; padding: 24px 28px 60px }
 #hint { margin: 4px 0 0 }
 #tabs { display: flex; gap: 8px; margin: 18px 0 6px; flex-wrap: wrap }

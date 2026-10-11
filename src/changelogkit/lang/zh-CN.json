@@ -103,6 +103,7 @@
   "dev.locked": "锁定包",
   "dev.locked_note": "checkout 与锁定版本需分别确认；此处不是已安装 App 的 BuildInfo。可在 .changelog.toml 设置 sources 加入其他 checkout。",
   "dev.files": "代码与文档",
+  "dev.members": "成员",
   "dev.no_comment": "尚无相邻文档注释",
   "dev.uncommitted": "未提交变更（含未跟踪文件）",
   "dev.clean": "工作区干净",

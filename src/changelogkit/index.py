@@ -210,6 +210,41 @@ def _locked_packages():
             for p in pins]
 
 
+# 可「容納成員」的型別種類（成員依縮排收進所屬型別）。
+_TYPE_KINDS = {"class", "struct", "interface", "enum", "protocol", "actor",
+               "trait", "object", "extension", "namespace", "module", "impl", "type",
+               "union", "record"}
+
+
+def _nest(symbols, lines):
+    """依縮排把成員收進所屬型別：回傳頂層符號，型別符號帶 ``members``（遞迴）。
+
+    作法：符號依行號排序；用堆疊追蹤「目前所在的型別」——某符號若比堆疊頂端縮排更深，
+    且頂端是型別，就是它的成員；否則為頂層。縮排由該符號所在行的前置空白推得。
+    """
+    for sym in symbols:
+        line = lines[sym["line"] - 1] if 0 <= sym["line"] - 1 < len(lines) else ""
+        sym["_depth"] = len(line) - len(line.lstrip())
+    top, stack = [], []
+    for sym in symbols:
+        depth = sym.pop("_depth", 0)
+        while stack and depth <= stack[-1][1]:
+            stack.pop()
+        if stack and stack[-1][0].get("kind") in _TYPE_KINDS:
+            stack[-1][0].setdefault("members", []).append(sym)
+        else:
+            top.append(sym)
+        stack.append((sym, depth))
+    return top
+
+
+def iter_symbols(symbols):
+    """走訪含巢狀成員的全部符號（depth-first）。"""
+    for sym in symbols:
+        yield sym
+        yield from iter_symbols(sym.get("members", []))
+
+
 def snapshot():
     """即時取得版本和近期提交；不把 Git 修改檔案推測成新增功能。"""
     data = {"features": validate(), "repos": [], "symbols": [], "documents": [],
@@ -235,7 +270,7 @@ def snapshot():
                 data["documents"].append({"name": name, "repo": repo, "url": link(repo, name),
                                           "text": text[:100000]})
                 continue
-            data["symbols"].extend(scan_symbols(text, repo, name))
+            data["symbols"].extend(_nest(scan_symbols(text, repo, name), text.splitlines()))
     data["lockedPackages"] = _locked_packages()
     return data
 

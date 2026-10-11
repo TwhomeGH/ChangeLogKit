@@ -1,3 +1,18 @@
+## 2026.10.11 changelogkit 0.1.7 發佈
+
+**類型**: 功能 · **檔案**: `index.py`、`scanners/javascript.py`、`assets/dev.js`、`assets/dev.css`、`export.py`
+
+### 修改 - API 宣告新增「類別成員」（依縮排收納、可展開）
+
+- **掃描器新增類別成員**：JS/TS 原本只抓 `function`／`export const`，新增抓類別方法（`name(args) {`）；其餘語言本就允許縮排宣告，故成員已被抓到。
+- `index._nest()`：依符號所在行的**縮排**把成員收進所屬型別（型別符號帶 `members`，遞迴巢狀）；新增 `iter_symbols()` 走訪全部。
+- 型別卡片內新增可展開的「**成員 (N)**」區塊（動態 GUI 與靜態站一致）；成員卡片縮排並以左側 accent 邊條標示。
+- **搜尋**會命中成員（資料結構即含 `members`）；**種類篩選**也涵蓋「含有該種類成員的型別」。
+- CLI `symbols` 改走 `iter_symbols`，成員可被查詢。
+- 實測：TTWChat 的 `WebSocketManager` → 33 個成員、`KickWebSocket` → 5 個（`onAllEvents`…）；全 repo `top-level 1120 / 全部 1753`。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.6 發佈
 
 **類型**: 修復 · **檔案**: `assets/dev.js`、`assets/dev.html`、`assets/theme.css`、`assets/file.css`

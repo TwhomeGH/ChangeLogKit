@@ -15,4 +15,4 @@ try:
     __version__ = _metadata.version("changelogkit")
 except _metadata.PackageNotFoundError:
     # 未安裝（例如 PYTHONPATH=src 直接跑）：退回字面值，需與 pyproject 同步。
-    __version__ = "0.1.6"
+    __version__ = "0.1.7"
