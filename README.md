@@ -107,6 +107,7 @@ path = "${HAISHINKIT_ROOT}"                      # 支援環境變數；不存�
 
 ## 文件
 
+- [安裝與本地使用](Docs/install.md)：三種裝法、cp950／中文路徑地雷、解除安裝
 - [用法](Docs/usage.md)：指令、`.changelog.toml` 全欄位、資產覆寫、變更歷史格式
 - [GitHub Pages](Docs/pages.md)：靜態匯出的產物、限制與啟用方式
 - [PyPI 發佈](Docs/publishing.md)：Trusted Publishing 設定與版本流程
