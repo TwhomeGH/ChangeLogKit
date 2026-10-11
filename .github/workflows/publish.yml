@@ -2,7 +2,7 @@
 #
 # 採 PyPI Trusted Publishing（OIDC），不需要 API token：
 # 先在 PyPI 專案頁設定 Trusted Publisher
-#   Owner=TwhomeGH  Repository=ChangeLogTools  Workflow=publish.yml  Environment=pypi
+#   Owner=TwhomeGH  Repository=ChangeLogKit  Workflow=publish.yml  Environment=pypi
 # 之後這裡以 id-token 換取短效權杖發佈。
 name: publish
 

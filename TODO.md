@@ -4,7 +4,7 @@
 
 ## 發佈（PyPI）
 - [ ] 取得 PyPI 帳號，並在專案頁設定 **Trusted Publisher**：
-  - Owner：`TwhomeGH`、Repository：`ChangeLogTools`、Workflow：`publish.yml`、Environment：`pypi`。
+  - Owner：`TwhomeGH`、Repository：`ChangeLogKit`、Workflow：`publish.yml`、Environment：`pypi`。
 - [ ] 首次發佈 `0.1.0` 以保留 `changelogkit` 名稱（`python -m build` → `twine upload dist/*`）。
 - [x] 之後正式發佈走 `.github/workflows/publish.yml`（打 `v*` tag → OIDC Trusted Publishing，**不需 API token**）。
 - [ ] 版本升版流程：改 `pyproject.toml` 的 `version` → commit → 打 `vX.Y.Z` tag → push。

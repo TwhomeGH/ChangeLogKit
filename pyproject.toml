@@ -23,7 +23,7 @@ dependencies = ["tomli>=2; python_version < '3.11'"]
 changelogkit = "changelogkit.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/TwhomeGH/ChangeLogTools"
+Homepage = "https://github.com/TwhomeGH/ChangeLogKit"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/changelogkit"]
