@@ -68,3 +68,12 @@ pre.blob { background: var(--code); border: 1px solid var(--line); border-radius
 .d-hunk { color: #8b5cf6; background: rgba(139, 92, 246, .08) }
 .d-file { color: var(--mut); font-weight: 600 }
 .d-meta { color: var(--mut) }
+
+/* 靜態匯出：<details class="commit">（動態版用 button.commit-head，故這些規則不衝突）。 */
+details.commit > summary {
+  padding: 8px 12px; cursor: pointer; font-weight: 600; overflow-wrap: anywhere;
+}
+details.commit > summary::marker { color: var(--mut) }
+details.commit > summary:hover { background: var(--line2) }
+details.commit > .commit-files { border-top: 1px solid var(--line2) }
+details.commit > .dpre { margin: 8px 12px 10px }
