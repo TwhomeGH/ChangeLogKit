@@ -17,7 +17,7 @@
 - **所有 repo 差異集中在 `config.py`／`.changelog.toml`**，其餘模組不硬編專案路徑。
 - 工具只對 repo **唯讀**；唯一寫入是變更歷史檔（`add`／GUI 編輯）。
 - 靜態匯出**預先渲染 HTML**（不是改寫 SPA），避免依賴動態端點。
-- 開發索引的 API 掃描是**文字比對**（非 AST）：Swift（`func`／型別／存取修飾屬性）、JS／TS（`function`／`class`／`interface`／`type`／`enum`／`export` 的 const 等）、Python（`def`／`class`）；不含呼叫關係，也不保證完整。未支援的副檔名不會被索引。
+- 開發索引的 API 掃描是**文字比對**（非 AST）：Swift（`func`／型別／存取修飾屬性）、JS／TS（`function`／`class`／`interface`／`type`／`enum`／`export` 的 const 等）、Python（`def`／`class`）、C／C++（`class`／`struct`／`enum`／`namespace` 與函式定義／宣告，啟發式）；不含呼叫關係，也不保證完整。未支援的副檔名不會被索引。
 - 相依：執行期需 `git`；`tomli` 僅 Python 3.10 需要。
 
 ## 檔案檢視與開發索引的差異

@@ -142,6 +142,10 @@ class IndexTests(unittest.TestCase):
         py_names = [s["name"] for s in index.scan_symbols(py, "app", "a.py")]
         self.assertIn("alpha", py_names)
         self.assertIn("Beta", py_names)
+        c = "class Foo {};\nstruct Pt { int x; };\nvoid setup() {\n}\nint add(int a, int b);"
+        c_names = [s["name"] for s in index.scan_symbols(c, "app", "a.cpp")]
+        for expected in ("Foo", "Pt", "setup", "add"):
+            self.assertIn(expected, c_names)
         self.assertEqual(index.scan_symbols("x = 1", "app", "a.rb"), [])  # 未支援 → 空
 
     def test_validate_absent_features(self):

@@ -38,7 +38,8 @@ def git(root, *args):
 
 def files(root):
     """只索引版本控管或未忽略的原始碼／Markdown，略過隱藏設定與產物。"""
-    suffixes = (".swift", ".md", ".js", ".mjs", ".cjs", ".ts", ".jsx", ".tsx", ".py")
+    suffixes = (".swift", ".md", ".js", ".mjs", ".cjs", ".ts", ".jsx", ".tsx", ".py",
+                ".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".hxx", ".hh", ".ino")
     paths = git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").split("\0")
     return sorted({p for p in paths if p and Path(p).suffix in suffixes
                    and not any(part.startswith(".") for part in Path(p).parts)})
@@ -115,6 +116,22 @@ _JS_KIND = {"function": "func", "class": "class", "interface": "interface",
 # Python 宣告。
 _PY_DECL_RE = re.compile(r"^(?:async\s+)?(def|class)\s+([A-Za-z_]\w*)")
 _PY_KIND = {"def": "func", "class": "class"}
+
+# C／C++ 宣告。
+_C_TYPE_RE = re.compile(r"^\s*(?:typedef\s+)?(class|struct|union|enum|namespace)\s+(?:class\s+)?([A-Za-z_]\w*)")
+_C_KEYWORDS_STOP = (r"(?!(?:if|for|while|switch|return|catch|else|do|case|sizeof|new|delete|"
+                    r"typedef|using|#)\b)")
+_C_FUNC_DEF_RE = re.compile(
+    r"^\s*" + _C_KEYWORDS_STOP +
+    r"(?:[A-Za-z_][\w:<>,.*&\s]*?\s)?"
+    r"([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*\([^;{}]*\)\s*(?:const\s*)?(?:noexcept\s*)?(?:override\s*)?"
+    r"(?:->[^{;]*)?\{")
+_C_FUNC_DECL_RE = re.compile(
+    r"^\s*" + _C_KEYWORDS_STOP +
+    r"[A-Za-z_][\w:<>,.*&\s]*?\s"
+    r"([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*\([^;{}]*\)\s*(?:const\s*)?(?:noexcept\s*)?(?:override\s*)?;")
+_C_KIND = {"class": "class", "struct": "struct", "union": "union",
+          "enum": "enum", "namespace": "namespace"}
 
 
 def _symbol(kind, symbol_name, signature, repo, fname, line, doc):
@@ -254,8 +271,50 @@ def _scan_python(text, repo, name):
     return symbols
 
 
+def _scan_c(text, repo, name):
+    """C／C++：class／struct／union／enum／namespace 與函式定義／宣告（啟發式）。"""
+    lines = text.splitlines()
+    symbols, doc, index = [], [], 0
+    while index < len(lines):
+        stripped = lines[index].strip()
+        if stripped.startswith("/**"):
+            block = []
+            while index < len(lines) and "*/" not in lines[index]:
+                block.append(lines[index])
+                index += 1
+            if index < len(lines):
+                block.append(lines[index])
+                index += 1
+            doc = [t for t in (_clean_js_doc(b) for b in block) if t]
+            continue
+        if stripped.startswith("//"):
+            doc.append(stripped.lstrip("/ ").strip())
+            index += 1
+            continue
+        type_match = _C_TYPE_RE.match(stripped)
+        func_match = None if type_match else (_C_FUNC_DEF_RE.match(stripped) or _C_FUNC_DECL_RE.match(stripped))
+        if type_match:
+            symbols.append(_symbol(_C_KIND[type_match.group(1)], type_match.group(2),
+                                   stripped, repo, name, index + 1, doc))
+            doc = []
+            index += 1
+            continue
+        if func_match:
+            symbols.append(_symbol("func", func_match.group(1), stripped,
+                                   repo, name, index + 1, doc))
+            doc = []
+            index += 1
+            continue
+        if stripped and not stripped.startswith(("@", "#")):
+            doc = []
+        index += 1
+    return symbols
+
+
 _SCANNERS = {".swift": _scan_swift, ".js": _scan_js, ".mjs": _scan_js, ".cjs": _scan_js,
-             ".ts": _scan_js, ".jsx": _scan_js, ".tsx": _scan_js, ".py": _scan_python}
+             ".ts": _scan_js, ".jsx": _scan_js, ".tsx": _scan_js, ".py": _scan_python,
+             ".c": _scan_c, ".cpp": _scan_c, ".cc": _scan_c, ".cxx": _scan_c,
+             ".h": _scan_c, ".hpp": _scan_c, ".hxx": _scan_c, ".hh": _scan_c, ".ino": _scan_c}
 
 
 def scan_symbols(text, repo, name):
