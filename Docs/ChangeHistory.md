@@ -1,3 +1,16 @@
+## 2026.10.11 changelogkit 0.1.0 首度發佈 PyPI
+
+**類型**: 功能 · **檔案**: `pyproject.toml`、`.github/workflows/publish.yml`
+
+### 修改 - 正式上架 PyPI（Trusted Publishing）
+
+- `pyproject.toml` metadata 收斂：作者由 `ReplyKit` 改為 `TwhomeGH`、補齊 classifiers（12 條）與 `project.urls`。
+- PyPI 端設定 pending publisher（OIDC：Owner／Repo／Workflow／Environment）。
+- 推 `v0.1.0` tag 觸發 `publish.yml`，以 OIDC 換短效權杖上傳；`python -m build` 與 `twine check` 皆通過。
+- 已上架：`changelogkit 0.1.0`（wheel + sdist）。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.0 初次抽離
 
 **類型**: 功能 · **檔案**: `src/changelogkit/`
