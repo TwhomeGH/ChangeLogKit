@@ -127,10 +127,13 @@ def _render_repos(repos):
             change = index.diff(repo["name"], commit["hash"])
             files = "".join('<span class="cfile">%s</span>' % _esc(f) for f in commit["files"])
             body = _diff_html(change["diff"]) if not change["empty"] else '<p class="muted">（無差異）</p>'
-            commits.append('<details class="commit"><summary>%s %s · %s</summary>'
-                           '<div class="commit-files">%s</div>%s</details>'
-                           % (_esc(commit["hash"]), _esc((commit["date"] or "")[:16].replace("T", " ")),
-                              _esc(commit["subject"]), files, body))
+            when = (commit["date"] or "")[:16].replace("T", " ")
+            summary = ('<summary><span class="cbody"><span class="commit-top">'
+                       '<code class="hash">%s</code><span class="when">%s</span></span>'
+                       '<span class="subject">%s</span></span></summary>'
+                       % (_esc(commit["hash"]), _esc(when), _esc(commit["subject"])))
+            commits.append('<details class="commit">%s'
+                           '<div class="commit-files">%s</div>%s</details>' % (summary, files, body))
         parts.append('<article class="card"><h2>%s</h2><div class="meta">HEAD：%s</div>'
                      '<div class="commits">%s</div></article>'
                      % (_esc(repo["name"]), _esc(repo["head"]), "".join(commits)))
