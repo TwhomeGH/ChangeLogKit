@@ -1,0 +1,5 @@
+# changelogkit 自身的設定（工具拿自己當測試對象）。
+[tool.changelog]
+title    = "changelogkit 變更歷史"
+history  = "Docs/ChangeHistory.md"
+features = "Docs/development/features.json"   # 目前不存在 → 開發索引的「功能」分頁會留空

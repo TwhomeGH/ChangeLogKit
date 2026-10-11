@@ -29,3 +29,12 @@
 ## 文件
 - [ ] README 補「發佈步驟」與「Trusted Publishing 設定」一節。
 - [ ] 補 `CHANGELOG.md` 記錄工具自身版本。
+
+## GitHub Pages（唯讀靜態匯出）
+- [ ] `changelogkit export <OUT>`：產生可部署到 Pages 的**唯讀靜態站**。
+  - 複製資產並把 `/assets/...`、`/development/data`、`/development/diff`、`/api/*` 改為**相對路徑**。
+  - 變更歷史頁：靜態渲染（唯讀；不含新增／編輯）。
+  - 開發索引：烘焙 `data.json`（features／symbols／documents／repos）＋各提交的 diff；檔案連結改指 GitHub blob（如 `https://github.com/<owner>/<repo>/blob/<branch>/<path>`）。
+- [ ] `.github/workflows/pages.yml`：push 到 main 時 `export _site` → `actions/configure-pages` / `upload-pages-artifact` / `deploy-pages`。
+- [ ] 啟用 Pages：repo Settings → Pages → Source = **GitHub Actions**。
+- [ ] 設計備註：工具本體是**動態**本機 server；Pages 只能放**靜態快照**，故編輯／即時查詢等功能不支援。
