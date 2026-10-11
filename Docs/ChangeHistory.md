@@ -1,3 +1,25 @@
+# ChangeHistory
+
+## 2026.10.11 changelogkit 0.2.0 發佈
+
+**類型**: 修復 · **檔案**: `history.py`
+
+### 問題 - 產出的 ChangeHistory 有 markdownlint 警告
+
+`changelogkit add` 產生的紀錄檔第一行是 `## …`（沒有 top-level 標題），多筆「相關文件」的清單前也少一個空行，觸發 markdownlint MD041／MD032。
+
+### 根因 - 建檔與組版未顧及 H1 與清單空行
+
+`insert_block` 直接把新區塊插在第一筆 `## ` 之前、`add` 建檔時也沒寫 H1；`build_block` 在 `**相關文件**:` 標籤行後直接接清單。
+
+### 修改 - 寫入時確保 H1，清單前補空行
+
+- `_write` 統一確保內容以 `# ChangeHistory` 開頭（MD041；已有 H1 則不覆寫）。
+- `build_block` 在多筆「相關文件」的標籤行與清單之間補空行（MD032）。
+- 補測試（`test_history_starts_with_h1`、更新多筆相關文件斷言）。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.9 發佈
 
 **類型**: 功能 · **檔案**: `scanners/javascript.py`

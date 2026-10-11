@@ -112,8 +112,16 @@ class HistoryTests(unittest.TestCase):
                 "2026.04.01", "多筆相關文件", "功能", "",
                 refs=["[A](a.md)", "[B](b.md)", "[C](c.md)"]))
             raw = history.parse_entries()[0]["raw"]
-            self.assertIn("**相關文件**:\n- [A](a.md)", raw)
+            self.assertIn("**相關文件**:\n\n- [A](a.md)", raw)   # 標籤與清單間空行（MD032）
             self.assertIn("- [C](c.md)", raw)
+
+    def test_history_starts_with_h1(self):
+        # 沒有 H1 的舊檔，寫入後要自動補上（markdownlint MD041）。
+        with TempRepo() as repo:
+            p = repo.root / "Docs" / "ChangeHistory.md"
+            p.write_text(SAMPLE.replace("# 變更歷史\n\n", ""), encoding="utf-8")
+            history.insert_block(history.build_block("2026.05.01", "H1", "功能", ""))
+            self.assertTrue(history.read_history().startswith("# ChangeHistory\n"))
 
     def test_missing_history_is_graceful(self):
         # 沒有 ChangeHistory.md 時回空、不中斷；insert_block 會自動建立（含父目錄）。

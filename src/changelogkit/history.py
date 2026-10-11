@@ -143,8 +143,10 @@ def build_block(date_str, title, type_, file_, problem="", root_cause="",
         if len(refs) == 1:
             lines.append("**相關文件**: %s" % refs[0])
         else:
-            # 多筆時逐行條列，避免原始檔出現一大長行。
+            # 多筆時逐行條列，避免原始檔出現一大長行；
+            # 標籤行與清單之間保留空行（markdownlint MD032）。
             lines.append("**相關文件**:")
+            lines.append("")
             lines.extend("- %s" % r for r in refs)
     while lines and lines[-1] == "":
         lines.pop()
@@ -154,11 +156,23 @@ def build_block(date_str, title, type_, file_, problem="", root_cause="",
 
 # ─────────────────────────── 寫入 ───────────────────────────
 
+_H1 = "# ChangeHistory"
+
+
+def _ensure_h1(lines):
+    """確保內容以 top-level 標題開頭（markdownlint MD041）；已有則原樣回傳。"""
+    for line in lines:
+        if line.strip() == "":
+            continue
+        return lines if line.startswith("# ") else [_H1, ""] + lines
+    return [_H1, ""] + lines
+
+
 def _write(lines):
     """把行陣列寫回變更歷史檔，正規化結尾換行；父目錄不存在就建立。"""
     path = _history()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    path.write_text("\n".join(_ensure_h1(lines)).rstrip() + "\n", encoding="utf-8")
 
 
 def insert_block(block):
