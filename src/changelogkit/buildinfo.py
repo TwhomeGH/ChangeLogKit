@@ -60,6 +60,11 @@ def commit():
     return _git_head(Path(__file__).resolve().parent) or _from_direct_url()
 
 
+def version():
+    """純版本號（如 ``0.1.0``）。"""
+    return __version__
+
+
 def version_string():
     """``--version`` 要印的一行字。"""
     source = commit()

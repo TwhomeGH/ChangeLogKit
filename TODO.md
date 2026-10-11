@@ -8,7 +8,7 @@
 ## 建置資訊（版本／來源 commit）
 - [x] `changelogkit --version`：版本 + 來源 commit（依序：建置蓋章 → 套件目錄 git → pip `direct_url.json`）。
 - [x] Pages 靜態站頁尾：標示來源 commit（連 GitHub）與產生時間。
-- [ ] 本機 GUI「關於」頁／頁尾（顯示版本與來源 commit）。
+- [x] 本機 GUI「關於」頁（`/about`：版本、來源 commit（連 GitHub）、專案首頁；兩頁導覽列都有連結）。
 - [ ] 建置時蓋章 `_buildinfo.py`（hatch build hook）——正式發 PyPI 版本時再做，讓裝好的 wheel 也能報 commit。
 
 ## 發佈（PyPI）

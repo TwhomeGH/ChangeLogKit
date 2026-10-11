@@ -12,7 +12,7 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from . import assets, history, index
+from . import assets, buildinfo, history, index
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -44,6 +44,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._serve_asset(u.path[len("/assets/"):])
         if u.path == "/":
             return self._send(200, assets.read("index.html"), "text/html; charset=utf-8")
+        if u.path == "/about":
+            return self._send(200, assets.read("about.html"), "text/html; charset=utf-8")
+        if u.path == "/api/buildinfo":
+            return self._send(200, json.dumps(
+                {"version": buildinfo.version(), "commit": buildinfo.commit()}, ensure_ascii=False))
         if u.path == "/favicon.ico":
             return self._send(204, b"")
         if u.path == "/api/entries":
