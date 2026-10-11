@@ -100,7 +100,7 @@
   "dev.result": "{0} 条结果 · 搜索可输入功能、路径或 API 名称",
   "dev.filter_hint": "（可切语言／种类）",
   "dev.no_data": "没有匹配的数据。",
-  "dev.more": "当前显示前 250 条，请缩小搜索范围。",
+  "dev.showing": "显示 {0} / {1}",
   "dev.no_files": "（无文件变更）",
   "dev.diff_empty": "没有差异。",
   "dev.diff_truncated": "（差异过大，仅显示前段）",
@@ -119,6 +119,9 @@
   "filter.supported": "支持语言：",
   "filter.all_langs": "全部语言",
   "filter.kind": "种类",
+  "filter.group": "分组",
+  "filter.by_file": "按文件",
+  "filter.no_group": "不分组",
   "filter.all": "全部",
 
   "file.back": "← 返回索引",

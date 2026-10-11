@@ -1,5 +1,25 @@
 # ChangeHistory
 
+## 2026.10.11 changelogkit 0.4.0 發佈
+
+**類型**: 功能 · **檔案**: `assets/dev.js`、`assets/dev.css`、`assets/dev.html`、`assets/static_dev.html`、`export.py`、`lang/*.json`
+
+### 問題 - API 宣告一多，導覽就難用
+
+捲到深處時分頁列早已滑出畫面（要拉回頂端才切得了）；清單是一條平的卡片流、看不出結構；且超過 250 筆就直接截斷、看不到。
+
+### 修改 - 分頁固定、記住瀏覽狀態、依檔案分組、lazy 載入、回到頂端
+
+- **分頁列／篩選列 sticky**：捲到哪都在上方可切換。
+- **記住上次瀏覽**（`localStorage`）：分頁、語言、種類、分組下次自動還原。
+- **API 宣告預設依檔案分組**：每個檔案一個 sticky 小標題，可切「不分組」。
+- **lazy 載入**：每次先渲染 80 筆，捲到底自動追加（移除原本 250 筆上限與提示）。
+- **回到頂端**浮動鈕。
+- 靜態匯出同步受益：`_render_symbols` 依檔案分組；靜態頁加回到頂端鈕（共用 `dev.css`，sticky 生效）。
+- 移除已無用的 `dev.more` 文案；新增 `filter.group`／`filter.by_file`／`filter.no_group`／`dev.showing`。
+
+---
+
 ## 2026.10.11 changelogkit 0.3.2 發佈
 
 **類型**: 修復 · **檔案**: `backfill.py`

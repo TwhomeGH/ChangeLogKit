@@ -100,7 +100,7 @@
   "dev.result": "{0} results · search by feature, path or API name",
   "dev.filter_hint": " (filter by language/kind)",
   "dev.no_data": "No matching data.",
-  "dev.more": "Showing the first 250; narrow your search.",
+  "dev.showing": "Showing {0} / {1}",
   "dev.no_files": "(no file changes)",
   "dev.diff_empty": "No diff.",
   "dev.diff_truncated": "(diff too large; showing the first part)",
@@ -119,6 +119,9 @@
   "filter.supported": "Supported languages: ",
   "filter.all_langs": "All languages",
   "filter.kind": "Kind",
+  "filter.group": "Group",
+  "filter.by_file": "By file",
+  "filter.no_group": "None",
   "filter.all": "All",
 
   "file.back": "← Back to index",

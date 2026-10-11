@@ -11,6 +11,7 @@
 <script src="../assets/markdown.js"></script>
 <link rel="stylesheet" href="../assets/theme.css">
 <link rel="stylesheet" href="../assets/dev.css">
+<style>:root { --grouptop: 8px }</style>
 </head><body>
 <header class="appbar">
   <h1 data-i18n="dev.title">{{t.dev.title}}</h1>
@@ -36,6 +37,10 @@ for (const el of document.querySelectorAll(".dline[data-line]")) {
   el.innerHTML = '<span class="dmark">' + window.HL.esc(mark) + "</span>" +
     window.HL.swift(raw.slice(1), { block: false });
 }
+const tt = document.getElementById("totop");
+if (tt) { tt.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  addEventListener("scroll", () => { tt.hidden = window.scrollY < 400; }); }
 </script>
+<button id="totop" hidden title="Top">↑</button>
 <footer class="built">{{footer}}</footer>
 </body></html>

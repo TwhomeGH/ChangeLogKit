@@ -1,6 +1,9 @@
 /* 開發索引：功能／API 宣告／文件／近期改動。資料來自 /development/data。 */
 const $ = (s) => document.querySelector(s);
-let data = null, tab = "features", lang = "", kind = "";
+let data = null, tab = "features", lang = "", kind = "", group = "file";
+let rows = [], shown = 0, lastGroup = null;   /* 目前篩選結果與已渲染進度（lazy） */
+const CHUNK = 80;                              /* 每次追加渲染的筆數 */
+const STORE = "changelogkit.devstate";         /* localStorage：記住分頁／篩選／分組 */
 
 const LABELS = {
   features: "tab.features",
@@ -31,6 +34,22 @@ function kindOf(name) {
 
 function links(items) {
   return items.map((p) => `<a href="/development/file?repo=app&path=${encodeURIComponent(p)}">${esc(p)}</a>`).join("");
+}
+
+/* ── 記住上次瀏覽狀態（分頁／語言／種類／分組） ── */
+
+function saveState() {
+  try { localStorage.setItem(STORE, JSON.stringify({ tab, lang, kind, group })); } catch (e) { /* 私密模式等 */ }
+}
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE) || "{}");
+    if (LABELS[s.tab]) tab = s.tab;
+    if (typeof s.lang === "string") lang = s.lang;
+    if (typeof s.kind === "string") kind = s.kind;
+    if (s.group === "file" || s.group === "none") group = s.group;
+  } catch (e) { /* 壞資料就忽略 */ }
 }
 
 /* ── 近期改動：提交卡片與 lazy 差異 ── */
@@ -96,7 +115,7 @@ async function loadDiff(box, params) {
   }
 }
 
-/* 「API 宣告」頁的篩選列：支援語言 + 語言 chips + 種類下拉。 */
+/* 「API 宣告」頁的篩選列：支援語言 + 語言 chips + 種類下拉 + 分組下拉。 */
 function renderFilters() {
   const box = $("#filters");
   if (tab !== "symbols") { box.hidden = true; box.innerHTML = ""; return; }
@@ -106,11 +125,15 @@ function renderFilters() {
   const kinds = [...new Set(symbols.map((s) => s.kind).filter(Boolean))].sort();
   const chip = (value, label) =>
     `<button class="chip${value === lang ? " on" : ""}" data-lang="${esc(value)}">${esc(label)}</button>`;
+  const opt = (v, label) => `<option value="${esc(v)}"${v === group ? " selected" : ""}>${esc(label)}</option>`;
   box.innerHTML =
     `<div class="supported">${CK_T("filter.supported")}${esc((data.languages || []).join("、"))}</div>` +
     `<div class="chips">${chip("", CK_T("filter.all_langs"))}${langs.map((l) => chip(l, l)).join("")}</div>` +
     `<label class="kindfilter">${CK_T("filter.kind")} <select id="kindsel"><option value="">${CK_T("filter.all")}</option>` +
     kinds.map((k) => `<option value="${esc(k)}"${k === kind ? " selected" : ""}>${esc(k)}</option>`).join("") +
+    `</select></label>` +
+    `<label class="groupfilter">${CK_T("filter.group")} <select id="groupsel">` +
+    opt("file", CK_T("filter.by_file")) + opt("none", CK_T("filter.no_group")) +
     `</select></label>`;
 }
 
@@ -128,57 +151,95 @@ function symbolCard(r, nested) {
   return `<article class="card${nested ? " member" : ""}">${head}${memberHtml}</article>`;
 }
 
+/* 單一資料列的 HTML（依分頁型別）。 */
+function rowHtml(r) {
+  if (tab === "features") {
+    /* 通用渲染：保留鍵以外的所有欄位逐列列出；標籤可用該筆的 labels 對照，預設用 key。 */
+    const reserved = new Set(["id", "name", "summary", "files", "docs", "labels"]);
+    const labels = r.labels || {};
+    const fields = Object.keys(r).filter((k) => !reserved.has(k))
+      .map((k) => [labels[k] || k, Array.isArray(r[k]) ? r[k].join("、") : r[k]])
+      .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+    return `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">${esc(r.id)}</div>` +
+      (r.summary ? `<p>${mdInline(r.summary)}</p>` : "") +
+      (fields ? `<dl>${fields}</dl>` : "") +
+      `<h3>${CK_T("dev.files")}</h3><div class="files">${links(r.files)}${links(r.docs)}</div></article>`;
+  }
+  if (tab === "symbols") return symbolCard(r);
+  if (tab === "documents") {
+    return `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
+      `<div class="meta">${esc(r.repo)}</div><div class="preview">${esc(r.text.slice(0, 260))}${r.text.length > 260 ? " …" : ""}</div></article>`;
+  }
+  const list = (r.commits || []).map((c) => commitCard(r.name, c)).join("");
+  return `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">HEAD：${esc(r.head)}</div>` +
+    `<h3>${CK_T("dev.uncommitted")}</h3><pre class="blob">${esc(r.changes || CK_T("dev.clean"))}</pre>` +
+    `<div class="wt-wrap"><button class="wt-btn" type="button" data-repo="${esc(r.name)}">${CK_T("dev.worktree")}</button>` +
+    `<div class="diff" hidden></div></div>` +
+    `<h3>${CK_T("dev.commits20")}</h3><div class="commits">${list}</div></article>`;
+}
+
+/* 「近期改動／版本」頁開頭的鎖定套件卡片。 */
+function lockedHtml() {
+  const deps = (data.lockedPackages || []).map((p) =>
+    `<code>${esc(p.identity)}</code><code>${esc((p.revision || "").slice(0, 12))}</code>`).join("");
+  return '<article class="card"><h2>' + CK_T("dev.locked") + '</h2><div class="deps">' + (deps || "<code>（無）</code><code></code>") + "</div>" +
+    '<p class=muted>' + CK_T("dev.locked_note") + "</p></article>";
+}
+
 function render() {
   if (!data) return;
   document.querySelectorAll("#tabs button").forEach((b) =>
     b.setAttribute("aria-pressed", b.dataset.key === tab));
   renderFilters();
+  saveState();
   const q = $("#search").value.toLowerCase();
   const repo = $("#repo").value;
   const match = (r) => JSON.stringify(r).toLowerCase().includes(q) &&
     (!repo || r.repo === repo || (r.id && tab === "features")) &&
     (tab !== "symbols" || ((!lang || r.lang === lang) && (!kind || r.kind === kind || (r.members || []).some((m) => m.kind === kind))));
 
-  const rows = (data[tab] || []).filter(match);
-  const suffix = tab === "symbols" ? CK_T("dev.filter_hint") : "";
-  $("#message").textContent = CK_T("dev.result", rows.length) + suffix;
-
-  let out = "";
-  if (tab === "repos") {
-    const deps = (data.lockedPackages || []).map((p) =>
-      `<code>${esc(p.identity)}</code><code>${esc((p.revision || "").slice(0, 12))}</code>`).join("");
-    out += '<article class="card"><h2>' + CK_T("dev.locked") + '</h2><div class="deps">' + (deps || "<code>（無）</code><code></code>") + "</div>" +
-      '<p class=muted>' + CK_T("dev.locked_note") + "</p></article>";
-  }
-  for (const r of rows.slice(0, 250)) {
-    if (tab === "features") {
-      /* 通用渲染：保留鍵以外的所有欄位逐列列出；標籤可用該筆的 labels 對照，預設用 key。 */
-      const reserved = new Set(["id", "name", "summary", "files", "docs", "labels"]);
-      const labels = r.labels || {};
-      const fields = Object.keys(r).filter((k) => !reserved.has(k))
-        .map((k) => [labels[k] || k, Array.isArray(r[k]) ? r[k].join("、") : r[k]])
-        .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
-      out += `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">${esc(r.id)}</div>` +
-        (r.summary ? `<p>${mdInline(r.summary)}</p>` : "") +
-        (fields ? `<dl>${fields}</dl>` : "") +
-        `<h3>${CK_T("dev.files")}</h3><div class="files">${links(r.files)}${links(r.docs)}</div></article>`;
-    } else if (tab === "symbols") {
-      out += symbolCard(r);
-    } else if (tab === "documents") {
-      out += `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
-        `<div class="meta">${esc(r.repo)}</div><div class="preview">${esc(r.text.slice(0, 260))}${r.text.length > 260 ? " …" : ""}</div></article>`;
-    } else {
-      const list = (r.commits || []).map((c) => commitCard(r.name, c)).join("");
-      out += `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">HEAD：${esc(r.head)}</div>` +
-        `<h3>${CK_T("dev.uncommitted")}</h3><pre class="blob">${esc(r.changes || CK_T("dev.clean"))}</pre>` +
-        `<div class="wt-wrap"><button class="wt-btn" type="button" data-repo="${esc(r.name)}">${CK_T("dev.worktree")}</button>` +
-        `<div class="diff" hidden></div></div>` +
-        `<h3>${CK_T("dev.commits20")}</h3><div class="commits">${list}</div></article>`;
-    }
-  }
-  if (rows.length > 250) out += '<p class="muted">' + CK_T("dev.more") + "</p>";
-  $("#results").innerHTML = out || '<p class="empty">' + CK_T("dev.no_data") + "</p>";
+  rows = (data[tab] || []).filter(match);
+  shown = 0;
+  lastGroup = null;
+  const box = $("#results");
+  box.innerHTML = "";
+  if (!rows.length) { box.innerHTML = '<p class="empty">' + CK_T("dev.no_data") + "</p>"; updateStatus(); return; }
+  if (tab === "repos") box.insertAdjacentHTML("beforeend", lockedHtml());
+  appendChunk();   /* 先渲染第一批，其餘捲到底再追加 */
 }
+
+/* 追加下一批（lazy）；symbols＋依檔案分組時，於檔案切換處插入 sticky 小標題。 */
+function appendChunk() {
+  const slice = rows.slice(shown, shown + CHUNK);
+  let out = "";
+  for (const r of slice) {
+    if (tab === "symbols" && group === "file" && r.file !== lastGroup) {
+      lastGroup = r.file;
+      out += `<h3 class="group">${esc(r.file)}</h3>`;
+    }
+    out += rowHtml(r);
+  }
+  if (out) $("#results").insertAdjacentHTML("beforeend", out);
+  shown += slice.length;
+  updateStatus();
+}
+
+/* 更新結果訊息與「回到頂端」鈕的可見度。 */
+function updateStatus() {
+  const suffix = tab === "symbols" ? CK_T("dev.filter_hint") : "";
+  const more = shown < rows.length ? "　" + CK_T("dev.showing", shown, rows.length) : "";
+  $("#message").textContent = CK_T("dev.result", rows.length) + suffix + more;
+  const el = $("#totop");
+  if (el) el.hidden = window.scrollY < 400;
+}
+
+window.addEventListener("scroll", () => {
+  updateStatus();
+  if (shown < rows.length &&
+      window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 700) {
+    appendChunk();
+  }
+});
 
 async function load() {
   $("#message").textContent = CK_T("dev.loading");
@@ -198,6 +259,9 @@ async function load() {
   }
 }
 
+/* ── 初始化 ── */
+
+loadState();
 for (const [key, title] of Object.entries(LABELS)) {
   const b = document.createElement("button");
   b.textContent = CK_T(title); b.dataset.key = key;
@@ -214,7 +278,11 @@ $("#filters").addEventListener("click", (e) => {
 });
 $("#filters").addEventListener("change", (e) => {
   if (e.target.id === "kindsel") { kind = e.target.value; render(); }
+  if (e.target.id === "groupsel") { group = e.target.value; render(); }
 });
+
+const totop = $("#totop");
+if (totop) totop.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
 /* 事件委派：提交標題、檔名、工作區差異鈕（#results 每次 render 會重建）。 */
 $("#results").addEventListener("click", (e) => {

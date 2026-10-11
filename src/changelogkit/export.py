@@ -120,8 +120,14 @@ def _symbol_card(sym, blob_base, nested):
 
 
 def _render_symbols(symbols, blob_base):
-    """API 宣告卡片。"""
-    return "\n".join(_symbol_card(sym, blob_base, False) for sym in symbols)
+    """API 宣告卡片；依檔案分組，於檔案切換處插入 sticky 小標題。"""
+    out, last = [], None
+    for sym in symbols:
+        if sym.get("file") != last:
+            last = sym.get("file")
+            out.append('<h3 class="group">%s</h3>' % _esc(last))
+        out.append(_symbol_card(sym, blob_base, False))
+    return "\n".join(out)
 
 
 def _render_documents(documents):

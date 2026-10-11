@@ -100,7 +100,7 @@
   "dev.result": "{0} 筆結果 · 搜尋可輸入功能、路徑或 API 名稱",
   "dev.filter_hint": "（可切語言／種類）",
   "dev.no_data": "沒有符合的資料。",
-  "dev.more": "目前顯示前 250 筆，請縮小搜尋範圍。",
+  "dev.showing": "顯示 {0} / {1}",
   "dev.no_files": "（無檔案變更）",
   "dev.diff_empty": "沒有差異。",
   "dev.diff_truncated": "（差異過大，僅顯示前段）",
@@ -119,6 +119,9 @@
   "filter.supported": "支援語言：",
   "filter.all_langs": "全部語言",
   "filter.kind": "種類",
+  "filter.group": "分組",
+  "filter.by_file": "依檔案",
+  "filter.no_group": "不分組",
   "filter.all": "全部",
 
   "file.back": "← 返回索引",

@@ -100,7 +100,7 @@
   "dev.result": "{0} 件 · 機能・パス・API 名で検索できます",
   "dev.filter_hint": "（言語／種類で絞り込み）",
   "dev.no_data": "一致するデータがありません。",
-  "dev.more": "先頭 250 件を表示中。検索を絞ってください。",
+  "dev.showing": "{0} / {1} を表示",
   "dev.no_files": "（ファイル変更なし）",
   "dev.diff_empty": "差分はありません。",
   "dev.diff_truncated": "（差分が大きいため先頭のみ表示）",
@@ -119,6 +119,9 @@
   "filter.supported": "対応言語：",
   "filter.all_langs": "すべての言語",
   "filter.kind": "種類",
+  "filter.group": "グループ",
+  "filter.by_file": "ファイル別",
+  "filter.no_group": "なし",
   "filter.all": "すべて",
 
   "file.back": "← インデックスへ",

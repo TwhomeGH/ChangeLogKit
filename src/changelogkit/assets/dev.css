@@ -93,3 +93,36 @@ details.commit > summary .when { color: var(--mut); font-size: 12px; white-space
 details.commit > summary .subject { display: block; font-weight: 600; white-space: normal; overflow-wrap: anywhere }
 details.commit > .commit-files { border-top: 1px solid var(--line2) }
 details.commit > .dpre { margin: 8px 12px 10px }
+
+/* ── 開發索引：可捲動時的導覽強化 ── */
+
+/* 分頁列固定在上方，捲到哪都按得到。 */
+#tabs {
+  position: sticky; top: 0; z-index: 6;
+  background: var(--hdr); backdrop-filter: blur(8px);
+  padding: 8px 0; margin: 12px 0 2px;
+}
+/* 篩選列接在分頁列下方一起固定。 */
+#filters {
+  position: sticky; top: 44px; z-index: 5;
+  background: var(--bg); padding: 6px 0 8px;
+}
+#filters .groupfilter { font-size: 13px; color: var(--mut) }
+#filters .groupfilter select { width: auto; margin-left: 6px }
+
+/* 依檔案分組的 sticky 小標題（滑動時知道在哪個檔案）。 */
+h3.group {
+  position: sticky; top: var(--grouptop, 88px); z-index: 4;
+  margin: 16px 0 6px; padding: 4px 0;
+  font-size: 13px; color: var(--mut);
+  background: var(--bg); border-bottom: 1px solid var(--line2);
+}
+
+/* 回到頂端鈕。 */
+#totop {
+  position: fixed; right: 20px; bottom: 20px; z-index: 20;
+  width: 42px; height: 42px; border-radius: 50%; font-size: 18px; cursor: pointer;
+  background: var(--card); color: var(--fg); border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+#totop:hover { color: var(--accent); border-color: var(--accent) }
