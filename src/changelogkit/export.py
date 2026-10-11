@@ -17,10 +17,10 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from . import assets, config, history, i18n, index
+from . import assets, buildinfo, config, history, i18n, index
 
 # 需要複製到輸出 assets/ 的檔案（其餘為 server 動態用，不需要）。
-STATIC_ASSETS = ("theme.css", "theme.js", "dev.css", "file.css", "highlight.js", "markdown.js")
+STATIC_ASSETS = ("theme.css", "theme.js", "i18n.js", "dev.css", "file.css", "highlight.js", "markdown.js")
 
 
 def _esc(text):
@@ -136,7 +136,7 @@ def _render_repos(repos):
         for commit in repo["commits"]:
             change = index.diff(repo["name"], commit["hash"])
             files = "".join('<span class="cfile">%s</span>' % _esc(f) for f in commit["files"])
-            body = _diff_html(change["diff"]) if not change["empty"] else '<p class="muted">' + i18n.t("static.no_diff") + '</p>'
+            body = _diff_html(change["diff"]) if not change["empty"] else '<p class="muted" data-i18n="static.no_diff">' + i18n.t("static.no_diff") + '</p>'
             when = (commit["date"] or "")[:16].replace("T", " ")
             summary = ('<summary><span class="cbody"><span class="commit-top">'
                        '<code class="hash">%s</code><span class="when">%s</span></span>'
@@ -152,19 +152,19 @@ def _render_repos(repos):
 
 def _render_dev(data, blob_base):
     """開發索引頁內容；回傳 (HTML, symbols, documents, sources 計數)。"""
-    blocks = ['<h1>%s</h1><p class="muted">%s%s</p>'
+    blocks = ['<h1 data-i18n="tab.symbols">%s</h1><p class="muted"><span data-i18n="filter.supported">%s</span>%s</p>'
               % (_esc(i18n.t("tab.symbols")), _esc(i18n.t("filter.supported")),
                  _esc("、".join(data.get("languages", []))))
               + _render_symbols(data["symbols"], blob_base),
-              '<h1 id="docs">%s</h1>' % _esc(i18n.t("tab.documents"))
+              '<h1 id="docs" data-i18n="tab.documents">%s</h1>' % _esc(i18n.t("tab.documents"))
               + _render_documents(data["documents"]),
-              '<h1>%s</h1>' % _esc(i18n.t("tab.repos")) + _render_repos(data["repos"])]
+              '<h1 data-i18n="tab.repos">%s</h1>' % _esc(i18n.t("tab.repos")) + _render_repos(data["repos"])]
     if data["features"]:
         cards = "".join(
             '<article class="card"><h2>%s</h2><div class="meta">%s</div><p>%s</p></article>'
             % (_esc(f.get("name")), _esc(f.get("id")), _esc(f.get("summary")))
             for f in data["features"])
-        blocks.insert(0, '<h1>%s</h1>' % _esc(i18n.t("tab.features")) + cards)
+        blocks.insert(0, '<h1 data-i18n="tab.features">%s</h1>' % _esc(i18n.t("tab.features")) + cards)
     return ("\n".join(blocks), len(data["symbols"]), len(data["documents"]), len(data["repos"]))
 
 
@@ -176,6 +176,24 @@ def _write_docs(out, documents, footer):
         (docs_dir / ("%d.html" % i)).write_text(assets.render(
             "static_doc.html", docname=_esc(doc["name"]), title=_esc(config.load().title),
             content=_esc(doc["text"]), footer=footer, **i18n.subs()), encoding="utf-8")
+
+
+def _write_about(out, cfg, data, footer, slug):
+    """產生靜態「關於」頁 ``about/index.html``：changelogkit 版本、來源 commit、UI 語系。"""
+    head = data["repos"][0]["head"] if data["repos"] else ""
+    if head and slug:
+        source = '<a href="https://github.com/%s/commit/%s">%s@%s</a>' % (slug, head, slug, head[:7])
+    elif head:
+        source = "%s@%s" % (_esc(cfg.root.name), head[:7])
+    else:
+        source = _esc(i18n.t("about.unknown"))
+    home = ('<a href="https://github.com/%s">github.com/%s</a>' % (slug, slug)) if slug else _esc(cfg.root.name)
+    about_dir = out / "about"
+    about_dir.mkdir()
+    (about_dir / "index.html").write_text(assets.render(
+        "static_about.html", **i18n.subs(), title=_esc(cfg.title), footer=footer,
+        version=_esc(buildinfo.version()), source=source,
+        locales=_esc("  ".join(i18n.available())), home=home), encoding="utf-8")
 
 
 def export(out_dir, branch="main"):
@@ -214,6 +232,7 @@ def export(out_dir, branch="main"):
         footer=footer), encoding="utf-8")
 
     _write_docs(out, data["documents"], footer)
+    _write_about(out, cfg, data, footer, slug)
 
     (out / ".nojekyll").write_text("", encoding="utf-8")
     return out

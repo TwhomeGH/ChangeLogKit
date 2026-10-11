@@ -5,19 +5,23 @@
 <title>{{t.dev.title}} · {{title}}</title>
 <meta name="generator" content="changelogkit">
 <script src="../assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script src="../assets/i18n.js"></script>
 <script src="../assets/highlight.js"></script>
 <script src="../assets/markdown.js"></script>
 <link rel="stylesheet" href="../assets/theme.css">
 <link rel="stylesheet" href="../assets/dev.css">
 </head><body>
 <header class="appbar">
-  <h1>{{t.dev.title}}</h1>
-  <a href="../">{{t.nav.history}}</a>
+  <h1 data-i18n="dev.title">{{t.dev.title}}</h1>
+  <a href="../" data-i18n="nav.history">{{t.nav.history}}</a>
+  <a href="../about/" data-i18n="nav.about">{{t.nav.about}}</a>
   <span class="spacer"></span>
-  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
 <main>
-  <p class="muted">{{t.static.dev_hint}}</p>
+  <p class="muted" data-i18n="static.dev_hint">{{t.static.dev_hint}}</p>
 {{content}}
 </main>
 <script>

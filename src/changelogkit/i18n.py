@@ -80,10 +80,32 @@ def _merged():
     return catalog
 
 
+def all_catalogs():
+    """所有語系的完整字典（``en`` 為底、各語系覆蓋），供前端執行期切換。"""
+    base = _catalog("en")
+    out = {}
+    for name in available():
+        merged = dict(base)
+        merged.update(_catalog(name))
+        out[name] = merged
+    return out
+
+
+def _embed(data):
+    """序列化成可安全放進 ``<script>`` 的 JSON（轉義 ``<``）。"""
+    return json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
+
+
 def subs():
-    """供網頁模板的 ``{{t.<key>}}`` 佔位替換（另附 ``lang_html``）。"""
+    """供網頁模板的 ``{{…}}`` 佔位替換。
+
+    提供 ``t.<key>``（目前語系的字串）、``lang_html``（``<html lang>``），以及前端
+    執行期 i18n 所需的 ``CK_LOCALES``（全部語系）與 ``CK_LOCALE``（目前語系）。
+    """
     result = {"t." + key: value for key, value in _merged().items()}
     result["lang_html"] = "zh-Hant" if current().lower().startswith("zh") else "en"
+    result["CK_LOCALES"] = _embed(all_catalogs())
+    result["CK_LOCALE"] = current()
     return result
 
 

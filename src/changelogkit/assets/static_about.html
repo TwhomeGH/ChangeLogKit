@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="{{lang_html}}"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{t.about.title}} · {{title}}</title>
+<meta name="generator" content="changelogkit">
+<script src="../assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script src="../assets/i18n.js"></script>
+<link rel="stylesheet" href="../assets/theme.css">
+<style>
+  /* 靜態「關於」頁：置中留邊；版本資訊以定義清單呈現。 */
+  main { max-width: 720px; margin: 0 auto; padding: 22px 24px 64px }
+  dl.about { display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; align-items: baseline }
+  dl.about dt { color: var(--mut); font-size: 13px; white-space: nowrap }
+  dl.about dd { margin: 0; overflow-wrap: anywhere }
+</style>
+</head><body>
+<header class="appbar">
+  <h1 data-i18n="about.title">{{t.about.title}}</h1>
+  <a href="../development/" data-i18n="nav.dev">{{t.nav.dev}}</a>
+  <a href="../" data-i18n="nav.history">{{t.nav.history}}</a>
+  <span class="spacer"></span>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
+</header>
+<main>
+  <p class="muted" data-i18n="about.intro">{{t.about.intro}}</p>
+  <dl class="about">
+    <dt data-i18n="about.version">{{t.about.version}}</dt><dd>changelogkit {{version}}</dd>
+    <dt data-i18n="about.commit">{{t.about.commit}}</dt><dd>{{source}}</dd>
+    <dt data-i18n="about.locales">{{t.about.locales}}</dt><dd>{{locales}}</dd>
+    <dt data-i18n="about.home">{{t.about.home}}</dt><dd>{{home}}</dd>
+  </dl>
+</main>
+<footer class="built">{{footer}}</footer>
+</body></html>

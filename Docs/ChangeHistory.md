@@ -1,3 +1,15 @@
+## 2026.10.11 changelogkit 0.1.2 發佈
+
+**類型**: 功能 · **檔案**: `assets/i18n.js`、`export.py`、`assets/static_about.html`
+
+### 修改 - 靜態站跟隨訪客語系 + 新增「關於」頁
+
+- 前端 i18n 改為**執行期**：頁面內嵌**全部語系**，載入時依 `navigator.language`（＋ localStorage）選擇，右上角新增**語系切換鈕**；不再固定為建置機器（CI＝en）的語系。
+- 靜態匯出新增 **about 頁**（`about/`）：顯示 changelogkit 版本、網站來源 commit（連 GitHub）、UI 語系清單；導覽列加「關於」。
+- `i18n.subs()` 內嵌 `CK_LOCALES`／`CK_LOCALE`；`STATIC_ASSETS` 納入 `i18n.js`；靜態頁文字加上 `data-i18n`。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.1 發佈
 
 **類型**: 功能 · **檔案**: `pyproject.toml`、`src/changelogkit/__init__.py`

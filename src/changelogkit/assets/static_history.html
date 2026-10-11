@@ -5,6 +5,8 @@
 <title>{{title}}</title>
 <meta name="generator" content="changelogkit">
 <script src="assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script src="assets/i18n.js"></script>
 <script src="assets/highlight.js"></script>
 <script src="assets/markdown.js"></script>
 <link rel="stylesheet" href="assets/theme.css">
@@ -24,13 +26,15 @@
 </head><body>
 <header class="appbar">
   <h1>{{title}}</h1>
-  <a href="development/">{{t.nav.dev}}</a>
-  <a href="development/#docs">{{t.nav.docs}}</a>
+  <a href="development/" data-i18n="nav.dev">{{t.nav.dev}}</a>
+  <a href="development/#docs" data-i18n="nav.docs">{{t.nav.docs}}</a>
+  <a href="about/" data-i18n="nav.about">{{t.nav.about}}</a>
   <span class="spacer"></span>
-  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
 <main>
-  <p class="muted" id="hint">{{t.static.export_hint}}</p>
+  <p class="muted" id="hint" data-i18n="static.export_hint">{{t.static.export_hint}}</p>
   <section id="entries">
 {{content}}
   </section>
