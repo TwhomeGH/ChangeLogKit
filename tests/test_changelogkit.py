@@ -195,5 +195,17 @@ class AssetTests(unittest.TestCase):
                 cfg.assets = original
 
 
+class I18nTests(unittest.TestCase):
+    def test_lookup_and_fallback(self):
+        from changelogkit import i18n
+
+        i18n.set_language("en")
+        self.assertEqual(i18n.t("cli.list.help"), "Search entries (CLI)")
+        i18n.set_language("zh-TW")
+        self.assertEqual(i18n.t("cli.list.help"), "檢索紀錄（CLI）")
+        self.assertEqual(i18n.t("nope.key"), "nope.key")
+        i18n.set_language(None)
+
+
 if __name__ == "__main__":
     unittest.main()
