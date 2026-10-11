@@ -152,6 +152,8 @@ class IndexTests(unittest.TestCase):
             "a.go": ("type Server struct {\n}\nfunc (s *Server) Handle() {\n}\nfunc New() {}", ("Server", "Handle", "New")),
             "a.rs": ("pub struct Config {\n}\npub fn run() {\n}\nimpl Config {\n}", ("Config", "run")),
             "a.cs": ("public class Api {\n  public void Get() {\n  }\n}\ninterface IApi", ("Api", "Get", "IApi")),
+            "a.rb": ("class Widget\n  def render(x)\n  end\n  def self.build\n  end\nend\nmodule Util", ("Widget", "render", "build", "Util")),
+            "a.dart": ("class HomePage {\n}\nmixin Logger {\n}\nvoid main() {\n}\nFuture<void> fetch() async {\n}", ("HomePage", "Logger", "main", "fetch")),
         }
         for fname, (src, expected) in cases.items():
             names = [s["name"] for s in index.scan_symbols(src, "app", fname)]

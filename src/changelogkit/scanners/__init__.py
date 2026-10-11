@@ -4,7 +4,7 @@
 註冊即可。
 """
 
-from . import cpp, csharp, go, java, javascript, kotlin, python, rust, swift
+from . import cpp, csharp, dart, go, java, javascript, kotlin, python, ruby, rust, swift
 from .common import link
 
 _SCANNERS = {
@@ -19,6 +19,9 @@ _SCANNERS = {
     ".go": go.scan,
     ".rs": rust.scan,
     ".cs": csharp.scan,
+    ".rb": ruby.scan,
+    ".dart": dart.scan,
+    ".swiftinterface": swift.scan,
 }
 
 # 被索引的原始碼副檔名（供 files() 過濾用）。
