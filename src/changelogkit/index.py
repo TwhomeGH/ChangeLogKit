@@ -58,23 +58,35 @@ def safe_file(repo, name):
 
 
 def validate():
-    """驗證功能清單（存在才檢查）：穩定 ID、必要欄位與檔案連結。"""
+    """驗證功能清單（存在才檢查）：``name`` 必填、``id`` 可省（預設取 name）、``files``/``docs`` 可省。
+
+    其餘欄位一律原樣保留——「功能」分頁採通用 key-value 渲染，不綁定任何特定 schema，
+    所以每個 repo 都能用自己的欄位（例如 platform／status）。
+    """
     features = config.load().features
     if features is None or not features.exists():
         return []
     catalog = json.loads(features.read_text(encoding="utf-8"))
     repo = default_repo()
     seen = set()
+    result = []
     for feature in catalog:
-        for field in ("id", "name", "summary", "files", "docs"):
-            if not feature.get(field):
-                raise ValueError("功能缺少欄位：" + field)
-        if feature["id"] in seen:
-            raise ValueError("重複功能 ID")
-        seen.add(feature["id"])
-        for name in feature["files"] + feature["docs"]:
-            safe_file(repo, name)
-    return catalog
+        name = feature.get("name")
+        if not name:
+            raise ValueError("功能缺少欄位：name")
+        fid = feature.get("id") or name
+        if fid in seen:
+            raise ValueError("重複功能 ID：" + fid)
+        seen.add(fid)
+        for path in list(feature.get("files") or []) + list(feature.get("docs") or []):
+            safe_file(repo, path)
+        item = dict(feature)
+        item["id"] = fid
+        item.setdefault("summary", "")
+        item["files"] = list(feature.get("files") or [])
+        item["docs"] = list(feature.get("docs") or [])
+        result.append(item)
+    return result
 
 
 # ── 近期改動與差異 ────────────────────────────────────────────

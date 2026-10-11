@@ -88,13 +88,17 @@ path = "${SOME_LIB_ROOT}"                      # 支援 ${ENV} 展開；不存�
 
 ## 功能清單 `features.json`（選填）
 
-物件陣列，至少要有 `id`、`name`、`summary`、`files`、`docs`：
+物件陣列，**通用 schema**：只有 `name` 必填，其餘欄位自由定義，會逐列顯示在「功能」分頁。
 
 ```json
 [
-  { "id": "my-feature", "name": "範例功能", "summary": "一句話說明。",
+  { "name": "範例功能", "summary": "一句話說明（可選）。",
+    "labels": { "platform": "平台", "status": "狀態" },
+    "platform": "iOS / macOS", "status": "待驗證",
     "files": ["Sources/Foo.swift"], "docs": ["Docs/foo.md"] }
 ]
 ```
 
-`files`／`docs` 必須是索引內（Git 可見）的相對路徑，否則載入時報錯。
+- 保留鍵：`name`（必填）、`id`（可選，預設取 `name`）、`summary`、`files`、`docs`、`labels`。
+- 其餘欄位一律當「接入狀態」逐列渲染；欄位標籤可用同筆的 `labels` 對照（預設直接用 key）。
+- `files`／`docs` 若填，必須是索引內（Git 可見）的相對路徑，否則載入時報錯。

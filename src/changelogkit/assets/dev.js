@@ -154,11 +154,16 @@ function render() {
   }
   for (const r of rows.slice(0, 250)) {
     if (tab === "features") {
+      /* 通用渲染：保留鍵以外的所有欄位逐列列出；標籤可用該筆的 labels 對照，預設用 key。 */
+      const reserved = new Set(["id", "name", "summary", "files", "docs", "labels"]);
+      const labels = r.labels || {};
+      const fields = Object.keys(r).filter((k) => !reserved.has(k))
+        .map((k) => [labels[k] || k, Array.isArray(r[k]) ? r[k].join("、") : r[k]])
+        .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
       out += `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">${esc(r.id)}</div>` +
-        `<p>${mdInline(r.summary)}</p><dl>` +
-        [["ReplayKit", r.replaykit], ["ScreenCaptureKit", r.screencapturekit], [CK_T("dev.ui_entry"), r.ui], [CK_T("dev.verification"), r.verification]]
-          .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("") +
-        `</dl><h3>${CK_T("dev.files")}</h3><div class="files">${links(r.files)}${links(r.docs)}</div></article>`;
+        (r.summary ? `<p>${mdInline(r.summary)}</p>` : "") +
+        (fields ? `<dl>${fields}</dl>` : "") +
+        `<h3>${CK_T("dev.files")}</h3><div class="files">${links(r.files)}${links(r.docs)}</div></article>`;
     } else if (tab === "symbols") {
       out += `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
         `<div class="meta"><span class="kind">${esc(r.kind || kindOf(r.name))}</span>${esc(r.repo)} · ${esc(r.file)}:${r.line}</div>` +

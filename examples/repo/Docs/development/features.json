@@ -2,11 +2,10 @@
   {
     "id": "sample-feature",
     "name": "範例功能",
-    "summary": "示範功能清單的一筆。",
-    "replaykit": "支援",
-    "screencapturekit": "支援",
-    "ui": "設定頁",
-    "verification": "待驗證",
+    "summary": "示範功能清單的一筆（欄位完全通用）。",
+    "labels": { "platform": "平台", "status": "狀態" },
+    "platform": "iOS / macOS",
+    "status": "待驗證",
     "files": ["Sources/Sample.swift"],
     "docs": ["Docs/ChangeHistory.md"]
   }
