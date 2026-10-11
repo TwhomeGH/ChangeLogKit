@@ -1,5 +1,25 @@
 # ChangeHistory
 
+## 2026.10.11 changelogkit 0.4.1 發佈
+
+**類型**: 修復 · **檔案**: `assets/dev.css`、`assets/dev.js`、`assets/static_dev.html`
+
+### 問題 - 分頁列蓋住 appbar，且三層固定吃掉太多高度
+
+0.4.0 讓分頁列與 appbar 都 `sticky; top: 0`，但分頁列 z-index 更高 → 捲動時**蓋住 appbar**（搜尋列被遮）；且 appbar＋分頁＋篩選三層都固定，固定高度過大。
+
+### 根因 - 固定列各自貼頂、偏移寫死
+
+分頁列未考慮 appbar 已固定；偏移用寫死的 px，而 appbar 會換行、高度並不固定。
+
+### 修改 - 固定列改為堆疊、以實測高度計算，篩選列改為不固定
+
+- 分頁列改貼在 appbar 之下（`top: var(--appbar-h)`），分組小標題再往下堆疊。
+- `dev.js` 量測 appbar／分頁列高度寫入 CSS 變數（換行也正確）並監聽 resize；靜態頁同理（量 appbar → `--appbar-h`）。
+- 篩選列改為**不固定**（往下捲時捲出），減少固定佔位；appbar 與分頁列仍固定、隨時可切換。
+
+---
+
 ## 2026.10.11 changelogkit 0.4.0 發佈
 
 **類型**: 功能 · **檔案**: `assets/dev.js`、`assets/dev.css`、`assets/dev.html`、`assets/static_dev.html`、`export.py`、`lang/*.json`

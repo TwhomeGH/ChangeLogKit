@@ -98,21 +98,21 @@ details.commit > .dpre { margin: 8px 12px 10px }
 
 /* 分頁列固定在上方，捲到哪都按得到。 */
 #tabs {
-  position: sticky; top: 0; z-index: 6;
+  position: sticky; top: var(--appbar-h, 52px); z-index: 6;
   background: var(--hdr); backdrop-filter: blur(8px);
   padding: 8px 0; margin: 12px 0 2px;
 }
-/* 篩選列接在分頁列下方一起固定。 */
+/* 篩選列不固定：往下捲時讓它捲出，避免 appbar＋分頁＋篩選三層吃掉太多高度。 */
 #filters {
-  position: sticky; top: 44px; z-index: 5;
   background: var(--bg); padding: 6px 0 8px;
 }
+#filters .frow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px }
 #filters .groupfilter { font-size: 13px; color: var(--mut) }
 #filters .groupfilter select { width: auto; margin-left: 6px }
 
 /* 依檔案分組的 sticky 小標題（滑動時知道在哪個檔案）。 */
 h3.group {
-  position: sticky; top: var(--grouptop, 88px); z-index: 4;
+  position: sticky; top: calc(var(--appbar-h, 52px) + var(--tabs-h, 44px)); z-index: 4;
   margin: 16px 0 6px; padding: 4px 0;
   font-size: 13px; color: var(--mut);
   background: var(--bg); border-bottom: 1px solid var(--line2);

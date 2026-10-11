@@ -128,13 +128,13 @@ function renderFilters() {
   const opt = (v, label) => `<option value="${esc(v)}"${v === group ? " selected" : ""}>${esc(label)}</option>`;
   box.innerHTML =
     `<div class="supported">${CK_T("filter.supported")}${esc((data.languages || []).join("、"))}</div>` +
-    `<div class="chips">${chip("", CK_T("filter.all_langs"))}${langs.map((l) => chip(l, l)).join("")}</div>` +
+    `<div class="frow"><div class="chips">${chip("", CK_T("filter.all_langs"))}${langs.map((l) => chip(l, l)).join("")}</div>` +
     `<label class="kindfilter">${CK_T("filter.kind")} <select id="kindsel"><option value="">${CK_T("filter.all")}</option>` +
     kinds.map((k) => `<option value="${esc(k)}"${k === kind ? " selected" : ""}>${esc(k)}</option>`).join("") +
     `</select></label>` +
     `<label class="groupfilter">${CK_T("filter.group")} <select id="groupsel">` +
     opt("file", CK_T("filter.by_file")) + opt("none", CK_T("filter.no_group")) +
-    `</select></label>`;
+    `</select></label></div>`;
 }
 
 /* 符號卡片：型別若有 members，收進可展開的「成員」區塊；成員卡片縮排呈現。 */
@@ -186,12 +186,24 @@ function lockedHtml() {
     '<p class=muted>' + CK_T("dev.locked_note") + "</p></article>";
 }
 
+/* 量測頂部固定列的高度，寫入 CSS 變數（appbar 會換行，高度不固定，別寫死）。 */
+function measureBars() {
+  const s = document.documentElement.style;
+  const appbar = document.querySelector(".appbar");
+  const tabs = document.getElementById("tabs");
+  const filters = document.getElementById("filters");
+  if (appbar) s.setProperty("--appbar-h", appbar.offsetHeight + "px");
+  if (tabs) s.setProperty("--tabs-h", tabs.offsetHeight + "px");
+  if (filters && !filters.hidden) s.setProperty("--filters-h", filters.offsetHeight + "px");
+}
+
 function render() {
   if (!data) return;
   document.querySelectorAll("#tabs button").forEach((b) =>
     b.setAttribute("aria-pressed", b.dataset.key === tab));
   renderFilters();
   saveState();
+  measureBars();
   const q = $("#search").value.toLowerCase();
   const repo = $("#repo").value;
   const match = (r) => JSON.stringify(r).toLowerCase().includes(q) &&
@@ -283,6 +295,7 @@ $("#filters").addEventListener("change", (e) => {
 
 const totop = $("#totop");
 if (totop) totop.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+window.addEventListener("resize", measureBars);
 
 /* 事件委派：提交標題、檔名、工作區差異鈕（#results 每次 render 會重建）。 */
 $("#results").addEventListener("click", (e) => {
