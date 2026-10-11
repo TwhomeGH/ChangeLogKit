@@ -106,6 +106,14 @@ class HistoryTests(unittest.TestCase):
             (repo.root / "new.txt").write_text("x", encoding="utf-8")
             self.assertIn("new.txt", history.git_changed_files())
 
+    def test_missing_history_is_graceful(self):
+        # 沒有 ChangeHistory.md 時回空、不中斷；insert_block 會自動建立（含父目錄）。
+        with TempRepo() as repo:
+            (repo.root / "Docs" / "ChangeHistory.md").unlink()
+            self.assertEqual(history.parse_entries(), [])
+            history.insert_block(history.build_block("2026.03.01", "第一筆", "功能", ""))
+            self.assertEqual(history.parse_entries()[0]["title"], "第一筆")
+
 
 class IndexTests(unittest.TestCase):
     def test_roots_and_symbols(self):

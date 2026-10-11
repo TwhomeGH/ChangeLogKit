@@ -19,7 +19,6 @@
 
 import re
 import subprocess
-import sys
 from datetime import date, datetime
 
 from . import config
@@ -64,11 +63,9 @@ def parse_entries(text=None):
 
 
 def read_history():
-    """讀取變更歷史檔；不存在時直接結束程式（資料檔是必要輸入）。"""
+    """讀取變更歷史檔；不存在時回傳空字串（以「尚無紀錄」呈現，而非中断）。"""
     path = _history()
-    if not path.exists():
-        sys.exit("找不到 %s" % path)
-    return path.read_text(encoding="utf-8")
+    return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
 def _heading_indices(lines):
@@ -158,8 +155,10 @@ def build_block(date_str, title, type_, file_, problem="", root_cause="",
 # ─────────────────────────── 寫入 ───────────────────────────
 
 def _write(lines):
-    """把行陣列寫回變更歷史檔，正規化結尾換行。"""
-    _history().write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    """把行陣列寫回變更歷史檔，正規化結尾換行；父目錄不存在就建立。"""
+    path = _history()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def insert_block(block):
