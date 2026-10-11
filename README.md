@@ -104,10 +104,10 @@ path = "${HAISHINKIT_ROOT}"                      # 支援環境變數；不存�
 
 ## 文件
 
-- [用法](docs/usage.md)：指令、`.changelog.toml` 全欄位、資產覆寫、變更歷史格式
-- [GitHub Pages](docs/pages.md)：靜態匯出的產物、限制與啟用方式
-- [PyPI 發佈](docs/publishing.md)：Trusted Publishing 設定與版本流程
-- [架構](docs/architecture.md)：模組結構與設計要點
+- [用法](Docs/usage.md)：指令、`.changelog.toml` 全欄位、資產覆寫、變更歷史格式
+- [GitHub Pages](Docs/pages.md)：靜態匯出的產物、限制與啟用方式
+- [PyPI 發佈](Docs/publishing.md)：Trusted Publishing 設定與版本流程
+- [架構](Docs/architecture.md)：模組結構與設計要點
 
 ## 開發
 
