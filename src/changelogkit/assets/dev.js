@@ -24,22 +24,6 @@ function mdInline(s) {
   return s;
 }
 
-/* 把相鄰 /// 註釋字串轉成簡單段落／條列。 */
-function mdDoc(text) {
-  if (!text) return "";
-  const lines = text.split("\n");
-  let out = "", list = [];
-  const flush = () => { if (list.length) { out += "<ul>" + list.map((x) => "<li>" + mdInline(x) + "</li>").join("") + "</ul>"; list = []; } };
-  for (const l of lines) {
-    const m = l.match(/^\s*[-*]\s+(.*)$/);
-    if (m) { list.push(m[1]); continue; }
-    flush();
-    if (l.trim()) out += "<p>" + mdInline(l) + "</p>";
-  }
-  flush();
-  return out;
-}
-
 function kindOf(name) {
   const m = name.match(/\b(func|struct|class|enum|protocol|actor)\b/);
   return m ? m[1] : "decl";
