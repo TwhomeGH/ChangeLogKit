@@ -24,6 +24,8 @@ git push origin v0.1.0
 
 → `.github/workflows/publish.yml` 觸發，以 OIDC 換取短效權杖並上傳。發佈後 pending publisher 會轉為正式。
 
+> **建置蓋章**：workflow 會分別從原始碼建 `--sdist` 與 `--wheel`（不是預設的「sdist → wheel」，因為那條路徑沒有 git）。`hatch_build.py` 會在打包時把來源 `COMMIT`／`DIRTY`／`BUILT_AT` 寫進 `changelogkit/_buildinfo.py`，所以從 PyPI 安裝的版本 `changelogkit --version` 也會顯示來源 commit。
+
 ## 手動（備用）
 
 ```bash

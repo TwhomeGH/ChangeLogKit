@@ -1,3 +1,24 @@
+## 2026.10.11 建置蓋章：`--version` 可報來源 commit
+
+**類型**: 功能 · **檔案**: `hatch_build.py`、`src/changelogkit/buildinfo.py`、`.github/workflows/publish.yml`
+
+### 問題 - 從 PyPI 安裝的版本無法得知來源 commit
+
+`--version` 只在「套件目錄是 git checkout」或「pip 記錄了來源目錄（direct_url）」時才報得出 commit；從 PyPI 裝的 wheel 兩者皆無，於是只顯示版本號。
+
+### 根因 - wheel 是自包含的，不帶來源資訊
+
+安裝後既不是 git、也沒有 `direct_url.json`；除非在**建置時**就把 commit 寫進套件，否則安裝端無從得知。
+
+### 修改 - 建置時把 commit 蓋章進套件
+
+- 新增 `hatch_build.py`（hatchling build hook）：打包時將 `COMMIT`／`DIRTY`／`BUILT_AT` 寫入 `src/changelogkit/_buildinfo.py`（列入 `.gitignore`），並以 `force_include` 帶進 wheel（被 gitignore 的檔預設不會納入）。
+- `buildinfo.commit()` 優先讀蓋章（`_buildinfo`），其次 git、再次 `direct_url`。
+- `publish.yml` 改為**分別從原始碼**建 `--sdist` 與 `--wheel`（`python -m build` 預設會「從 sdist 再建 wheel」，那裡沒有 git，蓋章會是空的）。
+- 驗證：本地 wheel 安裝後 `changelogkit --version` → `0.1.0 (1754080)`。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.0 首度發佈 PyPI
 
 **類型**: 功能 · **檔案**: `pyproject.toml`、`.github/workflows/publish.yml`
