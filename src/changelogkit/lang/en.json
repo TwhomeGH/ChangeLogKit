@@ -103,7 +103,7 @@
   "dev.locked": "Locked packages",
   "dev.locked_note": "Checkout and locked versions must be verified separately; this is not the installed app's BuildInfo. Add other checkouts via 'sources' in .changelog.toml.",
   "dev.files": "Code & documents",
-  "dev.no_comment": "No adjacent /// doc comment",
+  "dev.no_comment": "No adjacent doc comment",
   "dev.uncommitted": "Uncommitted changes (including untracked)",
   "dev.clean": "working tree clean",
   "dev.worktree": "View working-tree diff",
