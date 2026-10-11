@@ -1,9 +1,11 @@
 <!doctype html>
-<html lang="zh-Hant"><head>
+<html lang="{{lang_html}}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>關於</title>
+<title>{{t.about.title}}</title>
 <script src="/assets/theme.js"></script>
+<script src="/assets/i18n.js"></script>
+<script>window.CK_I18N = {{i18n_json}};</script>
 <link rel="stylesheet" href="/assets/theme.css">
 <style>
   main { max-width: 720px; margin: 0 auto; padding: 24px }
@@ -14,19 +16,19 @@
 </style>
 </head><body>
 <header class="appbar">
-  <h1>關於</h1>
-  <a href="/">變更歷史</a>
-  <a href="/development">開發索引</a>
-  <button id="theme" aria-label="切換深淺色" title="切換深/淺色">🌙</button>
+  <h1>{{t.about.title}}</h1>
+  <a href="/">{{t.nav.history}}</a>
+  <a href="/development">{{t.nav.dev}}</a>
+  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
 </header>
 <main>
   <article class="card">
     <h2>changelogkit</h2>
-    <p class="muted">通用變更歷史與開發索引工具。</p>
+    <p class="muted">{{t.about.intro}}</p>
     <dl>
-      <dt>版本</dt><dd id="version">…</dd>
-      <dt>來源 commit</dt><dd id="commit">…</dd>
-      <dt>專案首頁</dt><dd><a href="https://github.com/TwhomeGH/ChangeLogKit">github.com/TwhomeGH/ChangeLogKit</a></dd>
+      <dt>{{t.about.version}}</dt><dd id="version">…</dd>
+      <dt>{{t.about.commit}}</dt><dd id="commit">…</dd>
+      <dt>{{t.about.home}}</dt><dd><a href="https://github.com/TwhomeGH/ChangeLogKit">github.com/TwhomeGH/ChangeLogKit</a></dd>
     </dl>
   </article>
 </main>

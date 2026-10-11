@@ -3,10 +3,10 @@ const $ = (s) => document.querySelector(s);
 let data = null, tab = "features", lang = "", kind = "";
 
 const LABELS = {
-  features: "功能與接入",
-  symbols: "API 宣告",
-  documents: "文件",
-  repos: "近期改動／版本",
+  features: "tab.features",
+  symbols: "tab.symbols",
+  documents: "tab.documents",
+  repos: "tab.repos",
 };
 
 function esc(s) {
@@ -60,7 +60,7 @@ function commitCard(repo, c) {
     `<button class="commit-head" type="button"><span class="commit-top"><code class="hash">${esc(c.hash)}</code>` +
     `<span class="when">${esc(when)}</span></span>` +
     `<span class="subject">${esc(c.subject)}</span></button>` +
-    `<div class="commit-files">${files || '<span class="muted">（無檔案變更）</span>'}</div>` +
+    `<div class="commit-files">${files || `<span class="muted">${CK_T("dev.no_files")}</span>`}</div>` +
     `<div class="diff" hidden></div></div>`;
 }
 
@@ -76,7 +76,7 @@ function diffLineClass(l) {
 }
 
 function renderDiff(j) {
-  if (j.empty) return '<p class="muted">沒有差異。</p>';
+  if (j.empty) return '<p class="muted">' + CK_T("dev.diff_empty") + "</p>";
   const hl = window.HL;
   const swift = hl ? hl.swift : (t) => esc(t);
   const esc2 = hl ? hl.esc : esc;
@@ -91,7 +91,7 @@ function renderDiff(j) {
     return `<span class="dline ${cls}"><span class="dmark"> </span>${esc2(l)}</span>`;
   }).join("");
   return '<pre class="dpre">' + body + "</pre>" +
-    (j.truncated ? '<p class="muted">（差異過大，僅顯示前段）</p>' : "");
+    (j.truncated ? '<p class="muted">' + CK_T("dev.diff_truncated") + "</p>" : "");
 }
 
 const diffCache = new Map();
@@ -99,7 +99,7 @@ async function loadDiff(box, params) {
   const qs = params.toString();
   if (diffCache.has(qs)) { box.innerHTML = diffCache.get(qs); box.hidden = false; return; }
   box.hidden = false;
-  box.innerHTML = '<p class="muted">讀取差異…</p>';
+  box.innerHTML = '<p class="muted">' + CK_T("dev.diff_loading") + "</p>";
   try {
     const res = await fetch("/development/diff?" + qs);
     const j = await res.json();
@@ -108,7 +108,7 @@ async function loadDiff(box, params) {
     diffCache.set(qs, html);
     box.innerHTML = html;
   } catch (e) {
-    box.innerHTML = '<p class="empty">讀取失敗：' + esc(e.message) + "</p>";
+    box.innerHTML = '<p class="empty">' + CK_T("dev.load_failed") + esc(e.message) + "</p>";
   }
 }
 
@@ -123,9 +123,9 @@ function renderFilters() {
   const chip = (value, label) =>
     `<button class="chip${value === lang ? " on" : ""}" data-lang="${esc(value)}">${esc(label)}</button>`;
   box.innerHTML =
-    `<div class="supported">支援語言：${esc((data.languages || []).join("、"))}</div>` +
-    `<div class="chips">${chip("", "全部語言")}${langs.map((l) => chip(l, l)).join("")}</div>` +
-    `<label class="kindfilter">種類 <select id="kindsel"><option value="">全部</option>` +
+    `<div class="supported">${CK_T("filter.supported")}${esc((data.languages || []).join("、"))}</div>` +
+    `<div class="chips">${chip("", CK_T("filter.all_langs"))}${langs.map((l) => chip(l, l)).join("")}</div>` +
+    `<label class="kindfilter">${CK_T("filter.kind")} <select id="kindsel"><option value="">${CK_T("filter.all")}</option>` +
     kinds.map((k) => `<option value="${esc(k)}"${k === kind ? " selected" : ""}>${esc(k)}</option>`).join("") +
     `</select></label>`;
 }
@@ -142,46 +142,46 @@ function render() {
     (tab !== "symbols" || ((!lang || r.lang === lang) && (!kind || r.kind === kind)));
 
   const rows = (data[tab] || []).filter(match);
-  const suffix = tab === "symbols" ? "（可切語言／種類）" : "";
-  $("#message").textContent = `${rows.length} 筆結果 · 搜尋可輸入功能、路徑或 API 名稱${suffix}`;
+  const suffix = tab === "symbols" ? CK_T("dev.filter_hint") : "";
+  $("#message").textContent = CK_T("dev.result", rows.length) + suffix;
 
   let out = "";
   if (tab === "repos") {
     const deps = (data.lockedPackages || []).map((p) =>
       `<code>${esc(p.identity)}</code><code>${esc((p.revision || "").slice(0, 12))}</code>`).join("");
-    out += '<article class="card"><h2>App 鎖定套件</h2><div class="deps">' + (deps || "<code>（無）</code><code></code>") + "</div>" +
-      "<p class=muted>checkout 與鎖定版本需分別確認；此處不是已安裝 App 的 BuildInfo。可在 .changelog.toml 設定 sources 加入其他 checkout。</p></article>";
+    out += '<article class="card"><h2>' + CK_T("dev.locked") + '</h2><div class="deps">' + (deps || "<code>（無）</code><code></code>") + "</div>" +
+      '<p class=muted>' + CK_T("dev.locked_note") + "</p></article>";
   }
   for (const r of rows.slice(0, 250)) {
     if (tab === "features") {
       out += `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">${esc(r.id)}</div>` +
         `<p>${mdInline(r.summary)}</p><dl>` +
-        [["ReplayKit", r.replaykit], ["ScreenCaptureKit", r.screencapturekit], ["前端／使用入口", r.ui], ["驗證狀態", r.verification]]
+        [["ReplayKit", r.replaykit], ["ScreenCaptureKit", r.screencapturekit], [CK_T("dev.ui_entry"), r.ui], [CK_T("dev.verification"), r.verification]]
           .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("") +
-        `</dl><h3>程式與文件</h3><div class="files">${links(r.files)}${links(r.docs)}</div></article>`;
+        `</dl><h3>${CK_T("dev.files")}</h3><div class="files">${links(r.files)}${links(r.docs)}</div></article>`;
     } else if (tab === "symbols") {
       out += `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
         `<div class="meta"><span class="kind">${esc(r.kind || kindOf(r.name))}</span>${esc(r.repo)} · ${esc(r.file)}:${r.line}</div>` +
         (r.signature ? `<pre class="sig">${esc(r.signature)}</pre>` : "") +
-        `<div class="doc">${r.comment ? mdDoc(r.comment) : '<p class="muted">尚無相鄰 /// 文件註釋</p>'}</div></article>`;
+        `<div class="doc">${r.comment ? mdDoc(r.comment) : '<p class="muted">' + CK_T("dev.no_comment") + '</p>'}</div></article>`;
     } else if (tab === "documents") {
       out += `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
         `<div class="meta">${esc(r.repo)}</div><div class="preview">${esc(r.text.slice(0, 260))}${r.text.length > 260 ? " …" : ""}</div></article>`;
     } else {
       const list = (r.commits || []).map((c) => commitCard(r.name, c)).join("");
       out += `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">HEAD：${esc(r.head)}</div>` +
-        `<h3>未提交變更（含未追蹤檔案）</h3><pre class="blob">${esc(r.changes || "工作區乾淨")}</pre>` +
-        `<div class="wt-wrap"><button class="wt-btn" type="button" data-repo="${esc(r.name)}">檢視工作區差異</button>` +
+        `<h3>${CK_T("dev.uncommitted")}</h3><pre class="blob">${esc(r.changes || CK_T("dev.clean"))}</pre>` +
+        `<div class="wt-wrap"><button class="wt-btn" type="button" data-repo="${esc(r.name)}">${CK_T("dev.worktree")}</button>` +
         `<div class="diff" hidden></div></div>` +
-        `<h3>最近 20 筆提交與檔案</h3><div class="commits">${list}</div></article>`;
+        `<h3>${CK_T("dev.commits20")}</h3><div class="commits">${list}</div></article>`;
     }
   }
-  if (rows.length > 250) out += '<p class="muted">目前顯示前 250 筆，請縮小搜尋範圍。</p>';
-  $("#results").innerHTML = out || '<p class="empty">沒有符合的資料。</p>';
+  if (rows.length > 250) out += '<p class="muted">' + CK_T("dev.more") + "</p>";
+  $("#results").innerHTML = out || '<p class="empty">' + CK_T("dev.no_data") + "</p>";
 }
 
 async function load() {
-  $("#message").textContent = "正在讀取…";
+  $("#message").textContent = CK_T("dev.loading");
   diffCache.clear();
   try {
     const response = await fetch("/development/data");
@@ -190,17 +190,17 @@ async function load() {
     data = result;
     const repos = [...new Set((data.symbols.concat(data.documents)).map((r) => r.repo))].sort();
     const sel = $("#repo");
-    sel.innerHTML = '<option value="">全部來源</option>' +
+    sel.innerHTML = '<option value="">' + CK_T("dev.repo_all") + '</option>' +
       repos.map((r) => `<option value="${esc(r)}">${esc(r)}</option>`).join("");
     render();
   } catch (e) {
-    $("#message").textContent = "讀取失敗：" + e.message;
+    $("#message").textContent = CK_T("dev.load_failed") + e.message;
   }
 }
 
 for (const [key, title] of Object.entries(LABELS)) {
   const b = document.createElement("button");
-  b.textContent = title; b.dataset.key = key;
+  b.textContent = CK_T(title); b.dataset.key = key;
   b.onclick = () => { tab = key; render(); };
   $("#tabs").append(b);
 }

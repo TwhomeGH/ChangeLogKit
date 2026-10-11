@@ -12,13 +12,18 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from . import assets, buildinfo, history, index
+from . import assets, buildinfo, history, i18n, index
 
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         """靜音：避免每個請求都印到終端機。"""
         pass
+
+    def _page(self, name):
+        """以 i18n 佔位與前端字典渲染 html 資產。"""
+        return assets.render(name, i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+                             **i18n.subs())
 
     def _send(self, code, body, ctype="application/json; charset=utf-8"):
         data = body.encode("utf-8") if isinstance(body, str) else body
@@ -43,9 +48,9 @@ class Handler(BaseHTTPRequestHandler):
         if u.path.startswith("/assets/"):
             return self._serve_asset(u.path[len("/assets/"):])
         if u.path == "/":
-            return self._send(200, assets.read("index.html"), "text/html; charset=utf-8")
+            return self._send(200, self._page("index.html"), "text/html; charset=utf-8")
         if u.path == "/about":
-            return self._send(200, assets.read("about.html"), "text/html; charset=utf-8")
+            return self._send(200, self._page("about.html"), "text/html; charset=utf-8")
         if u.path == "/api/buildinfo":
             return self._send(200, json.dumps(
                 {"version": buildinfo.version(), "commit": buildinfo.commit()}, ensure_ascii=False))

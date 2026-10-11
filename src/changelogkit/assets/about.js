@@ -7,7 +7,7 @@ fetch("/api/buildinfo")
     document.getElementById("version").textContent = b.version || "未知";
     const raw = b.commit || "";
     if (!raw) {
-      document.getElementById("commit").textContent = "（無法判定；可能非 git 安裝）";
+      document.getElementById("commit").textContent = CK_T("about.unknown");
       return;
     }
     const hash = raw.replace(/\+dirty$/, "");
@@ -15,5 +15,5 @@ fetch("/api/buildinfo")
       '<a href="' + REPO + "/commit/" + hash + '"><code>' + raw + "</code></a>";
   })
   .catch(() => {
-    document.getElementById("version").textContent = "讀取失敗";
+    document.getElementById("version").textContent = CK_T("about.load_failed");
   });

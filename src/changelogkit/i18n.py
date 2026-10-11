@@ -62,3 +62,22 @@ def t(key, **fmt):
     """查表取字串；缺 key 回退 en，再不行回 key 本身。"""
     text = _catalog(current()).get(key) or _catalog("en").get(key) or key
     return text.format(**fmt) if fmt else text
+
+
+def _merged():
+    """合併語系（en 為底、現行語系覆蓋）以確保每個 key 都有值。"""
+    catalog = dict(_catalog("en"))
+    catalog.update(_catalog(current()))
+    return catalog
+
+
+def subs():
+    """供網頁模板的 ``{{t.<key>}}`` 佔位替換（另附 ``lang_html``）。"""
+    result = {"t." + key: value for key, value in _merged().items()}
+    result["lang_html"] = "zh-Hant" if current().lower().startswith("zh") else "en"
+    return result
+
+
+def js_dict():
+    """供前端 ``window.CK_I18N`` 的字典（全部 key）。"""
+    return _merged()

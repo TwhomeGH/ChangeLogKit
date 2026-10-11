@@ -75,31 +75,31 @@ async function load() {
   const r = await fetch("/api/entries?q=" + q + "&type=" + t);
   const items = await r.json();
   $("#list").innerHTML = items.length
-    ? items.map((e) => `<div class="item${e.i === sel ? " sel" : ""}" data-i="${e.i}"><div class="d">${e.date ? esc(e.date + (e.time ? " " + e.time : "")) : "未標日期"}</div><div class="t">${esc(e.title)}</div></div>`).join("")
-    : '<div class="empty">沒有符合的紀錄</div>';
+    ? items.map((e) => `<div class="item${e.i === sel ? " sel" : ""}" data-i="${e.i}"><div class="d">${e.date ? esc(e.date + (e.time ? " " + e.time : "")) : CK_T("history.no_date")}</div><div class="t">${esc(e.title)}</div></div>`).join("")
+    : '<div class="empty">' + CK_T("history.no_match") + "</div>";
   document.querySelectorAll(".item").forEach((el) => (el.onclick = () => show(+el.dataset.i)));
 }
 
 function renderView(e) {
   $("#detail").innerHTML =
-    '<div class="toolbar"><button id="edit">編輯</button><button id="del">刪除</button></div>' +
+    '<div class="toolbar"><button id="edit">' + CK_T("btn.edit") + '</button><button id="del">' + CK_T("btn.delete") + "</button></div>" +
     '<div id="content">' + mdToHtml(e.raw) + "</div>";
   $("#edit").onclick = () => renderEdit(e);
   let armed = false;
   $("#del").onclick = () => {
     if (!armed) {
-      armed = true; $("#del").textContent = "確定刪除？"; $("#del").classList.add("danger");
-      setTimeout(() => { armed = false; $("#del").textContent = "刪除"; $("#del").classList.remove("danger"); }, 3000);
+      armed = true; $("#del").textContent = CK_T("history.confirm_delete"); $("#del").classList.add("danger");
+      setTimeout(() => { armed = false; $("#del").textContent = CK_T("btn.delete"); $("#del").classList.remove("danger"); }, 3000);
       return;
     }
     fetch("/api/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ i: e.i }) })
-      .then(() => { sel = null; $("#detail").innerHTML = '<div class="empty">已刪除</div>'; load(); });
+      .then(() => { sel = null; $("#detail").innerHTML = '<div class="empty">' + CK_T("history.deleted") + "</div>"; load(); });
   };
 }
 
 function renderEdit(e) {
   $("#detail").innerHTML =
-    '<div class="toolbar"><button id="save" class="primary">儲存</button><button id="cancel-edit">取消</button></div>' +
+    '<div class="toolbar"><button id="save" class="primary">' + CK_T("btn.save") + '</button><button id="cancel-edit">' + CK_T("btn.cancel") + "</button></div>" +
     '<textarea id="raw" spellcheck="false"></textarea>';
   const ta = $("#raw"); ta.value = e.raw;
   const autosize = () => { ta.style.height = "auto"; ta.style.height = Math.max(320, ta.scrollHeight + 6) + "px"; };
@@ -127,7 +127,7 @@ $("#reload").onclick = () => load();
 /* 相關文件：可動態新增/移除的 label + url 列。 */
 function makeRefRow(label, url) {
   const d = document.createElement("div"); d.className = "ref-row";
-  d.innerHTML = '<input class="ref-label" placeholder="顯示文字（可留空）"><input class="ref-url" placeholder="連結或路徑，Docs/… 或 https://…"><button type="button" class="ref-del" title="移除">✕</button>';
+  d.innerHTML = '<input class="ref-label" placeholder="' + CK_T("form.ref_label") + '"><input class="ref-url" placeholder="' + CK_T("form.ref_url") + '"><button type="button" class="ref-del" title="' + CK_T("form.ref_remove") + '">✕</button>';
   d.querySelector(".ref-label").value = label || "";
   d.querySelector(".ref-url").value = url || "";
   d.querySelector(".ref-del").onclick = () => d.remove();
@@ -159,7 +159,7 @@ $("#add").onclick = async () => {
 $("#cancel").onclick = () => ($("#modal").hidden = true);
 $("#submit").onclick = async () => {
   const title = $("#f-title").value.trim();
-  if (!title) { $("#form-err").textContent = "請填標題"; $("#f-title").focus(); return; }
+  if (!title) { $("#form-err").textContent = CK_T("form.err_title"); $("#f-title").focus(); return; }
   $("#form-err").textContent = "";
   const body = {
     title, date: $("#f-date").value.trim(), time: $("#f-time").value.trim(), type: $("#f-type").value,

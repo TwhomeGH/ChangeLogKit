@@ -10,7 +10,7 @@
 | `scanners/` | 各語言的 API 宣告掃描：`swift.py`／`javascript.py`／`python.py`／`cpp.py`／`kotlin.py`／`java.py`／`go.py`／`rust.py`／`csharp.py`／`ruby.py`／`dart.py` ＋共用 `common.py`；新增語言只需加一個模組並註冊 |
 | `server.py` | 本機 HTTP server 與路由（`/`、`/development*`、`/assets/*`、`/api/*`） |
 | `cli.py` | 命令列：serve／add／list／show／languages／symbols／export |
-| `i18n.py` + `lang/` | CLI 字串語系（`zh-TW`／`en`；預設跟隨系統、非中文回退 en；`--locale` 可覆寫） |
+| `i18n.py` + `lang/` | CLI 與網頁字串語系（`zh-TW`／`en`；預設跟隨系統、非中文回退 en；`--locale` 可覆寫）。HTML 用 `{{t.<key>}}` 佔位、前端用注入的 `window.CK_I18N` + `CK_T()` |
 | `export.py` | 靜態匯出（唯讀，供 GitHub Pages） |
 | `assets.py` + `assets/` | 網頁資產載入（含 repo 覆寫查找）與預設資產 |
 

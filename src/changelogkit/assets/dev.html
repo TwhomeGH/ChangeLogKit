@@ -1,26 +1,27 @@
 <!doctype html>
-<html lang="zh-Hant"><head>
+<html lang="{{lang_html}}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>開發索引</title>
+<title>{{t.dev.title}}</title>
 <script src="/assets/theme.js"></script>
-<script src="/assets/highlight.js"></script>
+<script src="/assets/i18n.js"></script>
+<script>window.CK_I18N = {{i18n_json}};</script>
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/dev.css">
 </head><body>
 <header class="appbar">
-  <h1>開發索引</h1>
-  <a href="/">變更歷史</a>
-  <a href="/about">關於</a>
-  <input id="search" aria-label="搜尋功能、API、文件" placeholder="搜尋音訊、RTMP、函數名稱…">
-  <select id="repo" aria-label="依來源篩選"><option value="">全部來源</option></select>
-  <button id="reload" aria-label="重新讀取" title="重新讀取">↻</button>
-  <button id="theme" aria-label="切換深淺色" title="切換深/淺色">🌙</button>
+  <h1>{{t.dev.title}}</h1>
+  <a href="/">{{t.nav.history}}</a>
+  <a href="/about">{{t.nav.about}}</a>
+  <input id="search" aria-label="{{t.dev.search}}" placeholder="{{t.dev.search}}">
+  <select id="repo" aria-label="{{t.dev.repo_all}}"><option value="">{{t.dev.repo_all}}</option></select>
+  <button id="reload" aria-label="{{t.dev.reload}}" title="{{t.dev.reload}}">↻</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
 </header>
 <main>
-  <p class="muted" id="hint">功能接入狀態由清單維護；API 是原始碼宣告定位，尚非 DocC。搜尋涵蓋兩者與文件內容。</p>
+  <p class="muted" id="hint">{{t.dev.hint}}</p>
   <nav id="tabs"></nav>
-  <div id="message" role="status" class="muted">正在讀取…</div>
+  <div id="message" role="status" class="muted">{{t.dev.loading}}</div>
   <div id="filters" hidden></div>
   <section id="results"></section>
 </main>

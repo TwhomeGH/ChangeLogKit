@@ -14,6 +14,8 @@ changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 
 
 未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。
 
+全域旗標 **`--locale zh-TW|en`** 可切換 **CLI 說明與網頁語系**（預設跟隨系統；判定為非中文時回退 `en`）。
+
 ## 網頁 GUI
 
 `serve` 之後：

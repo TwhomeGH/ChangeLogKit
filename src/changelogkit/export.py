@@ -17,7 +17,7 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from . import assets, config, history, index
+from . import assets, config, history, i18n, index
 
 # 需要複製到輸出 assets/ 的檔案（其餘為 server 動態用，不需要）。
 STATIC_ASSETS = ("theme.css", "theme.js", "dev.css", "file.css", "highlight.js", "markdown.js")
@@ -136,7 +136,7 @@ def _render_repos(repos):
         for commit in repo["commits"]:
             change = index.diff(repo["name"], commit["hash"])
             files = "".join('<span class="cfile">%s</span>' % _esc(f) for f in commit["files"])
-            body = _diff_html(change["diff"]) if not change["empty"] else '<p class="muted">（無差異）</p>'
+            body = _diff_html(change["diff"]) if not change["empty"] else '<p class="muted">' + i18n.t("static.no_diff") + '</p>'
             when = (commit["date"] or "")[:16].replace("T", " ")
             summary = ('<summary><span class="cbody"><span class="commit-top">'
                        '<code class="hash">%s</code><span class="when">%s</span></span>'
@@ -152,17 +152,19 @@ def _render_repos(repos):
 
 def _render_dev(data, blob_base):
     """開發索引頁內容；回傳 (HTML, symbols, documents, sources 計數)。"""
-    blocks = ['<h1>API 宣告</h1><p class="muted">支援語言：%s</p>'
-              % _esc("、".join(data.get("languages", [])))
+    blocks = ['<h1>%s</h1><p class="muted">%s%s</p>'
+              % (_esc(i18n.t("tab.symbols")), _esc(i18n.t("filter.supported")),
+                 _esc("、".join(data.get("languages", []))))
               + _render_symbols(data["symbols"], blob_base),
-              '<h1 id="docs">文件</h1>' + _render_documents(data["documents"]),
-              '<h1>近期改動／版本</h1>' + _render_repos(data["repos"])]
+              '<h1 id="docs">%s</h1>' % _esc(i18n.t("tab.documents"))
+              + _render_documents(data["documents"]),
+              '<h1>%s</h1>' % _esc(i18n.t("tab.repos")) + _render_repos(data["repos"])]
     if data["features"]:
         cards = "".join(
             '<article class="card"><h2>%s</h2><div class="meta">%s</div><p>%s</p></article>'
             % (_esc(f.get("name")), _esc(f.get("id")), _esc(f.get("summary")))
             for f in data["features"])
-        blocks.insert(0, '<h1>功能與接入</h1>' + cards)
+        blocks.insert(0, '<h1>%s</h1>' % _esc(i18n.t("tab.features")) + cards)
     return ("\n".join(blocks), len(data["symbols"]), len(data["documents"]), len(data["repos"]))
 
 
@@ -173,7 +175,7 @@ def _write_docs(out, documents, footer):
     for i, doc in enumerate(documents):
         (docs_dir / ("%d.html" % i)).write_text(assets.render(
             "static_doc.html", docname=_esc(doc["name"]), title=_esc(config.load().title),
-            content=_esc(doc["text"]), footer=footer), encoding="utf-8")
+            content=_esc(doc["text"]), footer=footer, **i18n.subs()), encoding="utf-8")
 
 
 def export(out_dir, branch="main"):
@@ -198,18 +200,18 @@ def export(out_dir, branch="main"):
         where = "%s@%s" % (_esc(cfg.root.name), head[:7])
     else:
         where = "（無 git 資訊）"
-    footer = "本站由 %s 產生 · %s" % (where, datetime.now().strftime("%Y-%m-%d %H:%M"))
+    footer = i18n.t("static.built_by", src=where, time=datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     hist_content, count = _render_history(cfg)
     (out / "index.html").write_text(assets.render(
-        "static_history.html", title=_esc(cfg.title), content=hist_content, count=str(count),
-        footer=footer), encoding="utf-8")
+        "static_history.html", **i18n.subs(), title=_esc(cfg.title), content=hist_content,
+        count=str(count), footer=footer), encoding="utf-8")
 
     dev_content, symbols, documents, sources = _render_dev(data, blob_base)
     (out / "development" / "index.html").write_text(assets.render(
-        "static_dev.html", title=_esc(cfg.title), content=dev_content,
-        symbols=str(symbols), documents=str(documents), sources=str(sources), footer=footer),
-        encoding="utf-8")
+        "static_dev.html", **i18n.subs(), title=_esc(cfg.title), content=dev_content,
+        symbols=str(symbols), documents=str(documents), sources=str(sources),
+        footer=footer), encoding="utf-8")
 
     _write_docs(out, data["documents"], footer)
 

@@ -1,21 +1,23 @@
 <!doctype html>
-<html lang="zh-Hant"><head>
+<html lang="{{lang_html}}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{title}} — 開發索引</title>
+<title>{{title}} — {{t.dev.title}}</title>
 <script src="/assets/theme.js"></script>
+<script src="/assets/i18n.js"></script>
+<script>window.CK_I18N = {{i18n_json}};</script>
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/file.css">
 </head><body>
 <header class="appbar">
-  <a href="/development" id="back">← 返回索引</a>
+  <a href="/development" id="back">{{t.file.back}}</a>
   <strong id="name">{{title}}</strong>
   <span class="muted">{{repo}}</span>
   <span class="spacer"></span>
-  <button id="mode" hidden>原始碼</button>
-  <input id="jump" type="number" min="1" placeholder="行號" aria-label="跳到行號">
-  <button id="copy" title="複製路徑">複製路徑</button>
-  <button id="theme" aria-label="切換深淺色" title="切換深/淺色">🌙</button>
+  <button id="mode" hidden>{{t.file.source}}</button>
+  <input id="jump" type="number" min="1" placeholder="{{t.file.jump}}" aria-label="{{t.file.jump}}">
+  <button id="copy" title="{{t.file.copy}}">{{t.file.copy}}</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
 </header>
 <div class="wrap">
   <pre id="src" data-repo="{{repo}}" data-path="{{path}}" data-line="{{line}}">{{content}}</pre>

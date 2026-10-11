@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant"><head>
+<html lang="{{lang_html}}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{docname}} · {{title}}</title>
@@ -12,10 +12,10 @@
 </head><body>
 <header class="appbar">
   <h1>{{docname}}</h1>
-  <a href="../development/">開發索引</a>
-  <a href="../">變更歷史</a>
+  <a href="../development/">{{t.nav.dev}}</a>
+  <a href="../">{{t.nav.history}}</a>
   <span class="spacer"></span>
-  <button id="theme" aria-label="切換深淺色" title="切換深/淺色">🌙</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
 </header>
 <main>
   <div class="rendered" data-md><template>{{content}}</template></div>

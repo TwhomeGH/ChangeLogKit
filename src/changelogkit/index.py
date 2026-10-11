@@ -15,7 +15,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from . import assets, config
+from . import assets, config, i18n
 from .scanners import SUPPORTED_LANGUAGES, SUPPORTED_SUFFIXES, scan_symbols
 from .scanners.common import link
 
@@ -185,14 +185,17 @@ def _file_page(repo, name, line):
     return assets.render(
         "file.html",
         title=html.escape(name), repo=html.escape(repo), path=html.escape(name),
-        line=str(line), content=content)
+        line=str(line), content=content,
+        i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False), **i18n.subs())
 
 
 def route(path, query):
     """回傳 (HTTP 狀態, 內容, MIME)，由既有本機工具提供服務。"""
     try:
         if path == "/development":
-            return 200, assets.read("dev.html"), "text/html; charset=utf-8"
+            return 200, assets.render("dev.html",
+                                      i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+                                      **i18n.subs()), "text/html; charset=utf-8"
         if path == "/development/data":
             return 200, json.dumps(snapshot(), ensure_ascii=False), "application/json; charset=utf-8"
         if path == "/development/file":

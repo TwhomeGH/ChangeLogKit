@@ -48,9 +48,9 @@
 
   document.getElementById("copy")?.addEventListener("click", async (e) => {
     const path = src.dataset.path || "";
-    try { await navigator.clipboard.writeText(path); e.currentTarget.textContent = "已複製"; }
+    try { await navigator.clipboard.writeText(path); e.currentTarget.textContent = CK_T("file.copied"); }
     catch { e.currentTarget.textContent = path; }
-    setTimeout(() => { e.currentTarget.textContent = "複製路徑"; }, 1500);
+    setTimeout(() => { e.currentTarget.textContent = CK_T("file.copy"); }, 1500);
   });
 
   document.getElementById("back")?.addEventListener("click", (e) => {
@@ -79,7 +79,7 @@
     src.hidden = renderedMode;
     if (rendered) rendered.hidden = !renderedMode;
     if (jump) jump.hidden = renderedMode;
-    if (modeBtn) modeBtn.textContent = renderedMode ? "原始碼" : "排版";
+    if (modeBtn) modeBtn.textContent = renderedMode ? CK_T("file.source") : CK_T("file.rendered");
   }
 
   if (isMarkdown && rendered && modeBtn) {
