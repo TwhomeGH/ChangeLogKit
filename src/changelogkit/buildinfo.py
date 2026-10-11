@@ -54,7 +54,7 @@ def commit():
         from . import _buildinfo
         stamped = getattr(_buildinfo, "COMMIT", "")
         if stamped:
-            return stamped
+            return stamped + ("+dirty" if getattr(_buildinfo, "DIRTY", False) else "")
     except Exception:
         pass
     return _git_head(Path(__file__).resolve().parent) or _from_direct_url()

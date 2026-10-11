@@ -37,6 +37,9 @@ Repository = "https://github.com/TwhomeGH/ChangeLogKit"
 Issues = "https://github.com/TwhomeGH/ChangeLogKit/issues"
 Documentation = "https://github.com/TwhomeGH/ChangeLogKit/tree/main/Docs"
 
+# 建置掛鉤：打包時產生 src/changelogkit/_buildinfo.py（見 hatch_build.py）。
+[tool.hatch.build.hooks.custom]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/changelogkit"]
 
