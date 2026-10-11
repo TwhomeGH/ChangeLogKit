@@ -78,3 +78,9 @@ button.primary:hover { filter: brightness(1.07); background: var(--accent) }
 .chip:hover { border-color: var(--accent); color: var(--accent) }
 .empty { color: var(--mut); padding: 30px; text-align: center }
 @media (max-width: 640px) { .appbar { gap: 6px } }
+
+/* 靜態頁尾：標示來源 commit 與產生時間。 */
+footer.built {
+  max-width: 960px; margin: 22px auto 0; padding: 14px 24px 30px;
+  border-top: 1px solid var(--line); color: var(--mut); font-size: 12px;
+}

@@ -5,6 +5,12 @@
 ## 已知問題（環境）
 - [ ] cp950 Windows 上，對**非 ASCII 路徑**的專案做 `pip install -e` 會寫出含中文的 `.pth`，害 Python 啟動失敗。已在 README 加警告；長解可考慮文件化 `PYTHONUTF8=1` 或推廣 pipx。
 
+## 建置資訊（版本／來源 commit）
+- [x] `changelogkit --version`：版本 + 來源 commit（依序：建置蓋章 → 套件目錄 git → pip `direct_url.json`）。
+- [x] Pages 靜態站頁尾：標示來源 commit（連 GitHub）與產生時間。
+- [ ] 本機 GUI「關於」頁／頁尾（顯示版本與來源 commit）。
+- [ ] 建置時蓋章 `_buildinfo.py`（hatch build hook）——正式發 PyPI 版本時再做，讓裝好的 wheel 也能報 commit。
+
 ## 發佈（PyPI）
 - [ ] 取得 PyPI 帳號，並在專案頁設定 **Trusted Publisher**：
   - Owner：`TwhomeGH`、Repository：`ChangeLogKit`、Workflow：`publish.yml`、Environment：`pypi`。

@@ -14,6 +14,7 @@ import html
 import re
 import shutil
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from . import assets, config, history, index
@@ -55,8 +56,8 @@ def _diff_html(text):
     return '<pre class="dpre">%s</pre>' % "".join(lines)
 
 
-def _github_base(branch):
-    """由 origin remote 推得 GitHub blob 前綴；非 GitHub 或無 remote 時回 None。"""
+def _origin_slug():
+    """origin remote 的 ``owner/repo``；非 GitHub 或無 remote 時回 None。"""
     try:
         url = subprocess.run(["git", "-C", str(config.load().root), "remote", "get-url", "origin"],
                              capture_output=True, text=True, timeout=5).stdout.strip()
@@ -64,8 +65,13 @@ def _github_base(branch):
         url = ""
     if "github.com" not in url:
         return None
-    slug = url.split("github.com", 1)[1].lstrip(":/").removesuffix(".git").strip("/")
-    return "https://github.com/%s/blob/%s/" % (slug, branch)
+    return url.split("github.com", 1)[1].lstrip(":/").removesuffix(".git").strip("/")
+
+
+def _github_base(branch):
+    """由 origin remote 推得 GitHub blob 前綴；非 GitHub 或無 remote 時回 None。"""
+    slug = _origin_slug()
+    return "https://github.com/%s/blob/%s/" % (slug, branch) if slug else None
 
 
 def _file_link(path, blob_base):
@@ -158,14 +164,14 @@ def _render_dev(data, blob_base):
     return ("\n".join(blocks), len(data["symbols"]), len(data["documents"]), len(data["repos"]))
 
 
-def _write_docs(out, documents):
+def _write_docs(out, documents, footer):
     """為每份 Markdown 文件產生一個靜態檢視頁 ``docs/<i>.html``。"""
     docs_dir = out / "docs"
     docs_dir.mkdir()
     for i, doc in enumerate(documents):
         (docs_dir / ("%d.html" % i)).write_text(assets.render(
             "static_doc.html", docname=_esc(doc["name"]), title=_esc(config.load().title),
-            content=_esc(doc["text"])), encoding="utf-8")
+            content=_esc(doc["text"]), footer=footer), encoding="utf-8")
 
 
 def export(out_dir, branch="main"):
@@ -181,17 +187,29 @@ def export(out_dir, branch="main"):
     blob_base = _github_base(branch)
     data = index.snapshot()
 
+    # 頁尾：顯示本產物對應的來源 commit 與產生時間。
+    head = data["repos"][0]["head"] if data["repos"] else ""
+    slug = _origin_slug()
+    if head and slug:
+        where = '<a href="https://github.com/%s/commit/%s">%s@%s</a>' % (slug, head, slug, head[:7])
+    elif head:
+        where = "%s@%s" % (_esc(cfg.root.name), head[:7])
+    else:
+        where = "（無 git 資訊）"
+    footer = "本站由 %s 產生 · %s" % (where, datetime.now().strftime("%Y-%m-%d %H:%M"))
+
     hist_content, count = _render_history(cfg)
     (out / "index.html").write_text(assets.render(
-        "static_history.html", title=_esc(cfg.title), content=hist_content, count=str(count)),
-        encoding="utf-8")
+        "static_history.html", title=_esc(cfg.title), content=hist_content, count=str(count),
+        footer=footer), encoding="utf-8")
 
     dev_content, symbols, documents, sources = _render_dev(data, blob_base)
     (out / "development" / "index.html").write_text(assets.render(
         "static_dev.html", title=_esc(cfg.title), content=dev_content,
-        symbols=str(symbols), documents=str(documents), sources=str(sources)), encoding="utf-8")
+        symbols=str(symbols), documents=str(documents), sources=str(sources), footer=footer),
+        encoding="utf-8")
 
-    _write_docs(out, data["documents"])
+    _write_docs(out, data["documents"], footer)
 
     (out / ".nojekyll").write_text("", encoding="utf-8")
     return out

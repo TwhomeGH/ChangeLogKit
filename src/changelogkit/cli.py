@@ -6,7 +6,7 @@
 import argparse
 import sys
 
-from . import export as static_export, history, server
+from . import buildinfo, export as static_export, history, server
 
 
 def cmd_add(args):
@@ -66,6 +66,7 @@ def cmd_show(args):
 def main(argv=None):
     """進入點：解析參數並分派。無子命令等同 ``serve``。"""
     p = argparse.ArgumentParser(description="變更歷史：網頁 GUI + CLI")
+    p.add_argument("--version", action="version", version=buildinfo.version_string())
     sub = p.add_subparsers(dest="cmd")
 
     sv = sub.add_parser("serve", help="啟動本機網頁 GUI")
