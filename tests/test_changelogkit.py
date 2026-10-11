@@ -212,5 +212,37 @@ class I18nTests(unittest.TestCase):
         self.assertIn("en", i18n.available())
 
 
+class I18nKeyTests(unittest.TestCase):
+    """確保程式／HTML／JS 用到的 i18n key 都有定義，且各語系不缺 key（避免少翻）。"""
+
+    @classmethod
+    def setUpClass(cls):
+        import re
+
+        root = Path(__file__).resolve().parents[1] / "src" / "changelogkit"
+        cls.catalogs = {p.stem: json.loads(p.read_text(encoding="utf-8"))
+                        for p in (root / "lang").glob("*.json")}
+        used = set()
+        for path in list(root.glob("*.py")) + list((root / "scanners").glob("*.py")):
+            text = path.read_text(encoding="utf-8")
+            used |= set(re.findall(r'i18n\.t\(\s*"([\w.]+)"', text))
+            used |= set(re.findall(r'(?<![\w.])t\(\s*"([\w.]+)"', text))
+        for path in (root / "assets").glob("*.html"):
+            used |= set(re.findall(r"\{\{t\.([\w.]+)\}\}", path.read_text(encoding="utf-8")))
+        for path in (root / "assets").glob("*.js"):
+            used |= set(re.findall(r'CK_T\(\s*"([\w.]+)"', path.read_text(encoding="utf-8")))
+        cls.used = used
+
+    def test_reference_defines_used_keys(self):
+        missing = sorted(k for k in self.used if k not in self.catalogs["en"])
+        self.assertEqual(missing, [], "用到但 en 未定義的 key：" + ", ".join(missing))
+
+    def test_locales_not_drifted(self):
+        reference = self.catalogs["en"]
+        for name, catalog in self.catalogs.items():
+            missing = sorted(k for k in reference if k not in catalog)
+            self.assertEqual(missing, [], "%s 缺少 en 有的 key：%s" % (name, ", ".join(missing)))
+
+
 if __name__ == "__main__":
     unittest.main()
