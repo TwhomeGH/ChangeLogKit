@@ -36,6 +36,10 @@ for (const el of document.querySelectorAll(".dline[data-line]")) {
   el.innerHTML = '<span class="dmark">' + window.HL.esc(mark) + "</span>" +
     window.HL.swift(raw.slice(1), { block: false });
 }
+/* API 宣告卡片內的簽名區塊以 highlight.js 就地語法上色（靜態頁由前端處理）。 */
+for (const el of document.querySelectorAll("pre.sig")) {
+  el.innerHTML = window.HL.block(el.textContent);
+}
 const tt = document.getElementById("totop");
 if (tt) { tt.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
   addEventListener("scroll", () => { tt.hidden = window.scrollY < 400; }); }

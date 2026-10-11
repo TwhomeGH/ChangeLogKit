@@ -1,5 +1,25 @@
 # ChangeHistory
 
+## 2026.10.11 changelogkit 0.4.2 發佈
+
+**類型**: 修正 · **檔案**: `assets/dev.js`、`assets/static_dev.html`
+
+### 問題 - API 宣告卡片的簽名沒有語法上色
+
+符號卡片（尤其被收進「成員」的 `.d.ts` 宣告）的簽名以 `<pre class="sig">` 呈現，但只做 HTML 轉義、沒有上色，閱讀不佳。
+
+### 根因 - 簽名未經 highlight.js
+
+`dev.js` 的 `symbolCard` 對 `r.signature` 只做 `esc()`；靜態頁的簽名也未經前端上色（`export.py` 同）。
+
+### 修改 - 簽名套用 highlight.js
+
+- 動態：`symbolCard` 改用 `window.HL.block(r.signature)`。
+- 靜態：`static_dev.html` 載入後對 `pre.sig` 逐一套用 `window.HL.block()`。
+- 與檔案檢視／diff 共用同一套上色（Swift 近似掃描），各語言簽名也能大致分色（關鍵字／型別／呼叫）。
+
+---
+
 ## 2026.10.11 changelogkit 0.4.1 發佈
 
 **類型**: 修復 · **檔案**: `assets/dev.css`、`assets/dev.js`、`assets/static_dev.html`

@@ -142,7 +142,7 @@ function symbolCard(r, nested) {
   const head = `<h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
     `<div class="meta"><span class="kind">${esc(r.kind || kindOf(r.name))}</span>` +
     `${esc(r.repo)} · ${esc(r.file)}:${r.line}</div>` +
-    (r.signature ? `<pre class="sig">${esc(r.signature)}</pre>` : "") +
+    (r.signature ? `<pre class="sig">${window.HL.block(r.signature)}</pre>` : "") +
     `<div class="doc rendered">${r.comment ? window.renderMarkdown(r.comment) : '<p class="muted">' + CK_T("dev.no_comment") + '</p>'}</div>`;
   const members = r.members || [];
   const memberHtml = members.length
