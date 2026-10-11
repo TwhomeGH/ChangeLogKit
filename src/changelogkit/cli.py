@@ -99,3 +99,7 @@ def main(argv=None):
         cmd_list(args)
     elif args.cmd == "show":
         cmd_show(args)
+
+
+if __name__ == "__main__":
+    main()
