@@ -148,6 +148,20 @@ class HistoryTests(unittest.TestCase):
             self.assertNotIn("### 4.1", t)
             self.assertNotIn("### 73a.", t)
 
+    def test_backfill_removes_declared_time_without_double_blank(self):
+        # 移除 **時間** 行時不應留下連續空行（markdownlint MD012）。
+        with TempRepo() as repo:
+            p = repo.root / "Docs" / "ChangeHistory.md"
+            p.write_text("# H\n\n## 12. 標題\n\n**時間**：2026/01/02 10:00:00\n\n**檔案**：\n\n- a\n",
+                         encoding="utf-8")
+            _git(repo.root, "add", "-A")
+            _git(repo.root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "x")
+            backfill.backfill(apply=True)
+            t = p.read_text(encoding="utf-8")
+            self.assertIn("## 2026.01.02 10:00 標題", t)
+            self.assertNotIn("**時間**", t)
+            self.assertNotIn("\n\n\n", t)
+
     def test_missing_history_is_graceful(self):
         # 沒有 ChangeHistory.md 時回空、不中斷；insert_block 會自動建立（含父目錄）。
         with TempRepo() as repo:

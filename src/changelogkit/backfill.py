@@ -115,7 +115,15 @@ def backfill(apply=False, strip_number=False, sort=False):
             continue
 
         new_head = "## %s %s" % (stamp, title)
-        rest = [chunk[idx] for idx in range(1, len(chunk)) if idx != decl_idx]
+        drop = set()
+        if decl_idx is not None:
+            # 移除宣告時間行的同時，也去掉緊鄰的一個空行，避免留下連續空行（markdownlint MD012）。
+            drop.add(decl_idx)
+            if chunk[decl_idx - 1].strip() == "":
+                drop.add(decl_idx - 1)
+            elif decl_idx + 1 < len(chunk) and chunk[decl_idx + 1].strip() == "":
+                drop.add(decl_idx + 1)
+        rest = [chunk[idx] for idx in range(1, len(chunk)) if idx not in drop]
         if strip_number:
             stripped = _strip_subs(rest)
             if stripped != rest:
