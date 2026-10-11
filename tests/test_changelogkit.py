@@ -135,6 +135,19 @@ class HistoryTests(unittest.TestCase):
             self.assertEqual(r["items"][0][0], "ok")
             self.assertRegex(r["items"][0][2], r"^## \d{4}\.\d{2}\.\d{2} \d{2}:\d{2} 沒有日期的條目$")
 
+    def test_backfill_strip_number(self):
+        # --strip-number 要去掉子標題的編號（含 73a. 與 4.1 兩種寫法），即使是已日期式條目。
+        with TempRepo() as repo:
+            p = repo.root / "Docs" / "ChangeHistory.md"
+            p.write_text("# H\n\n## 2026.01.01 10:00 舊\n\n### 4.1 恢復速度加快\n\n"
+                         "### 4.2 Zero-Byte\n\n### 73a. 動機\n", encoding="utf-8")
+            backfill.backfill(apply=True, strip_number=True)
+            t = p.read_text(encoding="utf-8")
+            for kept in ("### 恢復速度加快", "### Zero-Byte", "### 動機"):
+                self.assertIn(kept, t)
+            self.assertNotIn("### 4.1", t)
+            self.assertNotIn("### 73a.", t)
+
     def test_missing_history_is_graceful(self):
         # 沒有 ChangeHistory.md 時回空、不中斷；insert_block 會自動建立（含父目錄）。
         with TempRepo() as repo:

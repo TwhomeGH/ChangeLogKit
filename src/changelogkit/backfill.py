@@ -21,7 +21,7 @@ from . import config
 
 DATED = re.compile(r"^## \d{4}\.\d{2}\.\d{2}(?:\s+\d{2}:\d{2})?\s+")
 NUM = re.compile(r"^(\d+)\.\s+(.*)$")
-SUBNUM = re.compile(r"^### \d+[a-z]?\.\s+(.*)$")
+SUBNUM = re.compile(r"^### \d+[a-z]?(?:\.\d+)*\.?\s+(.*)$")
 DECL = re.compile(r"^\*\*時間\*\*[：:]\s*(.+)")
 DECL_DATE = re.compile(r"(\d{4})[/.](\d{1,2})[/.](\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?")
 STAMP = "%s.%02d.%02d %02d:%02d"
@@ -41,6 +41,11 @@ def _stamp_from_decl(text):
         return None
     y, mo, d, hh, mm = m.groups()
     return STAMP % (y, int(mo), int(d), int(hh or 0), int(mm or 0))
+
+
+def _strip_subs(lines):
+    """去掉子標題的編號（``### 73a.``／``### 4.1`` → ``### 標題``）。"""
+    return [SUBNUM.sub(r"### \1", l) if SUBNUM.match(l) else l for l in lines]
 
 
 def _sort_entries(lines):
@@ -75,13 +80,16 @@ def backfill(apply=False, strip_number=False, sort=False):
 
     heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
     out = list(lines[:heads[0]]) if heads else list(lines)
-    items, total, converted, skipped = [], 0, 0, 0
+    items, total, converted, skipped, changed = [], 0, 0, 0, False
     for k, h in enumerate(heads):
         end = heads[k + 1] if k + 1 < len(heads) else len(lines)
         chunk = lines[h:end]
         head = lines[h]
         if DATED.match(head):
-            out += chunk
+            body = _strip_subs(chunk) if strip_number else chunk
+            if body != chunk:
+                changed = True
+            out += body
             continue
         total += 1
         body = head[3:].strip()
@@ -109,7 +117,10 @@ def backfill(apply=False, strip_number=False, sort=False):
         new_head = "## %s %s" % (stamp, title)
         rest = [chunk[idx] for idx in range(1, len(chunk)) if idx != decl_idx]
         if strip_number:
-            rest = [SUBNUM.sub(r"### \1", l) if SUBNUM.match(l) else l for l in rest]
+            stripped = _strip_subs(rest)
+            if stripped != rest:
+                changed = True
+            rest = stripped
         converted += 1
         items.append(("ok", head, new_head, source))
         out.append(new_head)
@@ -118,7 +129,7 @@ def backfill(apply=False, strip_number=False, sort=False):
     if sort:
         out = _sort_entries(out)
     applied = False
-    if apply and converted:
+    if apply and (converted or changed):
         path.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
         applied = True
     return {"total": total, "converted": converted, "skipped": skipped,
