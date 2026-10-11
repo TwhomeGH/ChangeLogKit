@@ -102,11 +102,18 @@ path = "${HAISHINKIT_ROOT}"                      # 支援環境變數；不存�
 - 只放 `theme.css` → 只換配色；
 - 放整套 `index.*`／`dev.*`／`file.*` → 整包換掉版面。
 
+## 文件
+
+- [用法](docs/usage.md)：指令、`.changelog.toml` 全欄位、資產覆寫、變更歷史格式
+- [GitHub Pages](docs/pages.md)：靜態匯出的產物、限制與啟用方式
+- [PyPI 發佈](docs/publishing.md)：Trusted Publishing 設定與版本流程
+- [架構](docs/architecture.md)：模組結構與設計要點
+
 ## 開發
 
 ```bash
-pip install -e ".[dev]"     # 若定義了 dev extra
-python -m pytest            # 或 python -m unittest discover tests
+pip install -e .
+python tests/test_changelogkit.py
 ```
 
 網頁資產在 `src/changelogkit/assets/`，改版面／配色只需動這些檔案，不必改 Python。
