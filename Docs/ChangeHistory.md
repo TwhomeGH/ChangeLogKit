@@ -1,3 +1,14 @@
+## 2026.10.11 changelogkit 0.1.5 發佈
+
+**類型**: 優化 · **檔案**: `assets/i18n.js`、`assets/theme.css`
+
+### 修改 - 語系切換改為下拉選單
+
+- 頂列 `🌐` 鈕由「**循環切換**」改為「**下拉選單**」：展開列出**全部語系**、目前生效者高亮、點選即切換；點選單外或按 Esc 關閉。語系一多也不必一再點擊輪替。
+- 關於頁的語系 chips 仍可直接點選（同一套 `data-locale` 機制）。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.4 發佈
 
 **類型**: 功能 · **檔案**: `lang/zh-CN.json`、`lang/ja.json`、`i18n.py`、`assets/i18n.js`、`assets/theme.css`

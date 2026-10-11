@@ -90,7 +90,8 @@
       el.placeholder = window.CK_T(el.getAttribute("data-i18n-ph"));
     });
     const btn = document.getElementById("locale");
-    if (btn) { btn.textContent = "🌐 " + label(active); btn.title = names.join(" / "); }
+    if (btn) { btn.textContent = "🌐 " + label(active) + " ▾"; btn.title = names.join(" / "); }
+    markMenu();
     /* 語系列（關於頁的 chips）：標出目前生效者。 */
     document.querySelectorAll("[data-locale]").forEach((el) => {
       el.classList.toggle("on", el.getAttribute("data-locale") === active);
@@ -99,15 +100,69 @@
 
   window.CK_applyI18n = apply;
 
-  /* 切換鈕：點一下循環到下一個語系。 */
+  /* 語系選單：`#locale` 鈕點一下展開（列出所有語系），點項目即切換。 */
+  function buildMenu() {
+    let el = document.getElementById("locale-menu");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "locale-menu";
+    el.className = "locale-menu";
+    el.hidden = true;
+    names.forEach((name) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "lchip";
+      item.setAttribute("data-locale", name);
+      item.textContent = name;
+      el.appendChild(item);
+    });
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function markMenu() {
+    const el = document.getElementById("locale-menu");
+    if (!el) return;
+    el.querySelectorAll("[data-locale]").forEach((c) => {
+      c.classList.toggle("on", c.getAttribute("data-locale") === active);
+    });
+  }
+
+  function closeMenu() {
+    const el = document.getElementById("locale-menu");
+    if (el) el.hidden = true;
+  }
+
+  function toggleMenu() {
+    const el = buildMenu();
+    if (!el.hidden) return void (el.hidden = true);
+    const btn = document.getElementById("locale");
+    const rect = btn.getBoundingClientRect();
+    el.hidden = false;
+    el.style.top = (rect.bottom + 6) + "px";
+    el.style.left = Math.max(8, rect.right - el.offsetWidth) + "px";
+    markMenu();
+  }
+
   document.addEventListener("click", (event) => {
     const target = event.target;
     if (!target) return;
-    if (target.id === "locale" && names.length > 1) {
-      window.CK_setLocale(names[(names.indexOf(active) + 1) % names.length]);
-    } else if (target.getAttribute && target.getAttribute("data-locale")) {
-      window.CK_setLocale(target.getAttribute("data-locale"));
+    if (target.id === "locale") {
+      if (names.length > 1) toggleMenu();
+      return;
     }
+    const loc = target.getAttribute && target.getAttribute("data-locale");
+    if (loc) {
+      window.CK_setLocale(loc);
+      closeMenu();
+      return;
+    }
+    const el = document.getElementById("locale-menu");
+    if (el && !el.hidden && !el.contains(target)) el.hidden = true;
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMenu();
   });
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", apply);
