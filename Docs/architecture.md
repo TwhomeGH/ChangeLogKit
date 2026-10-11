@@ -6,7 +6,8 @@
 | --- | --- |
 | `config.py` | 讀 `.changelog.toml`（3.11+ 用標準庫 `tomllib`、3.10 用 `tomli`） |
 | `history.py` | 變更歷史（`ChangeHistory.md`）的解析／組版／讀寫 |
-| `index.py` | 開發索引：Git 近期改動（含 `/development/diff`）、Swift 宣告掃描、文件 |
+| `index.py` | 開發索引：Git 近期改動（含 diff）、文件、原始碼檔清單；掃描分派到 `scanners/` |
+| `scanners/` | 各語言的 API 宣告掃描：`swift.py`／`javascript.py`／`python.py`／`cpp.py` ＋共用 `common.py`；新增語言只需加一個模組並註冊 |
 | `server.py` | 本機 HTTP server 與路由（`/`、`/development*`、`/assets/*`、`/api/*`） |
 | `cli.py` | 命令列：serve／add／list／show／export |
 | `export.py` | 靜態匯出（唯讀，供 GitHub Pages） |
