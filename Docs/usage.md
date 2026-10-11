@@ -14,7 +14,7 @@ changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 
 
 未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。
 
-全域旗標 **`--locale zh-TW|en`** 可切換 **CLI 說明與網頁語系**（預設跟隨系統；判定為非中文時回退 `en`）。
+全域旗標 **`--locale zh-TW|zh-CN|ja|en`** 可切換 **CLI 說明與網頁語系**（預設跟隨系統：`zh*` 依 Hant／Hans 判為 `zh-TW`／`zh-CN`、`ja*` → `ja`、其餘 → `en`）。
 
 > 新增／修改字串時，`tests/test_changelogkit.py` 的 `I18nKeyTests` 會檢查：程式／HTML／JS 用到的 key 是否都已定義，以及各語系是否缺 key（語系漂移）——CI 會擋下少翻。
 
