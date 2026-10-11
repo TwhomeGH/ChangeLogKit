@@ -1,5 +1,25 @@
 # ChangeHistory
 
+## 2026.10.11 changelogkit 0.5.0 發佈
+
+**類型**: 功能 · **檔案**: `assets/markdown.js`、`assets/dev.js`、`assets/static_dev.html`、`assets/dev.css`、`export.py`、`lang/*.json`
+
+### 問題 - JSDoc 註釋未結構化，參數擠成一團
+
+API 宣告卡片的註釋原本整段當 markdown 渲染；`@param {Object} options …` 這類 JSDoc 標籤會與相鄰行併成同一段，難以閱讀。
+
+### 根因 - 只有純 markdown 渲染，沒有標籤解析
+
+掃描器只把整段 doc comment 存成 `comment`，前端以 `renderMarkdown` 原樣輸出，未解析 JSDoc 標籤。
+
+### 修改 - 新增 renderDoc：描述＋參數表＋回傳＋其他標籤
+
+- `markdown.js` 新增 `window.renderDoc(text)`：描述用 markdown；`@param {型別} 名稱 說明` → 參數表（參數／型別／說明）；`@returns` → 回傳列；其他標籤（`@example`／`@throws`…）逐項列出；型別以**巢狀大括號平衡掃描**解析（如 `{{post: Function}}`）；**無標籤時退回 `renderMarkdown`**（向後相容）。
+- 動態（`dev.js`）改用 `renderDoc`；靜態頁把原始註釋放進 `data-raw`、由 `static_dev.html` 前端渲染。
+- `dev.css` 新增參數表／回傳／標籤樣式；`lang/*.json` 新增 `dev.p_name`／`dev.p_type`／`dev.p_desc`／`dev.returns`（4 語系）。
+
+---
+
 ## 2026.10.11 changelogkit 0.4.2 發佈
 
 **類型**: 修正 · **檔案**: `assets/dev.js`、`assets/static_dev.html`

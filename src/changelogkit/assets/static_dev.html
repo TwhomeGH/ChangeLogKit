@@ -40,6 +40,10 @@ for (const el of document.querySelectorAll(".dline[data-line]")) {
 for (const el of document.querySelectorAll("pre.sig")) {
   el.innerHTML = window.HL.block(el.textContent);
 }
+/* 符號註釋以 markdown／JSDoc 規則就地渲染（原始註釋置於 data-raw）。 */
+for (const el of document.querySelectorAll(".doc[data-raw]")) {
+  el.innerHTML = window.renderDoc(el.getAttribute("data-raw"));
+}
 const tt = document.getElementById("totop");
 if (tt) { tt.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
   addEventListener("scroll", () => { tt.hidden = window.scrollY < 400; }); }

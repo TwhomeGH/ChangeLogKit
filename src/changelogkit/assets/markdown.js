@@ -141,4 +141,77 @@
     resolve = typeof resolveHref === "function" ? resolveHref : (href) => href;
     return render(text);
   };
+
+  /* i18n：優先取 CK_T，沒有就回退字串。 */
+  function T(key, fallback) {
+    const v = typeof window.CK_T === "function" ? window.CK_T(key) : "";
+    return v && v !== key ? v : fallback;
+  }
+
+  /* 把標籤行（@tag …）與其續行收成一串 {tag, text}。 */
+  function parseTags(lines) {
+    const tags = [];
+    let cur = null;
+    for (const raw of lines) {
+      const m = raw.match(/^\s*@(\w+)\b\s*([\s\S]*)$/);
+      if (m) { cur = { tag: m[1].toLowerCase(), text: m[2].trim() }; tags.push(cur); }
+      else if (cur && raw.trim()) { cur.text += (cur.text ? " " : "") + raw.trim(); }
+    }
+    return tags;
+  }
+
+  /* 由字串開頭的 {…} 取型別（支援巢狀大括號，如 {{post: Function}}）。 */
+  function splitType(text) {
+    const s = String(text == null ? "" : text).trim();
+    if (s[0] !== "{") return { type: "", rest: s };
+    let depth = 0;
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === "{") depth++;
+      else if (s[i] === "}") { depth--; if (depth === 0) return { type: s.slice(1, i).trim(), rest: s.slice(i + 1).trim() }; }
+    }
+    return { type: "", rest: s };
+  }
+
+  /* 解析 JSDoc 形式的「{型別} 名稱 說明」。 */
+  function parseParam(text) {
+    const first = splitType(text);
+    const rest = first.rest;
+    const nm = rest.match(/^(\[?[\w.$]+\]?)\s*([\s\S]*)$/);
+    return { type: first.type, name: nm ? nm[1] : "", desc: nm ? nm[2].trim() : rest };
+  }
+
+  /* JSDoc 風格註釋渲染：描述用 markdown；@param／@returns／其他標籤整理成結構。
+     沒有標籤時退回 renderMarkdown（向後相容，Swift／Python 等註釋不受影響）。 */
+  function renderDoc(text) {
+    const lines = String(text == null ? "" : text).split("\n");
+    const start = lines.findIndex((l) => /^\s*@\w+/.test(l));
+    if (start === -1) return render(text);
+    const desc = lines.slice(0, start).join("\n").trim();
+    const tags = parseTags(lines.slice(start));
+    let html = "";
+    if (desc) html += `<div class="doc-desc">${render(desc)}</div>`;
+    const params = tags.filter((t) => t.tag === "param").map((t) => parseParam(t.text));
+    if (params.length) {
+      html += '<table class="docparams"><thead><tr>' +
+        `<th>${esc(T("dev.p_name", "Parameter"))}</th>` +
+        `<th>${esc(T("dev.p_type", "Type"))}</th>` +
+        `<th>${esc(T("dev.p_desc", "Description"))}</th></tr></thead><tbody>` +
+        params.map((p) => `<tr><td><code>${esc(p.name)}</code></td>` +
+          `<td>${p.type ? `<code>${esc(p.type)}</code>` : ""}</td>` +
+          `<td>${inline(p.desc)}</td></tr>`).join("") + "</tbody></table>";
+    }
+    const ret = tags.find((t) => t.tag === "return" || t.tag === "returns");
+    if (ret) {
+      const r = parseParam(ret.text);
+      html += `<p class="docreturns"><span class="lbl">${esc(T("dev.returns", "Returns"))}</span> ` +
+        (r.type ? `<code>${esc(r.type)}</code> ` : "") + inline(r.desc || r.name) + "</p>";
+    }
+    const others = tags.filter((t) => !["param", "return", "returns"].includes(t.tag));
+    if (others.length) {
+      html += others.map((t) => `<div class="doctag"><span class="lbl">@${esc(t.tag)}</span>${inline(t.text)}</div>`).join("");
+    }
+    return html || render(text);
+  }
+
+  window.renderDoc = renderDoc;
 })();

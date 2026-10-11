@@ -106,7 +106,8 @@ def _symbol_card(sym, blob_base, nested):
     """單一 API 宣告卡片；型別若有 ``members`` 則收進可展開的 details。"""
     link = _file_link(sym["file"], blob_base)
     signature = ('<pre class="sig">%s</pre>' % _esc(sym["signature"])) if sym.get("signature") else ""
-    comment = _md(sym["comment"]) if sym.get("comment") else '<p class="muted">' + i18n.t("dev.no_comment") + '</p>'
+    comment = ('<div class="doc rendered" data-raw="%s"></div>' % _esc(sym["comment"])) \
+        if sym.get("comment") else '<p class="muted">' + i18n.t("dev.no_comment") + '</p>'
     head = ('<h2>%s</h2><div class="meta"><span class="kind">%s</span>%s · %s:%s</div>%s%s'
             % (_esc(sym["name"]), _esc(sym.get("kind", "")), _esc(sym["repo"]),
                link, sym["line"], signature, comment))

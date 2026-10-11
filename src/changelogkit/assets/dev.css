@@ -22,6 +22,15 @@ article.card h2 a:hover { color: var(--accent); text-decoration: underline }
 .card dt { color: var(--mut); font-size: 13px } .card dd { margin: 0 }
 .card h3 { font-size: 13px; color: var(--mut); margin: 14px 0 6px; text-transform: none }
 .doc { line-height: 1.6 } .doc p { margin: .3em 0 } .doc ul { margin: .3em 0; padding-left: 1.3em }
+/* 符號註釋：描述／參數表／回傳／其他標籤（由 renderDoc 產生）。 */
+.doc .doc-desc > :first-child { margin-top: 0 }
+.docparams { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 13px }
+.docparams th, .docparams td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top }
+.docparams th { color: var(--mut); font-weight: 600; background: var(--code) }
+.docparams td code { font-size: 12px }
+.docreturns, .doctag { margin: .35em 0; font-size: 13px }
+.docreturns .lbl, .doctag .lbl { color: var(--mut); margin-right: 6px; font-weight: 600 }
+.doctag .lbl { font-family: ui-monospace, Consolas, "Courier New", monospace }
 .files a { display: inline-block; margin: 0 12px 6px 0 }
 .preview { font: 13px/1.6 ui-monospace, Consolas, "Courier New", monospace; color: var(--mut); white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 0 }
 pre.blob { background: var(--code); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow: auto; font-size: 12.5px; line-height: 1.55 }
