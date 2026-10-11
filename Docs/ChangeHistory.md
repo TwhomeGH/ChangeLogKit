@@ -1,3 +1,24 @@
+## 2026.10.11 changelogkit 0.1.6 發佈
+
+**類型**: 修復 · **檔案**: `assets/dev.js`、`assets/dev.html`、`assets/theme.css`、`assets/file.css`
+
+### 問題 - 符號註釋的程式碼區塊沒被渲染
+
+開發索引頁的 API 註釋（例如 JS 的 JSDoc 內含 ```typescript 範例）會以**純文字**呈現，連 ``` 標記都露出來。
+
+### 根因 - 動態 dev 頁用簡化的 mdDoc，且未載入樣式
+
+`dev.js` 的 `mdDoc` 只處理段落與 `-` 條列，**不支援 ``` 程式碼區塊**；dev 頁也沒有載入 `markdown.js`；而 `.rendered` 的**內容樣式**僅放在 `file.css`（dev 頁未載入）。
+
+### 修改 - 改用完整 markdown 並共用樣式
+
+- `dev.js` 的註釋改用 `window.renderMarkdown`（完整 markdown：程式碼區塊／表格／清單…），wrapper 加上 `.rendered`。
+- `dev.html` 載入 `markdown.js`。
+- 把 `.rendered` 的**內容樣式**由 `file.css` 移到共用的 `theme.css`（外框版面仍留在 `file.css`）。
+- 驗證：TTWChat 的 `KickWebSocket` JSDoc → 已渲染為 `<pre class="code"><code>`（含語法上色），不再出現裸 ```
+
+---
+
 ## 2026.10.11 changelogkit 0.1.5 發佈
 
 **類型**: 優化 · **檔案**: `assets/i18n.js`、`assets/theme.css`

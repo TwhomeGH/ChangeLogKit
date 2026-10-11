@@ -168,7 +168,7 @@ function render() {
       out += `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
         `<div class="meta"><span class="kind">${esc(r.kind || kindOf(r.name))}</span>${esc(r.repo)} · ${esc(r.file)}:${r.line}</div>` +
         (r.signature ? `<pre class="sig">${esc(r.signature)}</pre>` : "") +
-        `<div class="doc">${r.comment ? mdDoc(r.comment) : '<p class="muted">' + CK_T("dev.no_comment") + '</p>'}</div></article>`;
+        `<div class="doc rendered">${r.comment ? window.renderMarkdown(r.comment) : '<p class="muted">' + CK_T("dev.no_comment") + '</p>'}</div></article>`;
     } else if (tab === "documents") {
       out += `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
         `<div class="meta">${esc(r.repo)}</div><div class="preview">${esc(r.text.slice(0, 260))}${r.text.length > 260 ? " …" : ""}</div></article>`;
