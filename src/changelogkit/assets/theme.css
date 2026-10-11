@@ -69,6 +69,7 @@ button.primary:hover { filter: brightness(1.07); background: var(--accent) }
 }
 .appbar h1 { font-size: 16px; font-weight: 700; margin: 0 10px 0 0; white-space: nowrap }
 .appbar input, .appbar select { width: auto }
+.appbar .spacer { flex: 1 }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 12px 0 }
 .chip {
   font-size: 12px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 20px;
