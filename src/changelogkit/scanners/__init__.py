@@ -1,10 +1,10 @@
 """依副檔名分派的宣告掃描器（文字比對，非 AST）。
 
-每個語言一個模組（`swift`／`javascript`／`python`／`cpp`），共用 `common` 的工具；
-新增語言時只加一個模組並在 ``_SCANNERS`` 註冊即可。
+每個語言一個模組，共用 `common` 的工具；新增語言時只加一個模組並在 ``_SCANNERS``
+註冊即可。
 """
 
-from . import cpp, javascript, python, swift
+from . import cpp, csharp, go, java, javascript, kotlin, python, rust, swift
 from .common import link
 
 _SCANNERS = {
@@ -14,6 +14,11 @@ _SCANNERS = {
     ".py": python.scan,
     ".c": cpp.scan, ".cpp": cpp.scan, ".cc": cpp.scan, ".cxx": cpp.scan,
     ".h": cpp.scan, ".hpp": cpp.scan, ".hxx": cpp.scan, ".hh": cpp.scan, ".ino": cpp.scan,
+    ".kt": kotlin.scan, ".kts": kotlin.scan,
+    ".java": java.scan,
+    ".go": go.scan,
+    ".rs": rust.scan,
+    ".cs": csharp.scan,
 }
 
 # 被索引的原始碼副檔名（供 files() 過濾用）。

@@ -146,6 +146,17 @@ class IndexTests(unittest.TestCase):
         c_names = [s["name"] for s in index.scan_symbols(c, "app", "a.cpp")]
         for expected in ("Foo", "Pt", "setup", "add"):
             self.assertIn(expected, c_names)
+        cases = {
+            "a.kt": ("data class User(val id: Int)\nfun greet(name: String): String {\n return name\n}\ninterface Repo", ("User", "greet", "Repo")),
+            "a.java": ("public class Main {\n  public static void main(String[] a) {\n  }\n}\ninterface Svc", ("Main", "main", "Svc")),
+            "a.go": ("type Server struct {\n}\nfunc (s *Server) Handle() {\n}\nfunc New() {}", ("Server", "Handle", "New")),
+            "a.rs": ("pub struct Config {\n}\npub fn run() {\n}\nimpl Config {\n}", ("Config", "run")),
+            "a.cs": ("public class Api {\n  public void Get() {\n  }\n}\ninterface IApi", ("Api", "Get", "IApi")),
+        }
+        for fname, (src, expected) in cases.items():
+            names = [s["name"] for s in index.scan_symbols(src, "app", fname)]
+            for name in expected:
+                self.assertIn(name, names, "%s 少了 %s" % (fname, name))
         self.assertEqual(index.scan_symbols("x = 1", "app", "a.rb"), [])  # 未支援 → 空
 
     def test_validate_absent_features(self):
