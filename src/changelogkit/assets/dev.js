@@ -1,6 +1,6 @@
 /* 開發索引：功能／API 宣告／文件／近期改動。資料來自 /development/data。 */
 const $ = (s) => document.querySelector(s);
-let data = null, tab = "features";
+let data = null, tab = "features", lang = "", kind = "";
 
 const LABELS = {
   features: "功能與接入",
@@ -112,17 +112,38 @@ async function loadDiff(box, params) {
   }
 }
 
+/* 「API 宣告」頁的篩選列：支援語言 + 語言 chips + 種類下拉。 */
+function renderFilters() {
+  const box = $("#filters");
+  if (tab !== "symbols") { box.hidden = true; box.innerHTML = ""; return; }
+  box.hidden = false;
+  const symbols = data.symbols || [];
+  const langs = [...new Set(symbols.map((s) => s.lang).filter(Boolean))];
+  const kinds = [...new Set(symbols.map((s) => s.kind).filter(Boolean))].sort();
+  const chip = (value, label) =>
+    `<button class="chip${value === lang ? " on" : ""}" data-lang="${esc(value)}">${esc(label)}</button>`;
+  box.innerHTML =
+    `<div class="supported">支援語言：${esc((data.languages || []).join("、"))}</div>` +
+    `<div class="chips">${chip("", "全部語言")}${langs.map((l) => chip(l, l)).join("")}</div>` +
+    `<label class="kindfilter">種類 <select id="kindsel"><option value="">全部</option>` +
+    kinds.map((k) => `<option value="${esc(k)}"${k === kind ? " selected" : ""}>${esc(k)}</option>`).join("") +
+    `</select></label>`;
+}
+
 function render() {
   if (!data) return;
   document.querySelectorAll("#tabs button").forEach((b) =>
     b.setAttribute("aria-pressed", b.dataset.key === tab));
+  renderFilters();
   const q = $("#search").value.toLowerCase();
   const repo = $("#repo").value;
   const match = (r) => JSON.stringify(r).toLowerCase().includes(q) &&
-    (!repo || r.repo === repo || (r.id && tab === "features"));
+    (!repo || r.repo === repo || (r.id && tab === "features")) &&
+    (tab !== "symbols" || ((!lang || r.lang === lang) && (!kind || r.kind === kind)));
 
   const rows = (data[tab] || []).filter(match);
-  $("#message").textContent = `${rows.length} 筆結果 · 搜尋可輸入功能、路徑或 API 名稱`;
+  const suffix = tab === "symbols" ? "（可切語言／種類）" : "";
+  $("#message").textContent = `${rows.length} 筆結果 · 搜尋可輸入功能、路徑或 API 名稱${suffix}`;
 
   let out = "";
   if (tab === "repos") {
@@ -186,6 +207,14 @@ for (const [key, title] of Object.entries(LABELS)) {
 $("#search").oninput = render;
 $("#repo").onchange = render;
 $("#reload").onclick = load;
+
+$("#filters").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (chip) { lang = chip.dataset.lang; render(); }
+});
+$("#filters").addEventListener("change", (e) => {
+  if (e.target.id === "kindsel") { kind = e.target.value; render(); }
+});
 
 /* 事件委派：提交標題、檔名、工作區差異鈕（#results 每次 render 會重建）。 */
 $("#results").addEventListener("click", (e) => {

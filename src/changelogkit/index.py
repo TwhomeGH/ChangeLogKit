@@ -16,7 +16,7 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 from . import assets, config
-from .scanners import SUPPORTED_SUFFIXES, scan_symbols
+from .scanners import SUPPORTED_LANGUAGES, SUPPORTED_SUFFIXES, scan_symbols
 from .scanners.common import link
 
 def roots():
@@ -146,7 +146,8 @@ def _locked_packages():
 
 def snapshot():
     """即時取得版本和近期提交；不把 Git 修改檔案推測成新增功能。"""
-    data = {"features": validate(), "repos": [], "symbols": [], "documents": []}
+    data = {"features": validate(), "repos": [], "symbols": [], "documents": [],
+            "languages": SUPPORTED_LANGUAGES}
     for repo, root in roots().items():
         data["repos"].append({
             "name": repo,

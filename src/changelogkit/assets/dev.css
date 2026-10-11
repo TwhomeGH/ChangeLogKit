@@ -28,6 +28,14 @@ pre.blob { background: var(--code); border: 1px solid var(--line); border-radius
   .card dt { font-weight: 700 }
 }
 
+/* 「API 宣告」篩選列。 */
+#filters { margin: 4px 0 10px; display: flex; flex-direction: column; gap: 6px }
+#filters .supported { font-size: 12.5px; color: var(--mut); overflow-wrap: anywhere }
+#filters .chips { display: flex; flex-wrap: wrap; gap: 6px 8px }
+#filters .chip.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent) }
+#filters .kindfilter { font-size: 13px; color: var(--mut) }
+#filters .kindfilter select { width: auto; margin-left: 6px }
+
 /* 符號簽名列：等寬、可換行、深淺色一致。 */
 .sig {
   margin: 6px 0 10px; padding: 9px 12px; border-radius: 10px;

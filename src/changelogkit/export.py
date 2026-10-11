@@ -152,7 +152,9 @@ def _render_repos(repos):
 
 def _render_dev(data, blob_base):
     """開發索引頁內容；回傳 (HTML, symbols, documents, sources 計數)。"""
-    blocks = ['<h1>API 宣告</h1>' + _render_symbols(data["symbols"], blob_base),
+    blocks = ['<h1>API 宣告</h1><p class="muted">支援語言：%s</p>'
+              % _esc("、".join(data.get("languages", [])))
+              + _render_symbols(data["symbols"], blob_base),
               '<h1 id="docs">文件</h1>' + _render_documents(data["documents"]),
               '<h1>近期改動／版本</h1>' + _render_repos(data["repos"])]
     if data["features"]:
