@@ -40,6 +40,9 @@ pip install -e .
 changelogkit serve
 ```
 
+> ⚠️ **路徑含非 ASCII 字元時不要用 `-e`。** 若套件放在像 `…\桌面\…` 這種路徑，editable 安裝會寫出含中文路徑的 `.pth`；在 **cp950（繁體中文）語系的 Windows** 上，Python 以 locale 讀 `.pth` 會 `UnicodeDecodeError`，害**任何 `python`／`pip` 指令都啟動不了**（`Fatal Python error: init_import_site`）。
+> 解法：刪掉那個 `.pth` 後改用一般安裝 `pip install <ChangeLogTools>`（複製進 site-packages，不產生 `.pth`）或第 3 種 pipx；也可先 `set PYTHONUTF8=1`。
+
 ### 3. 全域 CLI、又保持隔離（推薦）
 
 ```powershell

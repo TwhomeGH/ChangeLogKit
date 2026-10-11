@@ -2,6 +2,9 @@
 
 留待日後處理；完成後請刪掉對應條目。`[x]` 已建好、待你推送／設定。
 
+## 已知問題（環境）
+- [ ] cp950 Windows 上，對**非 ASCII 路徑**的專案做 `pip install -e` 會寫出含中文的 `.pth`，害 Python 啟動失敗。已在 README 加警告；長解可考慮文件化 `PYTHONUTF8=1` 或推廣 pipx。
+
 ## 發佈（PyPI）
 - [ ] 取得 PyPI 帳號，並在專案頁設定 **Trusted Publisher**：
   - Owner：`TwhomeGH`、Repository：`ChangeLogKit`、Workflow：`publish.yml`、Environment：`pypi`。
