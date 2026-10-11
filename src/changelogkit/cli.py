@@ -63,6 +63,43 @@ def cmd_show(args):
     print(target["raw"])
 
 
+def cmd_languages(args):
+    """列出支援的程式語言（API 宣告掃描涵蓋範圍）。"""
+    from .scanners import SUPPORTED_LANGUAGES
+
+    for lang in SUPPORTED_LANGUAGES:
+        print(lang)
+
+
+def _symbol_matches(symbol, query, lang, kind, repo):
+    """依關鍵字／語言／種類／來源篩選單一符號。"""
+    if query and query not in (symbol["name"] + " " + symbol.get("signature", "")).lower():
+        return False
+    if lang and (symbol.get("lang") or "").lower() != lang.lower():
+        return False
+    if kind and symbol.get("kind") != kind:
+        return False
+    if repo and symbol.get("repo") != repo:
+        return False
+    return True
+
+
+def cmd_symbols(args):
+    """查詢開發索引掃到的 API 宣告（語言／種類／關鍵字）。"""
+    from . import index
+
+    data = index.snapshot()
+    symbols = data["symbols"]
+    query = (args.query or "").lower()
+    hits = [s for s in symbols if _symbol_matches(s, query, args.lang, args.kind, args.repo)]
+    if args.limit:
+        hits = hits[: args.limit]
+    print("符合 %d / 共 %d 個符號（支援語言：%s）\n" % (len(hits), len(symbols), "、".join(data["languages"])))
+    for symbol in hits:
+        print("%-22s %-9s %-10s %s:%d" % (symbol.get("lang") or "-", symbol.get("kind") or "",
+                                          symbol["name"], symbol["file"], symbol["line"]))
+
+
 def main(argv=None):
     """進入點：解析參數並分派。無子命令等同 ``serve``。"""
     p = argparse.ArgumentParser(description="變更歷史：網頁 GUI + CLI")
@@ -91,6 +128,15 @@ def main(argv=None):
     s = sub.add_parser("show", help="顯示單筆完整內容（編號或關鍵字）")
     s.add_argument("query")
 
+    sub.add_parser("languages", help="列出支援的程式語言")
+
+    sy = sub.add_parser("symbols", help="查詢 API 宣告（語言／種類／關鍵字）")
+    sy.add_argument("query", nargs="?", default="")
+    sy.add_argument("--lang", default="", help="限定語言（如 Python）")
+    sy.add_argument("--kind", default="", help="限定種類（func／class／property…）")
+    sy.add_argument("--repo", default="", help="限定來源名稱")
+    sy.add_argument("--limit", type=int, default=0)
+
     ex = sub.add_parser("export", help="匯出唯讀靜態站（供 GitHub Pages）")
     ex.add_argument("out", nargs="?", default="_site", help="輸出目錄（預設 _site）")
     ex.add_argument("--branch", default="main", help="檔案連結指向的 branch（預設 main）")
@@ -104,6 +150,10 @@ def main(argv=None):
         cmd_list(args)
     elif args.cmd == "show":
         cmd_show(args)
+    elif args.cmd == "languages":
+        cmd_languages(args)
+    elif args.cmd == "symbols":
+        cmd_symbols(args)
     elif args.cmd == "export":
         out = static_export.export(args.out, args.branch)
         print("已匯出靜態站：%s" % out)
