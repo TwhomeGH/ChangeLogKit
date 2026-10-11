@@ -47,6 +47,9 @@ path = "."
 [[tool.changelog.sources]]
 name = "lib"
 path = "${SOME_LIB_ROOT}"                      # 支援 ${ENV} 展開；不存在就略過
+
+include  = ["node_modules/kick-ws/dist/**/*.d.ts"]  # 額外納入（可含被 .gitignore 忽略者）
+exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產物）
 ```
 
 | 欄位 | 預設 | 說明 |
@@ -56,6 +59,10 @@ path = "${SOME_LIB_ROOT}"                      # 支援 ${ENV} 展開；不存�
 | `features` | `Docs/development/features.json` | 功能清單（不存在則功能分頁留空） |
 | `assets` | 無 | 覆寫資產目錄 |
 | `sources` | 單一（`name="app"`、`path="."`） | 開發索引來源；`path` 支援 `${ENV}` |
+| `include` | 無 | 額外納入的 glob（相對 root；**可涵蓋被 `.gitignore` 忽略者**，如特定 `node_modules` 套件的 `.d.ts`） |
+| `exclude` | 無 | 排除的 glob（相對 root），例如 `**/dist/**`、`**/*.min.js` |
+
+> glob 語法：`**` 跨目錄、`*` 單層、`?` 單字元。索引預設只看版本控管（含未忽略）的檔案；`include` 用於**選擇性**納入被忽略者（例如只看幾個已安裝套件的型別定義），`exclude` 用來排除建置產物。
 
 ## 變更歷史格式
 

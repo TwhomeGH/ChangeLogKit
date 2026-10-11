@@ -132,6 +132,15 @@ class IndexTests(unittest.TestCase):
             self.assertTrue(any(s["name"] == "Thing" for s in data["symbols"]))
             self.assertEqual(data["lockedPackages"], [{"identity": "x", "revision": "abc123"}])
 
+    def test_glob_re(self):
+        dist = index._glob_re("**/dist/**")
+        self.assertTrue(dist.match("a/b/dist/c.js"))
+        self.assertTrue(dist.match("dist/c.js"))
+        self.assertFalse(dist.match("a/b/c.js"))
+        mini = index._glob_re("*.min.js")
+        self.assertTrue(mini.match("a.min.js"))
+        self.assertFalse(mini.match("a/b.min.js"))
+
     def test_scanners(self):
         js = "export function foo() {}\nclass Bar {}\nexport const BAZ = () => {}"
         js_names = [s["name"] for s in index.scan_symbols(js, "app", "a.js")]

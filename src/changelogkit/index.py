@@ -8,8 +8,10 @@ Markdown 文件內容與近期 Git 改動。功能語意由版本控管的清單
 資產（HTML／CSS／JS）由 :mod:`changelog.assets` 載入。
 """
 
+import glob
 import html
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -38,12 +40,58 @@ def git(root, *args):
     return result.stdout
 
 
+_GLOB_CACHE = {}
+
+
+def _glob_re(pattern):
+    """把含 ``**`` 的 glob 轉成正規式（``**`` 跨目錄、``*`` 單層、``?`` 單字元）。"""
+    if pattern not in _GLOB_CACHE:
+        out, i = "", 0
+        while i < len(pattern):
+            if pattern[i:i + 2] == "**":
+                i += 2
+                if pattern[i:i + 1] == "/":     # ``**/`` 可匹配零層目錄
+                    out += "(?:.*/)?"
+                    i += 1
+                else:
+                    out += ".*"
+            elif pattern[i] == "*":
+                out += "[^/]*"
+                i += 1
+            elif pattern[i] == "?":
+                out += "[^/]"
+                i += 1
+            else:
+                out += re.escape(pattern[i])
+                i += 1
+        _GLOB_CACHE[pattern] = re.compile("^" + out + "$")
+    return _GLOB_CACHE[pattern]
+
+
 def files(root):
-    """只索引版本控管或未忽略的原始碼／Markdown，略過隱藏設定與產物。"""
+    """索引版本控管的原始碼／Markdown；依設定套用 ``include``／``exclude`` glob。
+
+    ``include`` 可納入被 ``.gitignore`` 忽略者（例如特定 ``node_modules`` 套件的 ``.d.ts``）；
+    ``exclude`` 可排除建置產物（例如 ``**/dist/**``）。
+    """
+    cfg = config.load()
     suffixes = SUPPORTED_SUFFIXES + (".md",)
+
+    def wanted(rel):
+        return (rel and Path(rel).suffix in suffixes
+                and not any(part.startswith(".") for part in Path(rel).parts))
+
     paths = git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").split("\0")
-    return sorted({p for p in paths if p and Path(p).suffix in suffixes
-                   and not any(part.startswith(".") for part in Path(p).parts)})
+    found = {p for p in paths if wanted(p)}
+    for pattern in cfg.include:
+        for path in glob.iglob(str(Path(root) / pattern), recursive=True):
+            rel = os.path.relpath(path, root).replace(os.sep, "/")
+            if wanted(rel):
+                found.add(rel)
+    if cfg.exclude:
+        excluded = [_glob_re(p) for p in cfg.exclude]
+        found = {p for p in found if not any(r.match(p) for r in excluded)}
+    return sorted(found)
 
 
 def safe_file(repo, name):

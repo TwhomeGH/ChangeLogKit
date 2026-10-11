@@ -43,6 +43,8 @@ class Config:
     features: Path | None            # 功能清單（可能不存在）
     assets: Path | None              # 覆寫資產目錄（可選）
     sources: list = field(default_factory=list)  # 開發索引來源
+    include: tuple = ()      # 額外納入的 glob（相對 root；可涵蓋被 .gitignore 忽略者，如 node_modules）
+    exclude: tuple = ()      # 排除的 glob（相對 root）
 
 
 def _find_root(start):
@@ -88,6 +90,8 @@ def _from_table(root, table):
         features=features,
         assets=assets,
         sources=sources or [Source("app", root)],
+        include=tuple(str(x) for x in table.get("include", [])),
+        exclude=tuple(str(x) for x in table.get("exclude", [])),
     )
 
 
