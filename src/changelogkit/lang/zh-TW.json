@@ -1,6 +1,6 @@
 {
   "cli.desc": "變更歷史：網頁 GUI + CLI",
-  "cli.locale": "語系（zh-TW／en；預設跟隨系統）",
+  "cli.locale": "語系（zh-TW／zh-CN／ja／en；預設跟隨系統）",
   "cli.serve.help": "啟動本機網頁 GUI",
   "cli.serve.port": "連接埠（預設 8710）",
   "cli.serve.no_browser": "不自動開啟瀏覽器",
