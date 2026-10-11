@@ -1,4 +1,4 @@
-"""命令列介面：serve / add / list / show / languages / locals / symbols / export。
+"""命令列介面：serve / add / list / show / languages / locales / symbols / export / backfill-dates。
 
 網頁 GUI 為主要介面；CLI 供腳本化使用。字串經 :mod:`i18n`（預設跟隨系統、
 判定為非中文時回退 ``en``；可用 ``--locale`` 覆寫）。
@@ -7,7 +7,7 @@
 import argparse
 import sys
 
-from . import buildinfo, export as static_export, history, i18n, server
+from . import backfill, buildinfo, export as static_export, history, i18n, server
 
 
 def _prescan_locale(argv):
@@ -42,6 +42,19 @@ def _matches(e, args):
     if args.since and (not e["date"] or e["date"] < args.since):
         return False
     return True
+
+
+def cmd_backfill(args):
+    """從 git 回填沒有日期的條目（預設只顯示，``--apply`` 才寫入）。"""
+    r = backfill.backfill(apply=args.apply, strip_number=args.strip_number, sort=args.sort)
+    for status, before, after, source in r["items"]:
+        if status == "ok":
+            print("%s  (%s)" % (after, source))
+        else:
+            print("? %s" % before)
+    mode = "已寫入" if r["applied"] else "試跑（未寫入）"
+    print(i18n.t("msg.backfill_summary", total=r["total"], converted=r["converted"],
+                 skipped=r["skipped"], mode=mode))
 
 
 def cmd_list(args):
@@ -166,6 +179,11 @@ def main(argv=None):
     ex.add_argument("out", nargs="?", default="_site", help=i18n.t("cli.export.out"))
     ex.add_argument("--branch", default="main", help=i18n.t("cli.export.branch"))
 
+    bf = sub.add_parser("backfill-dates", help=i18n.t("cli.backfill.help"))
+    bf.add_argument("--apply", action="store_true", help=i18n.t("cli.backfill.apply"))
+    bf.add_argument("--strip-number", action="store_true", help=i18n.t("cli.backfill.strip_number"))
+    bf.add_argument("--sort", action="store_true", help=i18n.t("cli.backfill.sort"))
+
     args = p.parse_args(argv)
     if args.cmd in (None, "serve"):
         server.serve(getattr(args, "port", 8710), not getattr(args, "no_browser", False))
@@ -184,6 +202,8 @@ def main(argv=None):
     elif args.cmd == "export":
         out = static_export.export(args.out, args.branch)
         print(i18n.t("msg.exported", path=str(out)))
+    elif args.cmd == "backfill-dates":
+        cmd_backfill(args)
 
 
 if __name__ == "__main__":

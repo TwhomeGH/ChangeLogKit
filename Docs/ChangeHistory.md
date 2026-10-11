@@ -1,5 +1,19 @@
 # ChangeHistory
 
+## 2026.10.11 changelogkit 0.3.0 發佈
+
+**類型**: 功能 · **檔案**: `backfill.py`、`cli.py`、`lang/*.json`
+
+### 修改 - 新增 `backfill-dates`：從 git 回填缺少日期的條目
+
+- 收編既有 changelog 用：對「標題沒有日期」的條目，找出它**首次出現的 commit**，補成 `## YYYY.MM.DD HH:MM 標題`。
+- 日期來源優先序：條目緊接的 `**時間**：<date>` 宣告行 → git 首次加入的 commit（編號式用穩定的 `## N.` 當搜尋字串，標題被改過也找得到）。
+- 預設**試跑**（只列出每筆 before→after），加 `--apply` 才寫入；**找不到日期者保持原樣**並列出，不填假日期。
+- 選項：`--strip-number`（去掉 `## N.`／`### Na.` 編號）、`--sort`（依日期由新到舊重排；**預設保留原順序**）。
+- 補測試（暫存 repo：無日期條目 → 從 git 補上）。
+
+---
+
 ## 2026.10.11 changelogkit 0.2.0 發佈
 
 **類型**: 修復 · **檔案**: `history.py`

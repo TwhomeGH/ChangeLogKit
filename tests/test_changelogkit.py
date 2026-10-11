@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from changelogkit import assets, config, history, index  # noqa: E402
+from changelogkit import assets, backfill, config, history, index  # noqa: E402
 
 SAMPLE = """# 變更歷史
 
@@ -122,6 +122,18 @@ class HistoryTests(unittest.TestCase):
             p.write_text(SAMPLE.replace("# 變更歷史\n\n", ""), encoding="utf-8")
             history.insert_block(history.build_block("2026.05.01", "H1", "功能", ""))
             self.assertTrue(history.read_history().startswith("# ChangeHistory\n"))
+
+    def test_backfill_dates_from_git(self):
+        # 沒有日期的條目 → 用「首次加入的 commit」時間補上日期。
+        with TempRepo() as repo:
+            p = repo.root / "Docs" / "ChangeHistory.md"
+            p.write_text("# H\n\n## 沒有日期的條目\n\n內容\n", encoding="utf-8")
+            _git(repo.root, "add", "-A")
+            _git(repo.root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "x")
+            r = backfill.backfill(apply=False)
+            self.assertEqual(r["converted"], 1)
+            self.assertEqual(r["items"][0][0], "ok")
+            self.assertRegex(r["items"][0][2], r"^## \d{4}\.\d{2}\.\d{2} \d{2}:\d{2} 沒有日期的條目$")
 
     def test_missing_history_is_graceful(self):
         # 沒有 ChangeHistory.md 時回空、不中斷；insert_block 會自動建立（含父目錄）。
