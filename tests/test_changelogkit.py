@@ -132,6 +132,18 @@ class IndexTests(unittest.TestCase):
             self.assertTrue(any(s["name"] == "Thing" for s in data["symbols"]))
             self.assertEqual(data["lockedPackages"], [{"identity": "x", "revision": "abc123"}])
 
+    def test_scanners(self):
+        js = "export function foo() {}\nclass Bar {}\nexport const BAZ = () => {}"
+        js_names = [s["name"] for s in index.scan_symbols(js, "app", "a.js")]
+        self.assertIn("foo", js_names)
+        self.assertIn("Bar", js_names)
+        self.assertIn("BAZ", js_names)
+        py = "def alpha():\n    pass\nclass Beta:\n    pass"
+        py_names = [s["name"] for s in index.scan_symbols(py, "app", "a.py")]
+        self.assertIn("alpha", py_names)
+        self.assertIn("Beta", py_names)
+        self.assertEqual(index.scan_symbols("x = 1", "app", "a.rb"), [])  # 未支援 → 空
+
     def test_validate_absent_features(self):
         with TempRepo():
             self.assertEqual(index.validate(), [])  # 沒有 features.json → 空清單

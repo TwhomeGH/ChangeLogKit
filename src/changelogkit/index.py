@@ -37,9 +37,10 @@ def git(root, *args):
 
 
 def files(root):
-    """只索引版本控管或未忽略的 Swift／Markdown，略過隱藏設定與產物。"""
+    """只索引版本控管或未忽略的原始碼／Markdown，略過隱藏設定與產物。"""
+    suffixes = (".swift", ".md", ".js", ".mjs", ".cjs", ".ts", ".jsx", ".tsx", ".py")
     paths = git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").split("\0")
-    return sorted({p for p in paths if p and Path(p).suffix in (".swift", ".md")
+    return sorted({p for p in paths if p and Path(p).suffix in suffixes
                    and not any(part.startswith(".") for part in Path(p).parts)})
 
 
@@ -103,6 +104,25 @@ _KIND_OF_KEYWORD = {
     "var": "property", "let": "property",
 }
 
+# JS／TS 宣告（``export`` 可選）。
+_JS_FUNC_RE = re.compile(
+    r"^(?:export\s+)?(?:default\s+)?(?:abstract\s+)?(?:async\s+)?"
+    r"(function|class|interface|type|enum|namespace)\s+([A-Za-z_$][\w$]*)")
+_JS_VAR_RE = re.compile(r"^export\s+(?:const|let|var)\s+([A-Za-z_$][\w$]*)")
+_JS_KIND = {"function": "func", "class": "class", "interface": "interface",
+            "type": "typealias", "enum": "enum", "namespace": "namespace"}
+
+# Python 宣告。
+_PY_DECL_RE = re.compile(r"^(?:async\s+)?(def|class)\s+([A-Za-z_]\w*)")
+_PY_KIND = {"def": "func", "class": "class"}
+
+
+def _symbol(kind, symbol_name, signature, repo, fname, line, doc):
+    """組出一個符號項目（各語言掃描器共用）。"""
+    return {"name": symbol_name or signature, "signature": signature, "kind": kind,
+            "repo": repo, "file": fname, "line": line,
+            "comment": "\n".join(doc).strip(), "url": link(repo, fname, line)}
+
 
 def _decl_keyword(line):
     """行首是否為宣告；回傳關鍵字（func／struct／var…）或 None。"""
@@ -131,15 +151,20 @@ def _symbol_name(keyword, signature):
     return match.group(1) if match else ""
 
 
-def scan_symbols(text, repo, name):
-    """掃描相鄰 /// 文件註釋與宣告，回傳符號清單（含種類、名稱、多行簽名）。
+def _clean_js_doc(line):
+    """清理 JS 區塊註釋的一行（去掉 ``/**``、``*/`` 與前後 ``*``）。"""
+    text = re.sub(r"^\s*/\*\*?", "", line)
+    text = re.sub(r"\*/?\s*$", "", text)
+    return text.strip().lstrip("*").strip()
+
+
+def _scan_swift(text, repo, name):
+    """Swift：相鄰 ``///`` 文件註釋與宣告。
 
     註釋與宣告之間允許屬性（@…）與條件編譯（#…）行；其餘非空行視為中斷註釋。
     """
     lines = text.splitlines()
-    symbols = []
-    doc = []
-    index = 0
+    symbols, doc, index = [], [], 0
     while index < len(lines):
         stripped = lines[index].strip()
         if stripped.startswith("///"):
@@ -152,12 +177,9 @@ def scan_symbols(text, repo, name):
             body = signature.split("{", 1)[0].strip()
             if keyword in ("var", "let", "typealias"):
                 body = body.split("=", 1)[0].strip()
-            symbols.append({
-                "name": _symbol_name(keyword, body) or body, "signature": body,
-                "kind": _KIND_OF_KEYWORD[keyword], "repo": repo, "file": name,
-                "line": index + 1, "comment": "\n".join(doc).strip(),
-                "url": link(repo, name, index + 1),
-            })
+            symbols.append(_symbol(_KIND_OF_KEYWORD[keyword],
+                                   _symbol_name(keyword, body) or body, body,
+                                   repo, name, index + 1, doc))
             doc = []
             index = following
             continue
@@ -165,6 +187,81 @@ def scan_symbols(text, repo, name):
             doc = []
         index += 1
     return symbols
+
+
+def _scan_js(text, repo, name):
+    """JS／TS：function／class／interface／type／enum／namespace 與 ``export`` 的 const／let／var。"""
+    lines = text.splitlines()
+    symbols, doc, index = [], [], 0
+    while index < len(lines):
+        stripped = lines[index].strip()
+        if stripped.startswith("/**"):
+            block = []
+            while index < len(lines) and "*/" not in lines[index]:
+                block.append(lines[index])
+                index += 1
+            if index < len(lines):
+                block.append(lines[index])
+                index += 1
+            doc = [t for t in (_clean_js_doc(b) for b in block) if t]
+            continue
+        if stripped.startswith("//"):
+            doc.append(stripped.lstrip("/ ").strip())
+            index += 1
+            continue
+        match = _JS_FUNC_RE.match(stripped)
+        var = _JS_VAR_RE.match(stripped) if not match else None
+        if match or var:
+            keyword = match.group(1) if match else "var"
+            symbol_name = match.group(2) if match else var.group(1)
+            signature, following = _collect_signature(lines, index)
+            body = signature.split("{", 1)[0].strip()
+            if not match:
+                body = body.split("=", 1)[0].strip()
+            symbols.append(_symbol(_JS_KIND.get(keyword, "property"), symbol_name, body,
+                                   repo, name, index + 1, doc))
+            doc = []
+            index = following
+            continue
+        if stripped and not stripped.startswith(("@", "#")):
+            doc = []
+        index += 1
+    return symbols
+
+
+def _scan_python(text, repo, name):
+    """Python：``def``／``async def``／``class``，相鄰 ``#`` 註釋當說明。"""
+    lines = text.splitlines()
+    symbols, doc, index = [], [], 0
+    while index < len(lines):
+        stripped = lines[index].strip()
+        if stripped.startswith("#") and not stripped.startswith("#!"):
+            doc.append(stripped.lstrip("#").strip())
+            index += 1
+            continue
+        match = _PY_DECL_RE.match(stripped)
+        if match:
+            signature, following = _collect_signature(lines, index)
+            body = re.sub(r":\s*$", "", signature).strip()
+            symbols.append(_symbol(_PY_KIND[match.group(1)], match.group(2), body,
+                                   repo, name, index + 1, doc))
+            doc = []
+            index = following
+            continue
+        if stripped and not stripped.startswith(("@", "#")):
+            doc = []
+        index += 1
+    return symbols
+
+
+_SCANNERS = {".swift": _scan_swift, ".js": _scan_js, ".mjs": _scan_js, ".cjs": _scan_js,
+             ".ts": _scan_js, ".jsx": _scan_js, ".tsx": _scan_js, ".py": _scan_python}
+
+
+def scan_symbols(text, repo, name):
+    """依副檔名分派到對應語言的宣告掃描器（文字比對，非 AST）。"""
+    scanner = _SCANNERS.get(Path(name).suffix.lower())
+    return scanner(text, repo, name) if scanner else []
 
 
 # ── 近期改動與差異 ────────────────────────────────────────────
