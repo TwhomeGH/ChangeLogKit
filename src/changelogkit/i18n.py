@@ -11,7 +11,7 @@ import warnings
 from pathlib import Path
 
 LANG_DIR = Path(__file__).resolve().parent / "lang"
-SUPPORTED = ("zh-TW", "en")
+SUPPORTED = ("zh-TW", "zh-CN", "ja", "en")
 _current = None
 _cache = {}
 
@@ -42,9 +42,14 @@ def _system_locale():
 
 
 def resolve_locale():
-    """依 --lang／環境變數／系統預設決定語系；非中文回退 ``en``。"""
+    """依 --lang／環境變數／系統預設決定語系；找不到對應語系檔則回退 ``en``。"""
     name = _system_locale().lower()
-    return "zh-TW" if name.startswith("zh") else "en"
+    guess = "en"
+    if name.startswith("zh"):
+        guess = "zh-TW" if any(tag in name for tag in ("tw", "hk", "mo", "hant")) else "zh-CN"
+    elif name.startswith("ja"):
+        guess = "ja"
+    return guess if guess == "en" or guess in available() else "en"
 
 
 def set_language(locale):
@@ -103,7 +108,11 @@ def subs():
     執行期 i18n 所需的 ``CK_LOCALES``（全部語系）與 ``CK_LOCALE``（目前語系）。
     """
     result = {"t." + key: value for key, value in _merged().items()}
-    result["lang_html"] = "zh-Hant" if current().lower().startswith("zh") else "en"
+    low = current().lower()
+    if low.startswith("zh"):
+        result["lang_html"] = "zh-Hant" if any(t in low for t in ("tw", "hk", "mo", "hant")) else "zh-Hans"
+    else:
+        result["lang_html"] = current()
     result["CK_LOCALES"] = _embed(all_catalogs())
     result["CK_LOCALE"] = current()
     return result

@@ -18,11 +18,15 @@
   const fallback = window.CK_LOCALE && locales[window.CK_LOCALE]
     ? window.CK_LOCALE : (names[0] || "en");
 
-  /* 把瀏覽器語言標籤對到我們支援的語系（只比對主要子標籤）。 */
+  /* 把瀏覽器語言標籤對到我們支援的語系。中文再分繁／簡（Hant／Hans）。 */
   function match(tag) {
     if (!tag) return null;
     const low = tag.toLowerCase();
-    if (low.startsWith("zh")) return names.find((n) => n.toLowerCase().startsWith("zh")) || null;
+    if (low.startsWith("zh")) {
+      const hant = /(tw|hk|mo|hant)/.test(low);
+      return names.find((n) => n.toLowerCase() === (hant ? "zh-tw" : "zh-cn"))
+        || names.find((n) => n.toLowerCase().startsWith("zh")) || null;
+    }
     const main = low.split("-")[0];
     return names.find((n) => n.toLowerCase().split("-")[0] === main) || null;
   }
@@ -70,7 +74,9 @@
   }
 
   function apply() {
-    document.documentElement.lang = active.toLowerCase().startsWith("zh") ? "zh-Hant" : active;
+    const low = active.toLowerCase();
+    document.documentElement.lang = low.startsWith("zh")
+      ? (/tw|hk|mo|hant/.test(low) ? "zh-Hant" : "zh-Hans") : active;
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       el.textContent = window.CK_T(el.getAttribute("data-i18n"));
     });
@@ -85,14 +91,22 @@
     });
     const btn = document.getElementById("locale");
     if (btn) { btn.textContent = "🌐 " + label(active); btn.title = names.join(" / "); }
+    /* 語系列（關於頁的 chips）：標出目前生效者。 */
+    document.querySelectorAll("[data-locale]").forEach((el) => {
+      el.classList.toggle("on", el.getAttribute("data-locale") === active);
+    });
   }
 
   window.CK_applyI18n = apply;
 
   /* 切換鈕：點一下循環到下一個語系。 */
   document.addEventListener("click", (event) => {
-    if (event.target && event.target.id === "locale" && names.length > 1) {
+    const target = event.target;
+    if (!target) return;
+    if (target.id === "locale" && names.length > 1) {
       window.CK_setLocale(names[(names.indexOf(active) + 1) % names.length]);
+    } else if (target.getAttribute && target.getAttribute("data-locale")) {
+      window.CK_setLocale(target.getAttribute("data-locale"));
     }
   });
 

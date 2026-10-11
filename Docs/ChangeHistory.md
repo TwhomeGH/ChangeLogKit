@@ -1,3 +1,15 @@
+## 2026.10.11 changelogkit 0.1.4 發佈
+
+**類型**: 功能 · **檔案**: `lang/zh-CN.json`、`lang/ja.json`、`i18n.py`、`assets/i18n.js`、`assets/theme.css`
+
+### 修改 - 新增簡中／日文語系；「UI 語系」改為可點選 chips
+
+- 新增 `lang/zh-CN.json`（簡體）與 `lang/ja.json`（日文），key 與其他語系**完全對齊**（測試把關）。
+- 語系判定細分中文：`zh-TW`／`zh-Hant`／`zh-HK`／`zh-MO` → zh-TW，其餘 `zh*` → zh-CN；`ja*` → ja；`<html lang>` 對應 `zh-Hant`／`zh-Hans`。
+- 關於頁「UI 語系」由空格串接的長字串改為**可點選的 chips**（自動換行）；點擊即切換語系，目前生效者高亮。避免未來語系變多時擠成一大行。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.3 發佈
 
 **類型**: 功能 · **檔案**: `assets/index.html`、`assets/dev.html`、`assets/file.html`、`assets/about.html`、`assets/i18n.js`

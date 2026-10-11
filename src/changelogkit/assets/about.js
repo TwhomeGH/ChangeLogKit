@@ -5,9 +5,23 @@ fetch("/api/buildinfo")
   .then((r) => r.json())
   .then((b) => {
     document.getElementById("version").textContent = b.version || CK_T("about.na");
-    /* UI 語系清單，* 標示目前生效者。 */
-    document.getElementById("locales").textContent =
-      (b.locales || []).map((l) => l + (l === b.locale ? " *" : "")).join("   ");
+    /* UI 語系清單：可點擊切換的 chips（目前生效者由 CK_applyI18n 高亮）。 */
+    const loc = document.getElementById("locales");
+    if (loc) {
+      loc.textContent = "";
+      const wrap = document.createElement("div");
+      wrap.className = "lchips";
+      (b.locales || []).forEach((l) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "lchip";
+        chip.setAttribute("data-locale", l);
+        chip.textContent = l;
+        wrap.appendChild(chip);
+      });
+      loc.appendChild(wrap);
+      if (window.CK_applyI18n) window.CK_applyI18n();
+    }
     const raw = b.commit || "";
     if (!raw) {
       document.getElementById("commit").textContent = CK_T("about.unknown");

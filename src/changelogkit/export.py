@@ -188,12 +188,15 @@ def _write_about(out, cfg, data, footer, slug):
     else:
         source = _esc(i18n.t("about.unknown"))
     home = ('<a href="https://github.com/%s">github.com/%s</a>' % (slug, slug)) if slug else _esc(cfg.root.name)
+    # 語系列：可點擊切換的 chips（目前生效者由前端 CK_applyI18n 高亮）。
+    locales = '<span class="lchips">%s</span>' % "".join(
+        '<button type="button" class="lchip" data-locale="%s">%s</button>' % (_esc(name), _esc(name))
+        for name in i18n.available())
     about_dir = out / "about"
     about_dir.mkdir()
     (about_dir / "index.html").write_text(assets.render(
         "static_about.html", **i18n.subs(), title=_esc(cfg.title), footer=footer,
-        version=_esc(buildinfo.version()), source=source,
-        locales=_esc("  ".join(i18n.available())), home=home), encoding="utf-8")
+        version=_esc(buildinfo.version()), source=source, locales=locales, home=home), encoding="utf-8")
 
 
 def export(out_dir, branch="main"):
