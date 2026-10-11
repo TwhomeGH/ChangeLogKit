@@ -6,7 +6,7 @@
 import argparse
 import sys
 
-from . import history, server
+from . import export as static_export, history, server
 
 
 def cmd_add(args):
@@ -90,6 +90,10 @@ def main(argv=None):
     s = sub.add_parser("show", help="顯示單筆完整內容（編號或關鍵字）")
     s.add_argument("query")
 
+    ex = sub.add_parser("export", help="匯出唯讀靜態站（供 GitHub Pages）")
+    ex.add_argument("out", nargs="?", default="_site", help="輸出目錄（預設 _site）")
+    ex.add_argument("--branch", default="main", help="檔案連結指向的 branch（預設 main）")
+
     args = p.parse_args(argv)
     if args.cmd in (None, "serve"):
         server.serve(getattr(args, "port", 8710), not getattr(args, "no_browser", False))
@@ -99,6 +103,9 @@ def main(argv=None):
         cmd_list(args)
     elif args.cmd == "show":
         cmd_show(args)
+    elif args.cmd == "export":
+        out = static_export.export(args.out, args.branch)
+        print("已匯出靜態站：%s" % out)
 
 
 if __name__ == "__main__":

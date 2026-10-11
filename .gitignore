@@ -8,3 +8,4 @@ dist/
 venv/
 .pytest_cache/
 .mypy_cache/
+_site/
