@@ -11,6 +11,7 @@
 """
 
 import html
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -76,7 +77,7 @@ def _file_link(path, blob_base):
 
 def _md(raw):
     """以 ``<template>`` 內嵌原始 markdown（HTML 轉義）；前端 markdown.js 就地渲染。"""
-    return '<div data-md><template>%s</template></div>' % _esc(raw)
+    return '<div class="rendered" data-md><template>%s</template></div>' % _esc(raw)
 
 
 def _render_history(cfg):
@@ -87,8 +88,11 @@ def _render_history(cfg):
         when = _esc(entry["date"] or "")
         if entry["time"]:
             when += " " + _esc(entry["time"])
+        # 去掉標題行（卡片已有 h2）與結尾分隔線，避免重複標題與多餘 <hr>。
+        body = "\n".join(entry["raw"].split("\n")[1:]).strip()
+        body = re.sub(r"\n-{3,}\s*$", "", body).strip()
         out.append('<article class="card"><h2>%s</h2><div class="meta">%s</div>%s</article>'
-                   % (_esc(entry["title"]), when, _md(entry["raw"])))
+                   % (_esc(entry["title"]), when, _md(body)))
     return "\n".join(out), len(entries)
 
 

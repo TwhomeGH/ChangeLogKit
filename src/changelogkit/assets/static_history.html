@@ -9,6 +9,18 @@
 <script src="assets/markdown.js"></script>
 <link rel="stylesheet" href="assets/theme.css">
 <link rel="stylesheet" href="assets/file.css">
+<style>
+  /* 靜態首頁版面：置中、留邊，卡片間距一致。 */
+  main { max-width: 960px; margin: 0 auto; padding: 22px 24px 64px }
+  #hint { margin: 4px 0 12px }
+  #entries { display: flex; flex-direction: column; gap: 14px }
+  #entries .card { margin: 0 }
+  .card h2 { margin: 0 0 6px; font-size: 19px; line-height: 1.35 }
+  .card .meta { color: var(--mut); font-size: 12.5px; margin-bottom: 10px }
+  .card .rendered { max-width: none; margin: 0; padding: 0 }
+  .card .rendered > :first-child { margin-top: 0 }
+  .card .rendered > :last-child { margin-bottom: 0 }
+</style>
 </head><body>
 <header class="appbar">
   <h1>{{title}}</h1>
