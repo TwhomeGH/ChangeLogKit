@@ -99,17 +99,12 @@ def _summary_body(text):
 
 
 def _norm_refs(refs):
-    """把多筆相關文件正規化為以 `` · `` 串接的單行字串。
-
-    接受 list（網頁 GUI）或字串（每行一筆，CLI 用），保留每筆的
-    markdown 連結寫法（如 ``[說明](Docs/x.md)``）。
-    """
+    """把相關文件正規化為字串清單（接受 list 或每行一筆的字串）。"""
     if not refs:
-        return ""
+        return []
     if isinstance(refs, str):
         refs = refs.splitlines()
-    items = [str(r).strip() for r in refs if str(r).strip()]
-    return " · ".join(items)
+    return [str(r).strip() for r in refs if str(r).strip()]
 
 
 def build_block(date_str, title, type_, file_, problem="", root_cause="",
@@ -145,7 +140,12 @@ def build_block(date_str, title, type_, file_, problem="", root_cause="",
             lines += ["- %s" % c for c in rest]
         lines.append("")
     if refs:
-        lines.append("**相關文件**: %s" % refs)
+        if len(refs) == 1:
+            lines.append("**相關文件**: %s" % refs[0])
+        else:
+            # 多筆時逐行條列，避免原始檔出現一大長行。
+            lines.append("**相關文件**:")
+            lines.extend("- %s" % r for r in refs)
     while lines and lines[-1] == "":
         lines.pop()
     lines += ["", "---", ""]
