@@ -66,7 +66,12 @@ def validate():
     features = config.load().features
     if features is None or not features.exists():
         return []
-    catalog = json.loads(features.read_text(encoding="utf-8"))
+    raw = json.loads(features.read_text(encoding="utf-8"))
+    # 支援兩種形式：純陣列；或 { "labels": {...}, "features": [...] }（全域欄位標籤）。
+    if isinstance(raw, dict):
+        catalog, global_labels = raw.get("features") or [], raw.get("labels") or {}
+    else:
+        catalog, global_labels = raw, {}
     repo = default_repo()
     seen = set()
     result = []
@@ -83,6 +88,7 @@ def validate():
         item = dict(feature)
         item["id"] = fid
         item.setdefault("summary", "")
+        item["labels"] = {**global_labels, **(feature.get("labels") or {})}
         item["files"] = list(feature.get("files") or [])
         item["docs"] = list(feature.get("docs") or [])
         result.append(item)

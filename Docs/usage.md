@@ -102,3 +102,11 @@ path = "${SOME_LIB_ROOT}"                      # 支援 ${ENV} 展開；不存�
 - 保留鍵：`name`（必填）、`id`（可選，預設取 `name`）、`summary`、`files`、`docs`、`labels`。
 - 其餘欄位一律當「接入狀態」逐列渲染；欄位標籤可用同筆的 `labels` 對照（預設直接用 key）。
 - `files`／`docs` 若填，必須是索引內（Git 可見）的相對路徑，否則載入時報錯。
+- 也支援**物件形式**（共用標籤一次定義，適合多筆共用同一組欄位）：
+
+```json
+{ "labels": { "replaykit": "ReplayKit", "screencapturekit": "ScreenCaptureKit" },
+  "features": [ { "name": "…", "replaykit": "支援" } ] }
+```
+
+  頂層 `labels` 為全域欄位標籤，逐筆的 `labels` 可覆寫。
