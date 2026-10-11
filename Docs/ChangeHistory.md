@@ -1,3 +1,15 @@
+## 2026.10.11 changelogkit 0.1.3 發佈
+
+**類型**: 功能 · **檔案**: `assets/index.html`、`assets/dev.html`、`assets/file.html`、`assets/about.html`、`assets/i18n.js`
+
+### 修改 - 本機 GUI 也能切換語系
+
+- 動態 GUI（變更歷史／開發索引／檔案檢視／關於）頂列新增**語系切換鈕**；頁面內嵌全部語系（`CK_LOCALES`），依 `navigator.language`＋localStorage 選擇（與靜態站相同機制）。
+- 動態頁介面文字加 `data-i18n`（含 placeholder 的 `data-i18n-ph`）；切換語系後**重新載入**以重繪 JS 產生的內容。
+- `i18n.js`：`CK_setLocale` 僅在**使用者主動切換**時發出 `ck-locale-change`（初始載入不發，避免無限重載）。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.2 發佈
 
 **類型**: 功能 · **檔案**: `assets/i18n.js`、`export.py`、`assets/static_about.html`

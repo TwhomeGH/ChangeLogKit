@@ -2,55 +2,57 @@
 <html lang="{{lang_html}}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{t.nav.history}}</title>
+<title data-i18n="nav.history">{{t.nav.history}}</title>
 <script src="/assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
 <script src="/assets/i18n.js"></script>
-<script>window.CK_I18N = {{i18n_json}};</script>
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/index.css">
 </head><body>
 <header class="appbar">
-  <h1>{{t.nav.history}}</h1>
-  <a href="/development">{{t.history.dev_link}}</a>
-  <a href="/about">{{t.nav.about}}</a>
-  <input id="q" aria-label="{{t.history.search}}" placeholder="{{t.history.search}}">
-  <select id="type" aria-label="{{t.history.filter_all}}">
-    <option value="">{{t.history.filter_all}}</option><option>修復</option><option>新增</option>
+  <h1 data-i18n="nav.history">{{t.nav.history}}</h1>
+  <a href="/development" data-i18n="history.dev_link">{{t.history.dev_link}}</a>
+  <a href="/about" data-i18n="nav.about">{{t.nav.about}}</a>
+  <input id="q" aria-label="{{t.history.search}}" data-i18n-aria="history.search" placeholder="{{t.history.search}}" data-i18n-ph="history.search">
+  <select id="type" aria-label="{{t.history.filter_all}}" data-i18n-aria="history.filter_all">
+    <option value="" data-i18n="history.filter_all">{{t.history.filter_all}}</option><option>修復</option><option>新增</option>
     <option>優化</option><option>重構</option><option>測試</option>
   </select>
-  <button id="reload" aria-label="{{t.history.reload}}" title="{{t.history.reload}}">↻</button>
-  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
-  <button id="add" class="primary">{{t.history.add}}</button>
+  <button id="reload" aria-label="{{t.history.reload}}" data-i18n-aria="history.reload" title="{{t.history.reload}}" data-i18n-title="history.reload">↻</button>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
+  <button id="add" class="primary" data-i18n="history.add">{{t.history.add}}</button>
 </header>
 <main>
   <aside id="list"></aside>
-  <section id="detail"><div class="empty">{{t.history.empty_select}}</div></section>
+  <section id="detail"><div class="empty" data-i18n="history.empty_select">{{t.history.empty_select}}</div></section>
 </main>
 
 <div id="modal" hidden><div class="dialog">
-  <h2>{{t.form.modal_title}}</h2>
-  <label for="f-title">{{t.form.title}}</label><input id="f-title" placeholder="{{t.form.title_ph}}">
+  <h2 data-i18n="form.modal_title">{{t.form.modal_title}}</h2>
+  <label for="f-title" data-i18n="form.title">{{t.form.title}}</label><input id="f-title" placeholder="{{t.form.title_ph}}" data-i18n-ph="form.title_ph">
   <div class="row">
-    <div><label for="f-date">{{t.form.date}}</label><input id="f-date" placeholder="YYYY.MM.DD"></div>
-    <div><label for="f-time">{{t.form.time}}</label><input id="f-time" placeholder="HH:MM"></div>
-    <div><label for="f-type">{{t.form.type}}</label>
+    <div><label for="f-date" data-i18n="form.date">{{t.form.date}}</label><input id="f-date" placeholder="YYYY.MM.DD"></div>
+    <div><label for="f-time" data-i18n="form.time">{{t.form.time}}</label><input id="f-time" placeholder="HH:MM"></div>
+    <div><label for="f-type" data-i18n="form.type">{{t.form.type}}</label>
       <select id="f-type"><option>修復</option><option>新增</option><option>優化</option><option>重構</option><option>測試</option></select>
     </div>
   </div>
-  <label for="f-file">{{t.form.file}}</label><input id="f-file" placeholder="path/to/file" list="gitfiles">
+  <label for="f-file" data-i18n="form.file">{{t.form.file}}</label><input id="f-file" placeholder="path/to/file" list="gitfiles">
   <datalist id="gitfiles"></datalist>
   <div class="chips" id="chips"></div>
-  <label for="f-problem">{{t.form.problem}}</label><textarea id="f-problem" placeholder="{{t.form.problem_ph}}"></textarea>
-  <label for="f-cause">{{t.form.cause}}</label><textarea id="f-cause" placeholder="{{t.form.cause_ph}}"></textarea>
-  <label for="f-changes">{{t.form.changes}}</label><textarea id="f-changes" placeholder="{{t.form.changes_ph}}"></textarea>
-  <label>{{t.form.refs}}</label>
+  <label for="f-problem" data-i18n="form.problem">{{t.form.problem}}</label><textarea id="f-problem" placeholder="{{t.form.problem_ph}}" data-i18n-ph="form.problem_ph"></textarea>
+  <label for="f-cause" data-i18n="form.cause">{{t.form.cause}}</label><textarea id="f-cause" placeholder="{{t.form.cause_ph}}" data-i18n-ph="form.cause_ph"></textarea>
+  <label for="f-changes" data-i18n="form.changes">{{t.form.changes}}</label><textarea id="f-changes" placeholder="{{t.form.changes_ph}}" data-i18n-ph="form.changes_ph"></textarea>
+  <label data-i18n="form.refs">{{t.form.refs}}</label>
   <div id="refs"></div>
-  <button type="button" id="add-ref">{{t.form.add_ref}}</button>
+  <button type="button" id="add-ref" data-i18n="form.add_ref">{{t.form.add_ref}}</button>
   <div class="foot">
     <div id="form-err" class="err"></div>
-    <div class="right"><button id="cancel">{{t.form.cancel}}</button><button id="submit" class="primary">{{t.form.insert}}</button></div>
+    <div class="right"><button id="cancel" data-i18n="form.cancel">{{t.form.cancel}}</button><button id="submit" class="primary" data-i18n="form.insert">{{t.form.insert}}</button></div>
   </div>
 </div></div>
 
 <script src="/assets/index.js"></script>
+<script>document.addEventListener("ck-locale-change", () => location.reload());</script>
 </body></html>

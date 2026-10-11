@@ -61,6 +61,8 @@
     active = name;
     try { localStorage.setItem(STORE, name); } catch (e) {}
     apply();
+    /* 僅在「使用者主動切換」時通知（初始載入不通知，避免無限重載）。 */
+    document.dispatchEvent(new CustomEvent("ck-locale-change", { detail: { locale: active } }));
   };
 
   function label(name) {
@@ -78,9 +80,11 @@
     document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
       el.setAttribute("aria-label", window.CK_T(el.getAttribute("data-i18n-aria")));
     });
+    document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
+      el.placeholder = window.CK_T(el.getAttribute("data-i18n-ph"));
+    });
     const btn = document.getElementById("locale");
     if (btn) { btn.textContent = "🌐 " + label(active); btn.title = names.join(" / "); }
-    document.dispatchEvent(new CustomEvent("ck-locale-change", { detail: { locale: active } }));
   }
 
   window.CK_applyI18n = apply;

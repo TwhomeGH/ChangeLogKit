@@ -4,20 +4,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{title}} — {{t.dev.title}}</title>
 <script src="/assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
 <script src="/assets/i18n.js"></script>
-<script>window.CK_I18N = {{i18n_json}};</script>
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/file.css">
 </head><body>
 <header class="appbar">
-  <a href="/development" id="back">{{t.file.back}}</a>
+  <a href="/development" id="back" data-i18n="file.back">{{t.file.back}}</a>
   <strong id="name">{{title}}</strong>
   <span class="muted">{{repo}}</span>
   <span class="spacer"></span>
-  <button id="mode" hidden>{{t.file.source}}</button>
-  <input id="jump" type="number" min="1" placeholder="{{t.file.jump}}" aria-label="{{t.file.jump}}">
-  <button id="copy" title="{{t.file.copy}}">{{t.file.copy}}</button>
-  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
+  <button id="mode" hidden data-i18n="file.source">{{t.file.source}}</button>
+  <input id="jump" type="number" min="1" placeholder="{{t.file.jump}}" data-i18n-ph="file.jump" aria-label="{{t.file.jump}}" data-i18n-aria="file.jump">
+  <button id="copy" title="{{t.file.copy}}" data-i18n-title="file.copy" data-i18n="file.copy">{{t.file.copy}}</button>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
 <div class="wrap">
   <pre id="src" data-repo="{{repo}}" data-path="{{path}}" data-line="{{line}}">{{content}}</pre>
@@ -26,4 +27,5 @@
 <script src="/assets/highlight.js"></script>
 <script src="/assets/markdown.js"></script>
 <script src="/assets/file.js"></script>
+<script>document.addEventListener("ck-locale-change", () => location.reload());</script>
 </body></html>

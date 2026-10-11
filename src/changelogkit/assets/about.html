@@ -2,10 +2,10 @@
 <html lang="{{lang_html}}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{t.about.title}}</title>
+<title data-i18n="about.title">{{t.about.title}}</title>
 <script src="/assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
 <script src="/assets/i18n.js"></script>
-<script>window.CK_I18N = {{i18n_json}};</script>
 <link rel="stylesheet" href="/assets/theme.css">
 <style>
   main { max-width: 720px; margin: 0 auto; padding: 24px }
@@ -16,22 +16,24 @@
 </style>
 </head><body>
 <header class="appbar">
-  <h1>{{t.about.title}}</h1>
-  <a href="/">{{t.nav.history}}</a>
-  <a href="/development">{{t.nav.dev}}</a>
-  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
+  <h1 data-i18n="about.title">{{t.about.title}}</h1>
+  <a href="/" data-i18n="nav.history">{{t.nav.history}}</a>
+  <a href="/development" data-i18n="nav.dev">{{t.nav.dev}}</a>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
 <main>
   <article class="card">
     <h2>changelogkit</h2>
-    <p class="muted">{{t.about.intro}}</p>
+    <p class="muted" data-i18n="about.intro">{{t.about.intro}}</p>
     <dl>
-      <dt>{{t.about.version}}</dt><dd id="version">…</dd>
-      <dt>{{t.about.commit}}</dt><dd id="commit">…</dd>
-      <dt>{{t.about.locales}}</dt><dd id="locales">…</dd>
-      <dt>{{t.about.home}}</dt><dd><a href="https://github.com/TwhomeGH/ChangeLogKit">github.com/TwhomeGH/ChangeLogKit</a></dd>
+      <dt data-i18n="about.version">{{t.about.version}}</dt><dd id="version">…</dd>
+      <dt data-i18n="about.commit">{{t.about.commit}}</dt><dd id="commit">…</dd>
+      <dt data-i18n="about.locales">{{t.about.locales}}</dt><dd id="locales">…</dd>
+      <dt data-i18n="about.home">{{t.about.home}}</dt><dd><a href="https://github.com/TwhomeGH/ChangeLogKit">github.com/TwhomeGH/ChangeLogKit</a></dd>
     </dl>
   </article>
 </main>
 <script src="/assets/about.js"></script>
+<script>document.addEventListener("ck-locale-change", () => location.reload());</script>
 </body></html>

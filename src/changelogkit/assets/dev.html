@@ -2,28 +2,30 @@
 <html lang="{{lang_html}}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{t.dev.title}}</title>
+<title data-i18n="dev.title">{{t.dev.title}}</title>
 <script src="/assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
 <script src="/assets/i18n.js"></script>
-<script>window.CK_I18N = {{i18n_json}};</script>
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/dev.css">
 </head><body>
 <header class="appbar">
-  <h1>{{t.dev.title}}</h1>
-  <a href="/">{{t.nav.history}}</a>
-  <a href="/about">{{t.nav.about}}</a>
-  <input id="search" aria-label="{{t.dev.search}}" placeholder="{{t.dev.search}}">
-  <select id="repo" aria-label="{{t.dev.repo_all}}"><option value="">{{t.dev.repo_all}}</option></select>
-  <button id="reload" aria-label="{{t.dev.reload}}" title="{{t.dev.reload}}">↻</button>
-  <button id="theme" aria-label="{{t.btn.theme}}" title="{{t.btn.theme}}">🌙</button>
+  <h1 data-i18n="dev.title">{{t.dev.title}}</h1>
+  <a href="/" data-i18n="nav.history">{{t.nav.history}}</a>
+  <a href="/about" data-i18n="nav.about">{{t.nav.about}}</a>
+  <input id="search" aria-label="{{t.dev.search}}" data-i18n-aria="dev.search" placeholder="{{t.dev.search}}" data-i18n-ph="dev.search">
+  <select id="repo" aria-label="{{t.dev.repo_all}}" data-i18n-aria="dev.repo_all"><option value="" data-i18n="dev.repo_all">{{t.dev.repo_all}}</option></select>
+  <button id="reload" aria-label="{{t.dev.reload}}" data-i18n-aria="dev.reload" title="{{t.dev.reload}}" data-i18n-title="dev.reload">↻</button>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
 <main>
-  <p class="muted" id="hint">{{t.dev.hint}}</p>
+  <p class="muted" id="hint" data-i18n="dev.hint">{{t.dev.hint}}</p>
   <nav id="tabs"></nav>
-  <div id="message" role="status" class="muted">{{t.dev.loading}}</div>
+  <div id="message" role="status" class="muted" data-i18n="dev.loading">{{t.dev.loading}}</div>
   <div id="filters" hidden></div>
   <section id="results"></section>
 </main>
 <script src="/assets/dev.js"></script>
+<script>document.addEventListener("ck-locale-change", () => location.reload());</script>
 </body></html>
