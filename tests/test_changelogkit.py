@@ -206,6 +206,11 @@ class I18nTests(unittest.TestCase):
         self.assertEqual(i18n.t("nope.key"), "nope.key")
         i18n.set_language(None)
 
+    def test_available_locales(self):
+        from changelogkit import i18n
+        self.assertIn("zh-TW", i18n.available())
+        self.assertIn("en", i18n.available())
+
 
 if __name__ == "__main__":
     unittest.main()

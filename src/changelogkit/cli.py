@@ -1,4 +1,4 @@
-"""命令列介面：serve / add / list / show / languages / symbols / export。
+"""命令列介面：serve / add / list / show / languages / locals / symbols / export。
 
 網頁 GUI 為主要介面；CLI 供腳本化使用。字串經 :mod:`i18n`（預設跟隨系統、
 判定為非中文時回退 ``en``；可用 ``--locale`` 覆寫）。
@@ -78,8 +78,17 @@ def cmd_languages(args):
     """列出支援的程式語言（API 宣告掃描涵蓋範圍）。"""
     from .scanners import SUPPORTED_LANGUAGES
 
+    print(i18n.t("msg.languages_header"))
     for lang in SUPPORTED_LANGUAGES:
-        print(lang)
+        print("  " + lang)
+
+
+def cmd_locales(args):
+    """列出支援的 UI 語系，並以 ``*`` 標示目前生效者。"""
+    active = i18n.current()
+    print(i18n.t("msg.locales_header", current=active))
+    for name in i18n.available():
+        print("  " + name + (" *" if name == active else ""))
 
 
 def _symbol_matches(symbol, query, lang, kind, repo):
@@ -144,6 +153,7 @@ def main(argv=None):
     sh.add_argument("query", help=i18n.t("cli.show.query"))
 
     sub.add_parser("languages", help=i18n.t("cli.languages.help"))
+    sub.add_parser("locales", help=i18n.t("cli.locales.help"))
 
     sy = sub.add_parser("symbols", help=i18n.t("cli.symbols.help"))
     sy.add_argument("query", nargs="?", default="", help=i18n.t("cli.symbols.query"))
@@ -167,6 +177,8 @@ def main(argv=None):
         cmd_show(args)
     elif args.cmd == "languages":
         cmd_languages(args)
+    elif args.cmd == "locales":
+        cmd_locales(args)
     elif args.cmd == "symbols":
         cmd_symbols(args)
     elif args.cmd == "export":

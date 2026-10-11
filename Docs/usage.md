@@ -16,6 +16,8 @@ changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 
 
 全域旗標 **`--locale zh-TW|en`** 可切換 **CLI 說明與網頁語系**（預設跟隨系統；判定為非中文時回退 `en`）。
 
+查詢類子命令：`languages`（列出**程式語言**：API 宣告掃描涵蓋範圍）與 `locales`（列出 **UI 語系**，`*` 標示目前生效者）。
+
 ## 網頁 GUI
 
 `serve` 之後：

@@ -34,6 +34,8 @@
   "msg.not_found": "No matching entry: {query}",
   "msg.exported": "Static site exported to: {path}",
   "msg.symbols_summary": "{hits} of {total} symbols matched (languages: {langs})",
+  "msg.languages_header": "Supported languages (API declaration scanning):",
+  "msg.locales_header": "UI languages (current: {current}, * = active):",
 
   "nav.history": "Changelog",
   "nav.dev": "Dev index",

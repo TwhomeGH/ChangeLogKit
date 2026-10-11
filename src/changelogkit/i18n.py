@@ -53,6 +53,15 @@ def set_language(locale):
     _current = locale or None
 
 
+def available():
+    """可用語系（``lang/*.json`` 檔名，排序）。"""
+    try:
+        names = sorted(p.stem for p in LANG_DIR.glob("*.json"))
+    except OSError:
+        names = []
+    return names or list(SUPPORTED)
+
+
 def current():
     """目前生效的語系。"""
     return _current or resolve_locale()

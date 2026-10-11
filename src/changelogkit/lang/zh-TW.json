@@ -34,6 +34,8 @@
   "msg.not_found": "找不到符合的紀錄: {query}",
   "msg.exported": "已匯出靜態站：{path}",
   "msg.symbols_summary": "符合 {hits} / 共 {total} 個符號（支援語言：{langs}）",
+  "msg.languages_header": "支援語言（API 宣告掃描）：",
+  "msg.locales_header": "UI 語系（目前：{current}，* 為目前）：",
 
   "nav.history": "變更歷史",
   "nav.dev": "開發索引",
