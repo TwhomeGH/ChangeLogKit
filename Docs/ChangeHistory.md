@@ -1,3 +1,16 @@
+## 2026.10.11 changelogkit 0.1.9 發佈
+
+**類型**: 功能 · **檔案**: `scanners/javascript.py`
+
+### 修改 - 正確解析 `.d.ts`（TypeScript 型別宣告檔）
+
+- **支援 `declare`**：`declare class`／`function`／`const`／`namespace`／`module` 皆納入掃描（前綴修飾接受 `declare`）。
+- **支援 `;` 結尾的簽名成員**：`.d.ts` 中沒有實作的方法／屬性簽名（`name(args): T;`、`readonly x: T;`）也抓成成員，配合既有的依縮排收納。
+- 一般原始碼不受影響：`.js`／`.ts` 的 `declare` 同樣可用；**`;` 簽名僅在 `.d.ts` 啟用**，避免誤判。
+- 實測：TTWChat 的 `.d.ts` → 463 個頂層符號；`WebSocketManager` → 18 個成員、`KickWebSocket` → 6 個、`EventEmitter` → 11 個。
+
+---
+
 ## 2026.10.11 changelogkit 0.1.8 發佈
 
 **類型**: 優化 · **檔案**: `lang/*.json`、`assets/dev.js`、`Docs/*.md`

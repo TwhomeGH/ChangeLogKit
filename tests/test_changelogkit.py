@@ -147,6 +147,12 @@ class IndexTests(unittest.TestCase):
         self.assertIn("foo", js_names)
         self.assertIn("Bar", js_names)
         self.assertIn("BAZ", js_names)
+        ts = ("export declare class KickWebSocket {\n"
+              "  connect(channel: string): void;\n  readonly ready: boolean;\n}\n"
+              "export declare function create(): void;")
+        ts_names = [s["name"] for s in index.scan_symbols(ts, "app", "k.d.ts")]
+        for expected in ("KickWebSocket", "connect", "ready", "create"):
+            self.assertIn(expected, ts_names)
         py = "def alpha():\n    pass\nclass Beta:\n    pass"
         py_names = [s["name"] for s in index.scan_symbols(py, "app", "a.py")]
         self.assertIn("alpha", py_names)
