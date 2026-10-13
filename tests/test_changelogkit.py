@@ -295,6 +295,18 @@ class CommunityTests(unittest.TestCase):
             self.assertTrue(path.read_text(encoding="utf-8").startswith("# "))
             self.assertFalse(community.write_template()[1])  # 已存在 → 不覆蓋
 
+    def test_template_is_markdownlint_clean(self):
+        # MD041（首行 H1）、MD022（標題前後空行）、MD047（結尾單一換行）。
+        text = community.template()
+        lines = text.split("\n")
+        self.assertTrue(lines[0].startswith("# "))
+        self.assertTrue(text.endswith("\n") and not text.endswith("\n\n"))
+        for i, line in enumerate(lines):
+            if line.startswith("#"):
+                self.assertEqual(lines[i - 1] if i else "", "", "標題前需空行（MD022）：" + line)
+                self.assertTrue(i + 1 < len(lines) and lines[i + 1] == "",
+                                "標題後需空行（MD022）：" + line)
+
 
 class AssetTests(unittest.TestCase):
     def test_default_asset(self):

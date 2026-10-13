@@ -1,5 +1,24 @@
 # ChangeHistory
 
+## 2026.10.14 changelogkit 0.7.1 發佈
+
+**類型**: 修正 · **檔案**: `community.py`、`tests/test_changelogkit.py`
+
+### 問題 - `community-init` 產生的範本不符 markdownlint
+
+預設範本的 `##` 標題後沒有空行，觸發 markdownlint MD022。
+
+### 根因 - 範本字串的 `##` 與說明之間少了空行
+
+`_TEMPLATE` 在每個 `##` 標題後直接接說明段落。
+
+### 修改 - 補上標題後空行並加測試
+
+- `_TEMPLATE` 的每個 `##` 標題後補空行（MD022）。
+- 新增測試檢查範本符合 MD041／MD022／MD047。
+
+---
+
 ## 2026.10.14 changelogkit 0.7.0 發佈
 
 **類型**: 功能 · **檔案**: `community.py`、`config.py`、`server.py`、`export.py`、`cli.py`、`buildinfo.py`、`__init__.py`、`assets/about.html`、`assets/static_about.html`、`assets/theme.css`、`lang/*.json`
