@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from changelogkit import assets, backfill, config, history, index  # noqa: E402
+from changelogkit import assets, backfill, community, config, history, index  # noqa: E402
 
 SAMPLE = """# 變更歷史
 
@@ -85,6 +85,7 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(cfg.title, "測試專案")
             self.assertEqual(cfg.root, repo.root.resolve())
             self.assertEqual(cfg.history, repo.root / "Docs/ChangeHistory.md")
+            self.assertEqual(cfg.community, repo.root / "Docs/community.md")
             self.assertEqual([s.name for s in cfg.sources], ["app"])
 
 
@@ -227,6 +228,22 @@ class IndexTests(unittest.TestCase):
         with TempRepo():
             self.assertEqual(index.validate(), [])  # 沒有 features.json → 空清單
 
+    def test_rel_path(self):
+        with TempRepo() as repo:
+            self.assertEqual(index.rel_path(repo.root / "Docs/ChangeHistory.md"),
+                             "Docs/ChangeHistory.md")
+            self.assertIsNone(index.rel_path(repo.root.parent / "outside.md"))  # root 外 → None
+            self.assertIsNone(index.rel_path(None))
+
+    def test_snapshot_contexts(self):
+        # 前端渲染 markdown 需要「來源文件脈絡」以改寫相對連結。
+        with TempRepo():
+            data = index.snapshot()
+            self.assertEqual(data["contexts"]["history"],
+                             {"repo": "app", "path": "Docs/ChangeHistory.md"})
+            self.assertEqual(data["contexts"]["features"]["path"],
+                             "Docs/development/features.json")
+
     def test_routes(self):
         with TempRepo():
             code, body, mime = index.route("/development/data", "")
@@ -236,6 +253,47 @@ class IndexTests(unittest.TestCase):
             self.assertEqual(index.route("/development/diff", "repo=app&worktree=1")[0], 200)
             self.assertEqual(index.route("/development/diff", "repo=app&hash=zzz")[0], 400)
             self.assertEqual(index.route("/development/file", "repo=app&path=../x")[0], 400)
+
+
+class CommunityTests(unittest.TestCase):
+    SAMPLE = ("# 社群與開發交流\n\n## Discord 群\n交流使用心得、討論開發問題。\n"
+              "[加入 Discord →](https://discord.gg/abc)\n\n## Twitch 直播\n追蹤直播。\n"
+              "[前往 Twitch →](https://www.twitch.tv/x)\n")
+
+    def test_parse(self):
+        data = community.parse(self.SAMPLE)
+        self.assertEqual(data["title"], "社群與開發交流")
+        self.assertEqual([c["title"] for c in data["cards"]], ["Discord 群", "Twitch 直播"])
+        self.assertEqual(data["cards"][0]["action"],
+                         {"text": "加入 Discord →", "href": "https://discord.gg/abc"})
+        self.assertEqual(data["cards"][0]["body"], "交流使用心得、討論開發問題。")  # 行動連結行已移除
+
+    def test_action_link_is_standalone_line_only(self):
+        # 行內連結不算行動按鈕，會留在說明中。
+        data = community.parse("## A\n加入我們的 [Discord](https://x) 一起討論。\n")
+        self.assertIsNone(data["cards"][0]["action"])
+        self.assertIn("[Discord](https://x)", data["cards"][0]["body"])
+
+    def test_missing_file_hidden(self):
+        with TempRepo():
+            self.assertIsNone(community.load())              # 無檔 → 不顯示
+            self.assertEqual(community.html_block(None), "")
+
+    def test_html_block_escapes(self):
+        block = community.html_block(community.parse(
+            "# A & B\n## <x>\n<img>\n[<a>](https://x/?a=1&b=2)\n"))
+        self.assertIn("A &amp; B", block)
+        self.assertIn("&lt;x&gt;", block)
+        self.assertIn("[&lt;a&gt;](https://x/?a=1&amp;b=2)", block)  # 行動連結以 markdown 內嵌（前端解析）
+        self.assertIn("&lt;img&gt;", block)
+
+    def test_write_template(self):
+        with TempRepo() as repo:
+            path, created = community.write_template()
+            self.assertTrue(created)
+            self.assertEqual(path, repo.root / "Docs/community.md")
+            self.assertTrue(path.read_text(encoding="utf-8").startswith("# "))
+            self.assertFalse(community.write_template()[1])  # 已存在 → 不覆蓋
 
 
 class AssetTests(unittest.TestCase):
@@ -255,6 +313,19 @@ class AssetTests(unittest.TestCase):
                 self.assertIn("#tabs", assets.read("dev.css"))  # 未覆寫者仍用預設
             finally:
                 cfg.assets = original
+
+
+class VersionTests(unittest.TestCase):
+    def test_source_version_matches_pyproject(self):
+        # 以原始碼執行時版號須等於 pyproject（不被環境中殘留的舊安裝誤導）。
+        import re
+
+        import changelogkit
+
+        text = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+        match = re.search(r'^version\s*=\s*"([^"]+)"', text, re.MULTILINE)
+        self.assertIsNotNone(match)
+        self.assertEqual(changelogkit.__version__, match.group(1))
 
 
 class I18nTests(unittest.TestCase):

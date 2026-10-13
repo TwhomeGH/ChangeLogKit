@@ -6,6 +6,7 @@
 | --- | --- |
 | `config.py` | 讀 `.changelog.toml`（3.11+ 用標準庫 `tomllib`、3.10 用 `tomli`） |
 | `history.py` | 變更歷史（`ChangeHistory.md`）的解析／組版／讀寫 |
+| `community.py` | 「社群與開發交流」區塊（`community.md`）的慣例解析、組 HTML 與範本 |
 | `index.py` | 開發索引：Git 近期改動（含 diff）、文件、原始碼檔清單；掃描分派到 `scanners/` |
 | `scanners/` | 各語言的 API 宣告掃描：`swift.py`／`javascript.py`／`python.py`／`cpp.py`／`kotlin.py`／`java.py`／`go.py`／`rust.py`／`csharp.py`／`ruby.py`／`dart.py` ＋共用 `common.py`；新增語言只需加一個模組並註冊 |
 | `server.py` | 本機 HTTP server 與路由（`/`、`/development*`、`/assets/*`、`/api/*`） |
@@ -17,7 +18,8 @@
 ## 設計要點
 
 - **所有 repo 差異集中在 `config.py`／`.changelog.toml`**，其餘模組不硬編專案路徑。
-- 工具只對 repo **唯讀**；唯一寫入是變更歷史檔（`add`／GUI 編輯）。
+- **文件內連結由單一解析器改寫**：`markdown.js` 的 `markdownResolver`（動態）／`markdownStaticResolver`（靜態）依「來源文件路徑」改寫相對連結——動態指向檔案檢視頁（`/development/file`），靜態優先指向匯出的文件頁、其次 GitHub blob。所有渲染 markdown 的地方（變更歷史、文件、開發索引、檔案檢視）共用同一套，避免各自處理而漏改。
+- 工具只對 repo **唯讀**；寫入僅限變更歷史檔（`add`／GUI 編輯）與 `community-init` 明示產生的社群範本。
 - 靜態匯出**預先渲染 HTML**（不是改寫 SPA），避免依賴動態端點。
 - 開發索引的 API 掃描是**文字比對**（非 AST）：Swift（`func`／型別／存取修飾屬性）、JS／TS（`function`／`class`／`interface`／`type`／`enum`／`export` 的 const 等）、Python（`def`／`class`）、C／C++（`class`／`struct`／`enum`／`namespace` 與函式定義／宣告，啟發式）、Kotlin（`fun`／`class`／`object`／`interface`／公開 `val`/`var`）、Java（`class`／`interface`／`enum`／`record` 與方法）、Go（`func`／`type`／`var`）、Rust（`fn`／`struct`／`enum`／`trait`／`impl`）、C#（`class`／`interface`／`record` 與方法）、Ruby（`def`／`class`／`module`／常數）、Dart（`class`／`mixin`／`enum`／`extension`／函式）；`.swiftinterface` 以 Swift 掃描器處理。不含呼叫關係，也不保證完整。未支援的副檔名不會被索引。
 - 相依：執行期需 `git`；`tomli` 僅 Python 3.10 需要。

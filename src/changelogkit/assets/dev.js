@@ -18,13 +18,21 @@ function esc(s) {
   ));
 }
 
-/* 行內 markdown（用於註釋、摘要）：跳脫後套用 code/bold/link。 */
-function mdInline(s) {
+/* 行內 markdown（用於註釋、摘要）：跳脫後套用 code/bold/link；連結經 resolve 改寫。 */
+function mdInline(s, resolve) {
+  const r = resolve || ((h) => h);
   s = esc(s);
   s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
   s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) =>
+    `<a href="${r(href)}" target="_blank" rel="noopener">${label}</a>`);
   return s;
+}
+
+/* 功能摘要的連結以功能清單檔所在目錄為基準改寫（來源脈絡來自 /development/data）。 */
+function featureResolve() {
+  const c = (data && data.contexts && data.contexts.features) || {};
+  return window.markdownResolver(c.repo, c.path);
 }
 
 function kindOf(name) {
@@ -143,7 +151,7 @@ function symbolCard(r, nested) {
     `<div class="meta"><span class="kind">${esc(r.kind || kindOf(r.name))}</span>` +
     `${esc(r.repo)} · ${esc(r.file)}:${r.line}</div>` +
     (r.signature ? `<pre class="sig">${window.HL.block(r.signature)}</pre>` : "") +
-    `<div class="doc rendered">${r.comment ? window.renderDoc(r.comment) : '<p class="muted">' + CK_T("dev.no_comment") + '</p>'}</div>`;
+    `<div class="doc rendered">${r.comment ? window.renderDoc(r.comment, window.markdownResolver(r.repo, r.file)) : '<p class="muted">' + CK_T("dev.no_comment") + '</p>'}</div>`;
   const members = r.members || [];
   const memberHtml = members.length
     ? `<details class="members"><summary>${CK_T("dev.members")} (${members.length})</summary>` +
@@ -161,7 +169,7 @@ function rowHtml(r) {
       .map((k) => [labels[k] || k, Array.isArray(r[k]) ? r[k].join("、") : r[k]])
       .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
     return `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">${esc(r.id)}</div>` +
-      (r.summary ? `<p>${mdInline(r.summary)}</p>` : "") +
+      (r.summary ? `<p>${mdInline(r.summary, featureResolve())}</p>` : "") +
       (fields ? `<dl>${fields}</dl>` : "") +
       `<h3>${CK_T("dev.files")}</h3><div class="files">${links(r.files)}${links(r.docs)}</div></article>`;
   }

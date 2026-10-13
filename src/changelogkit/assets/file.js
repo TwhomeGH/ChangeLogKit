@@ -60,19 +60,8 @@
   window.addEventListener("hashchange", () => { if (!src.hidden) highlight(fromHash()); });
 
   // 2) Markdown：排版檢視（預設）＋可切回原始碼。
-  function resolveHref(href) {
-    if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("#") || href.startsWith("/")) return href;
-    const repo = src.dataset.repo || "app";
-    const [clean, ...rest] = href.split("#");
-    const base = (src.dataset.path || "").split("/").slice(0, -1);
-    for (const seg of clean.split("/")) {
-      if (seg === "" || seg === ".") continue;
-      if (seg === "..") { base.pop(); continue; }
-      base.push(seg);
-    }
-    const anchor = rest.length ? "#" + rest.join("#") : "";
-    return "/development/file?" + new URLSearchParams({ repo, path: base.join("/") }).toString() + anchor;
-  }
+  // 連結改寫共用 markdown.js 的解析器（依本檔在 repo 內的路徑推相對基準）。
+  const resolveHref = window.markdownResolver(src.dataset.repo || "app", src.dataset.path || "");
 
   function setMode(mode) {
     const renderedMode = mode === "rendered";

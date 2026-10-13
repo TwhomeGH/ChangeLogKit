@@ -135,3 +135,16 @@ footer.built {
 .alert-important .alert-title { color: #8b5cf6 }
 .alert-warning .alert-title { color: #f59e0b }
 .alert-caution .alert-title { color: #ef4444 }
+
+/* 社群與開發交流（關於頁；由 Docs/community.md 產生）。 */
+.community { margin-top: 34px }
+.community .section-title { font-size: 20px; margin: 0 0 18px }
+.community .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px }
+.community .card { display: flex; flex-direction: column; padding: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 14px }
+.community .card h3 { margin: 0 0 8px; font-size: 18px }
+.community .card .rendered { margin: 0; color: var(--mut) }
+.community .card .rendered > :first-child { margin-top: 0 }
+.community .card .rendered > :last-child { margin-bottom: 0 }
+.community .action { margin-top: auto; padding-top: 14px }
+.community .action p { margin: 0 }
+.community .action a { font-weight: 650 }

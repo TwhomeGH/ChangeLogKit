@@ -6,6 +6,7 @@
 <meta name="generator" content="changelogkit">
 <script src="../assets/theme.js"></script>
 <script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script>window.CK_SITE_BASE = {{site_base}}; window.CK_DOC_PAGES = {{doc_pages}}; window.CK_BLOB_BASE = {{blob_base}}; window.CK_DOC_PATH = {{doc_path}};</script>
 <script src="../assets/i18n.js"></script>
 <script src="../assets/highlight.js"></script>
 <script src="../assets/markdown.js"></script>
@@ -25,9 +26,10 @@
   <div class="rendered" data-md><template>{{content}}</template></div>
 </main>
 <script>
+const resolve = window.markdownStaticResolver(window.CK_DOC_PATH);
 for (const el of document.querySelectorAll("[data-md]")) {
   const tpl = el.querySelector("template");
-  if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent);
+  if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent, resolve);
 }
 </script>
 <footer class="built">{{footer}}</footer>

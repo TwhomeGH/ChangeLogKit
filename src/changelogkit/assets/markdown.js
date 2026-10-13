@@ -1,5 +1,6 @@
 /* 極簡 Markdown 渲染（零依賴）：標題、清單（含巢狀）、表格、程式碼區塊、引言與 GitHub 提示框。
-   提供 window.renderMarkdown(text, resolveHref)；resolveHref 可把相對連結改寫成站內連結。 */
+   相對連結一律經 resolve 改寫；統一的解析器由 markdownResolver（動態）／
+   markdownStaticResolver（靜態）提供，所有渲染點共用，避免各處連結行為不一致。 */
 (function () {
   const esc = (s) => window.HL.esc(s);
 
@@ -11,10 +12,8 @@
     caution: { label: "小心", icon: "\uD83D\uDD25" },
   };
 
-  let resolve = (href) => href;
-
   /* 行內語法：程式碼、粗體、斜體、刪除線、圖片、連結。 */
-  function inline(text) {
+  function inline(text, resolve) {
     let s = esc(text);
     s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img alt="$1" src="$2" loading="lazy">');
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g,
@@ -29,14 +28,14 @@
   function splitRow(line) {
     return line.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
   }
-  function table(header, rows) {
-    const head = "<tr>" + header.map((c) => `<th>${inline(c)}</th>`).join("") + "</tr>";
-    const body = rows.map((r) => "<tr>" + r.map((c) => `<td>${inline(c)}</td>`).join("") + "</tr>").join("");
+  function table(header, rows, resolve) {
+    const head = "<tr>" + header.map((c) => `<th>${inline(c, resolve)}</th>`).join("") + "</tr>";
+    const body = rows.map((r) => "<tr>" + r.map((c) => `<td>${inline(c, resolve)}</td>`).join("") + "</tr>").join("");
     return `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
   }
 
   /* 以縮排把清單項目組成樹，再遞迴輸出巢狀 ul/ol。 */
-  function listHtml(items) {
+  function listHtml(items, resolve) {
     const root = { ordered: items[0].ordered, text: "", children: [] };
     const stack = [root];
     for (const it of items) {
@@ -48,22 +47,22 @@
     const emit = (node) => {
       const tag = node.ordered ? "ol" : "ul";
       return `<${tag}>` + node.children.map((c) =>
-        `<li>${inline(c.text)}${c.children.length ? emit(c) : ""}</li>`).join("") + `</${tag}>`;
+        `<li>${inline(c.text, resolve)}${c.children.length ? emit(c) : ""}</li>`).join("") + `</${tag}>`;
     };
     return emit(root);
   }
 
   /* 引言；若首行為 [!TYPE] 則輸出提示框，其餘內容照 markdown 渲染。 */
-  function quote(lines) {
+  function quote(lines, resolve) {
     const alert = lines[0] && lines[0].match(/^\s*\[!(\w+)\]\s*(.*)$/);
     if (alert && ALERTS[alert[1].toLowerCase()]) {
       const meta = ALERTS[alert[1].toLowerCase()];
       const title = alert[2].trim() || meta.label;
-      const body = render(lines.slice(1).join("\n"));
+      const body = render(lines.slice(1).join("\n"), resolve);
       return `<div class="alert alert-${alert[1].toLowerCase()}">` +
-        `<p class="alert-title"><span class="alert-icon">${meta.icon}</span>${inline(title)}</p>${body}</div>`;
+        `<p class="alert-title"><span class="alert-icon">${meta.icon}</span>${inline(title, resolve)}</p>${body}</div>`;
     }
-    return `<blockquote>${render(lines.join("\n"))}</blockquote>`;
+    return `<blockquote>${render(lines.join("\n"), resolve)}</blockquote>`;
   }
 
   const isBlockStart = (line, next) => {
@@ -75,7 +74,7 @@
     return false;
   };
 
-  function render(text) {
+  function render(text, resolve) {
     const lines = String(text).replace(/\r\n?/g, "\n").split("\n");
     const out = [];
     let i = 0;
@@ -94,7 +93,7 @@
       }
 
       const heading = line.match(/^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/);
-      if (heading) { const l = heading[1].length; out.push(`<h${l}>${inline(heading[2])}</h${l}>`); i++; continue; }
+      if (heading) { const l = heading[1].length; out.push(`<h${l}>${inline(heading[2], resolve)}</h${l}>`); i++; continue; }
 
       if (/^\s{0,3}([-*_])(\s*\1){2,}\s*$/.test(line)) { out.push("<hr>"); i++; continue; }
 
@@ -103,14 +102,14 @@
         i += 2;
         const rows = [];
         while (i < lines.length && lines[i].includes("|") && lines[i].trim()) { rows.push(splitRow(lines[i])); i++; }
-        out.push(table(header, rows));
+        out.push(table(header, rows, resolve));
         continue;
       }
 
       if (/^\s{0,3}>/.test(line)) {
         const buf = [];
         while (i < lines.length && /^\s{0,3}>/.test(lines[i])) { buf.push(lines[i].replace(/^\s{0,3}>\s?/, "")); i++; }
-        out.push(quote(buf));
+        out.push(quote(buf, resolve));
         continue;
       }
 
@@ -123,7 +122,7 @@
           items.push({ indent: m[1].replace(/\t/g, "  ").length, ordered: /\d/.test(m[2]), text: m[3] });
           i++;
         }
-        out.push(listHtml(items));
+        out.push(listHtml(items, resolve));
         continue;
       }
 
@@ -132,14 +131,64 @@
       const para = [line];
       i++;
       while (i < lines.length && !isBlockStart(lines[i], lines[i + 1])) { para.push(lines[i]); i++; }
-      out.push(`<p>${inline(para.join(" "))}</p>`);
+      out.push(`<p>${inline(para.join(" "), resolve)}</p>`);
     }
     return out.join("\n");
   }
 
-  window.renderMarkdown = (text, resolveHref) => {
-    resolve = typeof resolveHref === "function" ? resolveHref : (href) => href;
-    return render(text);
+  const IDENTITY = (href) => href;
+
+  window.renderMarkdown = (text, resolveHref) =>
+    render(text, typeof resolveHref === "function" ? resolveHref : IDENTITY);
+
+  /* ── 連結解析：所有渲染點共用的唯一來源 ─────────────────────
+     依「來源文件」把相對連結改寫成站內連結。
+
+     repo     來源名稱；docPath 來源文件在 repo 內的相對路徑（推得相對基準目錄）。
+     options.baseDir  直接指定基準目錄（覆寫由 docPath 推得者）。
+     options.staticMap 靜態站：{ base, docs, blob }
+       - base：相對站根的前綴（"" 或 "../"…）
+       - docs：{ 文件相對路徑 → 站內文件頁相對路徑 }（如 "docs/0.html"）
+       - blob：GitHub blob 前綴；比對不到文件頁時改用
+     動態：相對路徑 → /development/file?repo=…&path=…（與檔案檢視一致）。 */
+  window.markdownResolver = function (repo, docPath, options) {
+    const opts = options || {};
+    const baseDir = typeof opts.baseDir === "string"
+      ? opts.baseDir
+      : String(docPath || "").split("/").slice(0, -1).join("/");
+    return function (href) {
+      const raw = String(href == null ? "" : href);
+      if (/^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.startsWith("#") || raw.startsWith("/")) return raw;
+      const [clean, ...rest] = raw.split("#");
+      const parts = baseDir ? baseDir.split("/") : [];
+      for (const seg of clean.split("/")) {
+        if (seg === "" || seg === ".") continue;
+        if (seg === "..") { parts.pop(); continue; }
+        parts.push(seg);
+      }
+      const name = parts.join("/");
+      const anchor = rest.length ? "#" + rest.join("#") : "";
+      const map = opts.staticMap;
+      if (map) {
+        if (map.docs && Object.prototype.hasOwnProperty.call(map.docs, name)) {
+          return (map.base || "") + map.docs[name] + anchor;
+        }
+        if (map.blob) return map.blob + name + anchor;
+        return raw;
+      }
+      return "/development/file?" + new URLSearchParams({ repo: repo || "app", path: name }).toString() + anchor;
+    };
+  };
+
+  /* 靜態站用的解析器；讀取匯出時注入的 window.CK_* 全域。 */
+  window.markdownStaticResolver = function (docPath) {
+    return window.markdownResolver("", docPath, {
+      staticMap: {
+        base: window.CK_SITE_BASE || "",
+        docs: window.CK_DOC_PAGES || {},
+        blob: window.CK_BLOB_BASE || null,
+      },
+    });
   };
 
   /* i18n：優先取 CK_T，沒有就回退字串。 */
@@ -182,14 +231,15 @@
 
   /* JSDoc 風格註釋渲染：描述用 markdown；@param／@returns／其他標籤整理成結構。
      沒有標籤時退回 renderMarkdown（向後相容，Swift／Python 等註釋不受影響）。 */
-  function renderDoc(text) {
+  function renderDoc(text, resolveHref) {
+    const resolve = typeof resolveHref === "function" ? resolveHref : IDENTITY;
     const lines = String(text == null ? "" : text).split("\n");
     const start = lines.findIndex((l) => /^\s*@\w+/.test(l));
-    if (start === -1) return render(text);
+    if (start === -1) return render(text, resolve);
     const desc = lines.slice(0, start).join("\n").trim();
     const tags = parseTags(lines.slice(start));
     let html = "";
-    if (desc) html += `<div class="doc-desc">${render(desc)}</div>`;
+    if (desc) html += `<div class="doc-desc">${render(desc, resolve)}</div>`;
     const params = tags.filter((t) => t.tag === "param").map((t) => parseParam(t.text));
     if (params.length) {
       html += '<table class="docparams"><thead><tr>' +
@@ -198,19 +248,19 @@
         `<th>${esc(T("dev.p_desc", "Description"))}</th></tr></thead><tbody>` +
         params.map((p) => `<tr><td><code>${esc(p.name)}</code></td>` +
           `<td>${p.type ? `<code>${esc(p.type)}</code>` : ""}</td>` +
-          `<td>${inline(p.desc)}</td></tr>`).join("") + "</tbody></table>";
+          `<td>${inline(p.desc, resolve)}</td></tr>`).join("") + "</tbody></table>";
     }
     const ret = tags.find((t) => t.tag === "return" || t.tag === "returns");
     if (ret) {
       const r = parseParam(ret.text);
       html += `<p class="docreturns"><span class="lbl">${esc(T("dev.returns", "Returns"))}</span> ` +
-        (r.type ? `<code>${esc(r.type)}</code> ` : "") + inline(r.desc || r.name) + "</p>";
+        (r.type ? `<code>${esc(r.type)}</code> ` : "") + inline(r.desc || r.name, resolve) + "</p>";
     }
     const others = tags.filter((t) => !["param", "return", "returns"].includes(t.tag));
     if (others.length) {
-      html += others.map((t) => `<div class="doctag"><span class="lbl">@${esc(t.tag)}</span>${inline(t.text)}</div>`).join("");
+      html += others.map((t) => `<div class="doctag"><span class="lbl">@${esc(t.tag)}</span>${inline(t.text, resolve)}</div>`).join("");
     }
-    return html || render(text);
+    return html || render(text, resolve);
   }
 
   window.renderDoc = renderDoc;

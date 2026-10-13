@@ -6,7 +6,10 @@
 <meta name="generator" content="changelogkit">
 <script src="../assets/theme.js"></script>
 <script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script>window.CK_SITE_BASE = {{site_base}}; window.CK_DOC_PAGES = {{doc_pages}}; window.CK_BLOB_BASE = {{blob_base}}; window.CK_DOC_PATH = {{doc_path}};</script>
 <script src="../assets/i18n.js"></script>
+<script src="../assets/highlight.js"></script>
+<script src="../assets/markdown.js"></script>
 <link rel="stylesheet" href="../assets/theme.css">
 <style>
   /* 靜態「關於」頁：置中留邊；版本資訊以定義清單呈現。 */
@@ -32,6 +35,15 @@
     <dt data-i18n="about.locales">{{t.about.locales}}</dt><dd>{{locales}}</dd>
     <dt data-i18n="about.home">{{t.about.home}}</dt><dd>{{home}}</dd>
   </dl>
+  {{community}}
 </main>
+<script>
+/* 社群卡片說明：以 markdown.js 就地渲染；相對連結依該檔所在目錄改寫。 */
+const cResolve = window.markdownStaticResolver(window.CK_DOC_PATH);
+for (const el of document.querySelectorAll(".community [data-md]")) {
+  const tpl = el.querySelector("template");
+  if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent, cResolve);
+}
+</script>
 <footer class="built">{{footer}}</footer>
 </body></html>

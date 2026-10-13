@@ -11,13 +11,14 @@
 """
 
 import html
+import json
 import re
 import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from . import assets, buildinfo, config, history, i18n, index
+from . import assets, buildinfo, community, config, history, i18n, index
 
 # 需要複製到輸出 assets/ 的檔案（其餘為 server 動態用，不需要）。
 STATIC_ASSETS = ("theme.css", "theme.js", "i18n.js", "dev.css", "file.css", "highlight.js", "markdown.js")
@@ -57,15 +58,8 @@ def _diff_html(text):
 
 
 def _origin_slug():
-    """origin remote 的 ``owner/repo``；非 GitHub 或無 remote 時回 None。"""
-    try:
-        url = subprocess.run(["git", "-C", str(config.load().root), "remote", "get-url", "origin"],
-                             capture_output=True, text=True, timeout=5).stdout.strip()
-    except Exception:
-        url = ""
-    if "github.com" not in url:
-        return None
-    return url.split("github.com", 1)[1].lstrip(":/").removesuffix(".git").strip("/")
+    """origin remote 的 ``owner/repo``（委派 :func:`buildinfo.origin_slug`）。"""
+    return buildinfo.origin_slug()
 
 
 def _github_base(branch):
@@ -106,7 +100,8 @@ def _symbol_card(sym, blob_base, nested):
     """單一 API 宣告卡片；型別若有 ``members`` 則收進可展開的 details。"""
     link = _file_link(sym["file"], blob_base)
     signature = ('<pre class="sig">%s</pre>' % _esc(sym["signature"])) if sym.get("signature") else ""
-    comment = ('<div class="doc rendered" data-raw="%s"></div>' % _esc(sym["comment"])) \
+    comment = ('<div class="doc rendered" data-repo="%s" data-file="%s" data-raw="%s"></div>'
+               % (_esc(sym["repo"]), _esc(sym["file"]), _esc(sym["comment"]))) \
         if sym.get("comment") else '<p class="muted">' + i18n.t("dev.no_comment") + '</p>'
     head = ('<h2>%s</h2><div class="meta"><span class="kind">%s</span>%s · %s:%s</div>%s%s'
             % (_esc(sym["name"]), _esc(sym.get("kind", "")), _esc(sym["repo"]),
@@ -184,18 +179,24 @@ def _render_dev(data, blob_base):
             len(data["documents"]), len(data["repos"]))
 
 
-def _write_docs(out, documents, footer):
-    """為每份 Markdown 文件產生一個靜態檢視頁 ``docs/<i>.html``。"""
+def _write_docs(out, documents, footer, doc_pages_json, blob_base_json):
+    """為每份 Markdown 文件產生一個靜態檢視頁 ``docs/<i>.html``。
+
+    注入站內脈絡，讓文件內的相對連結改寫到正確的站內頁（或 GitHub blob）。
+    """
     docs_dir = out / "docs"
     docs_dir.mkdir()
     for i, doc in enumerate(documents):
         (docs_dir / ("%d.html" % i)).write_text(assets.render(
             "static_doc.html", docname=_esc(doc["name"]), title=_esc(config.load().title),
-            content=_esc(doc["text"]), footer=footer, **i18n.subs()), encoding="utf-8")
+            content=_esc(doc["text"]), footer=footer, **i18n.subs(),
+            site_base=json.dumps("../"), doc_pages=doc_pages_json, blob_base=blob_base_json,
+            doc_path=json.dumps(doc["name"], ensure_ascii=False)), encoding="utf-8")
 
 
-def _write_about(out, cfg, data, footer, slug):
-    """產生靜態「關於」頁 ``about/index.html``：changelogkit 版本、來源 commit、UI 語系。"""
+def _write_about(out, cfg, data, footer, slug, community_html, doc_pages_json, blob_base_json,
+                 community_path):
+    """產生靜態「關於」頁 ``about/index.html``：changelogkit 版本、來源 commit、UI 語系、社群區塊。"""
     head = data["repos"][0]["head"] if data["repos"] else ""
     if head and slug:
         source = '<a href="https://github.com/%s/commit/%s">%s@%s</a>' % (slug, head, slug, head[:7])
@@ -212,7 +213,10 @@ def _write_about(out, cfg, data, footer, slug):
     about_dir.mkdir()
     (about_dir / "index.html").write_text(assets.render(
         "static_about.html", **i18n.subs(), title=_esc(cfg.title), footer=footer,
-        version=_esc(buildinfo.version()), source=source, locales=locales, home=home), encoding="utf-8")
+        version=_esc(buildinfo.version()), source=source, locales=locales, home=home,
+        community=community_html, site_base=json.dumps("../"),
+        doc_pages=doc_pages_json, blob_base=blob_base_json,
+        doc_path=json.dumps(community_path, ensure_ascii=False)), encoding="utf-8")
 
 
 def export(out_dir, branch="main"):
@@ -239,19 +243,30 @@ def export(out_dir, branch="main"):
         where = "（無 git 資訊）"
     footer = i18n.t("static.built_by", src=where, time=datetime.now().strftime("%Y-%m-%d %H:%M"))
 
+    # 站內連結脈絡：文件相對路徑 → 匯出的文件頁；其餘退回 GitHub blob。
+    doc_pages_json = json.dumps({doc["name"]: "docs/%d.html" % i
+                                 for i, doc in enumerate(data["documents"])}, ensure_ascii=False)
+    blob_base_json = json.dumps(blob_base, ensure_ascii=False)
+    hist_rel = index.rel_path(cfg.history) or ""
+
     hist_content, count = _render_history(cfg)
     (out / "index.html").write_text(assets.render(
         "static_history.html", **i18n.subs(), title=_esc(cfg.title), content=hist_content,
-        count=str(count), footer=footer), encoding="utf-8")
+        count=str(count), footer=footer,
+        site_base=json.dumps(""), doc_pages=doc_pages_json, blob_base=blob_base_json,
+        doc_path=json.dumps(hist_rel, ensure_ascii=False)), encoding="utf-8")
 
     dev_content, symbols, documents, sources = _render_dev(data, blob_base)
     (out / "development" / "index.html").write_text(assets.render(
         "static_dev.html", **i18n.subs(), title=_esc(cfg.title), content=dev_content,
         symbols=str(symbols), documents=str(documents), sources=str(sources),
-        footer=footer), encoding="utf-8")
+        footer=footer, site_base=json.dumps("../"), doc_pages=doc_pages_json,
+        blob_base=blob_base_json, doc_path=json.dumps("")), encoding="utf-8")
 
-    _write_docs(out, data["documents"], footer)
-    _write_about(out, cfg, data, footer, slug)
+    _write_docs(out, data["documents"], footer, doc_pages_json, blob_base_json)
+    community_html = community.html_block(community.load(), i18n.t("about.community_title"))
+    _write_about(out, cfg, data, footer, slug, community_html, doc_pages_json, blob_base_json,
+                 index.rel_path(cfg.community) or "")
 
     (out / ".nojekyll").write_text("", encoding="utf-8")
     return out

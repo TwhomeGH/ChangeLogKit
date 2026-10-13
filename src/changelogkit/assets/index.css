@@ -34,7 +34,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 1em 0 }
 button.danger { background: #dc2626; color: #fff; border-color: #dc2626 }
 .err { color: #ef4444; font-size: 13px; min-height: 1.2em; margin-top: 8px }
 .alert { border: 1px solid; border-left-width: 4px; border-radius: 10px; padding: 10px 14px; margin: .9em 0 }
-.alert-title { font-weight: 700; font-size: 13px; margin-bottom: 5px; letter-spacing: .02em }
+.alert-title { font-weight: 700; font-size: 13px; margin: 0 0 5px; letter-spacing: .02em }
 .alert :last-child { margin-bottom: 0 }
 .alert-note { border-color: #3b82f6; background: rgba(59, 130, 246, .10) } .alert-note .alert-title { color: #2563eb }
 .alert-tip { border-color: #10b981; background: rgba(16, 185, 129, .10) } .alert-tip .alert-title { color: #059669 }

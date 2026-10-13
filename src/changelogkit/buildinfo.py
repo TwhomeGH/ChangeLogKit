@@ -65,6 +65,20 @@ def version():
     return __version__
 
 
+def origin_slug():
+    """repo 的 origin remote 之 ``owner/repo``；非 GitHub 或無 remote 時回 None。"""
+    try:
+        from . import config
+
+        url = subprocess.run(["git", "-C", str(config.load().root), "remote", "get-url", "origin"],
+                             capture_output=True, text=True, timeout=5).stdout.strip()
+    except Exception:
+        return None
+    if "github.com" not in url:
+        return None
+    return url.split("github.com", 1)[1].lstrip(":/").removesuffix(".git").strip("/")
+
+
 def version_string():
     """``--version`` 要印的一行字。"""
     source = commit()

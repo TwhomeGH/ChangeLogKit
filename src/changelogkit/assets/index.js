@@ -8,68 +8,6 @@ function esc(s) {
   ));
 }
 
-/* 行內 markdown：code → strong → link。先跳脫 HTML 再套用。 */
-function inline(s) {
-  s = esc(s);
-  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
-  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  return s;
-}
-
-/* 極簡 markdown → HTML：程式碼區塊、表格、標題、hr、引言/alert、清單、段落。 */
-function mdToHtml(src) {
-  const L = src.split("\n");
-  let out = "", i = 0;
-  const row = (l) => l.trim().replace(/^\||\|$/g, "").split("|").map((s) => s.trim());
-  while (i < L.length) {
-    const l = L[i];
-    if (/^```/.test(l)) {
-      const b = []; i++;
-      while (i < L.length && !/^```/.test(L[i])) { b.push(L[i]); i++; }
-      i++; out += '<pre class="code">' + esc(b.join("\n")) + "</pre>"; continue;
-    }
-    if (/^\s*\|/.test(l) && i + 1 < L.length && /^\s*\|[\s:|-]+\|/.test(L[i + 1])) {
-      const h = row(l); i += 2; const rs = [];
-      while (i < L.length && /^\s*\|/.test(L[i])) { rs.push(row(L[i])); i++; }
-      out += "<table><thead><tr>" + h.map((c) => "<th>" + inline(c) + "</th>").join("") +
-        "</tr></thead><tbody>" +
-        rs.map((r) => "<tr>" + r.map((c) => "<td>" + inline(c) + "</td>").join("") + "</tr>").join("") +
-        "</tbody></table>"; continue;
-    }
-    let m = l.match(/^(#{1,6})\s+(.*)$/);
-    if (m) { const n = m[1].length; out += "<h" + n + ">" + inline(m[2]) + "</h" + n + ">"; i++; continue; }
-    if (/^\s*---+\s*$/.test(l)) { out += "<hr>"; i++; continue; }
-    if (/^\s*>\s?/.test(l)) {
-      const b = [];
-      while (i < L.length && /^\s*>\s?/.test(L[i])) { b.push(L[i].replace(/^\s*>\s?/, "")); i++; }
-      const am = b.length ? b[0].match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(.*)$/i) : null;
-      if (am) {
-        const t = am[1].toLowerCase();
-        const body = b.slice(1); if (am[2].trim()) body.unshift(am[2]);
-        const meta = { note: ["ℹ️", "Note"], tip: ["💡", "Tip"], important: ["📌", "Important"], warning: ["⚠️", "Warning"], caution: ["🛑", "Caution"] }[t];
-        out += '<div class="alert alert-' + t + '"><div class="alert-title">' + meta[0] + " " + meta[1] + "</div>" + mdToHtml(body.join("\n")) + "</div>";
-      } else {
-        out += "<blockquote>" + inline(b.join(" ")) + "</blockquote>";
-      }
-      continue;
-    }
-    if (/^\s*[-*]\s+/.test(l)) {
-      const b = [];
-      while (i < L.length && /^\s*[-*]\s+/.test(L[i])) { b.push(L[i].replace(/^\s*[-*]\s+/, "")); i++; }
-      out += "<ul>" + b.map((x) => "<li>" + inline(x) + "</li>").join("") + "</ul>"; continue;
-    }
-    if (/^\s*\d+\.\s+/.test(l)) {
-      const b = [];
-      while (i < L.length && /^\s*\d+\.\s+/.test(L[i])) { b.push(L[i].replace(/^\s*\d+\.\s+/, "")); i++; }
-      out += "<ol>" + b.map((x) => "<li>" + inline(x) + "</li>").join("") + "</ol>"; continue;
-    }
-    if (/^\s*$/.test(l)) { i++; continue; }
-    out += "<p>" + inline(l) + "</p>"; i++;
-  }
-  return out;
-}
-
 async function load() {
   const q = encodeURIComponent($("#q").value), t = encodeURIComponent($("#type").value);
   const r = await fetch("/api/entries?q=" + q + "&type=" + t);
@@ -81,9 +19,12 @@ async function load() {
 }
 
 function renderView(e) {
+  // 內文 markdown 交由共用的 markdown.js 渲染；「相關文件」等相對連結依歷史檔所在目錄改寫。
+  const H = window.CK_HISTORY || {};
+  const resolve = window.markdownResolver(H.repo, H.path);
   $("#detail").innerHTML =
     '<div class="toolbar"><button id="edit">' + CK_T("btn.edit") + '</button><button id="del">' + CK_T("btn.delete") + "</button></div>" +
-    '<div id="content">' + mdToHtml(e.raw) + "</div>";
+    '<div id="content">' + window.renderMarkdown(e.raw, resolve) + "</div>";
   $("#edit").onclick = () => renderEdit(e);
   let armed = false;
   $("#del").onclick = () => {

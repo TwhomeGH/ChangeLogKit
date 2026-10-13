@@ -34,6 +34,7 @@
   "cli.backfill.apply": "実際に書き込む（既定は表示のみ）",
   "cli.backfill.strip_number": "`## N.`／`### Na.` の番号も除去",
   "cli.backfill.sort": "日付の新しい順に並べ直す",
+  "cli.community.help": "「コミュニティと開発交流」セクションの雛形を出力（Docs/community.md）",
   "msg.inserted": "挿入しました: {date} {time} {title}",
   "msg.list_summary": "{hits} / 全 {total} 件が一致",
   "msg.not_found": "一致する記録がありません: {query}",
@@ -42,6 +43,8 @@
   "msg.symbols_summary": "{hits} / 全 {total} 件のシンボルが一致（対応言語：{langs}）",
   "msg.languages_header": "対応言語（API 宣言スキャン）：",
   "msg.locales_header": "UI 言語（現在：{current}、* が現在）：",
+  "msg.community_created": "コミュニティ雛形を出力しました：{path}",
+  "msg.community_exists": "コミュニティファイルは既存のため保持しました：{path}",
 
   "nav.history": "変更履歴",
   "nav.dev": "開発インデックス",
@@ -144,6 +147,7 @@
   "about.home": "ホームページ",
   "about.unknown": "（判定不可。git インストールでない可能性）",
   "about.load_failed": "読み込みに失敗",
+  "about.community_title": "コミュニティと開発交流",
 
   "static.export_hint": "changelogkit 静的エクスポート（読み取り専用）：変更 {{count}} 件。",
   "static.dev_hint": "changelogkit 静的エクスポート（読み取り専用）：シンボル {{symbols}}、ドキュメント {{documents}}、ソース {{sources}}。",

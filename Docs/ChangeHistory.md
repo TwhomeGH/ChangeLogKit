@@ -1,5 +1,49 @@
 # ChangeHistory
 
+## 2026.10.14 changelogkit 0.7.0 發佈
+
+**類型**: 功能 · **檔案**: `community.py`、`config.py`、`server.py`、`export.py`、`cli.py`、`buildinfo.py`、`__init__.py`、`assets/about.html`、`assets/static_about.html`、`assets/theme.css`、`lang/*.json`
+
+### 問題 - 無法展示維護者的社群／開發管道
+
+想在「關於」頁放一組社群卡片（Discord／Twitch／原始碼…），但工具只呈現變更歷史與開發索引，沒有可配置的展示區塊。
+
+### 根因 - 缺少可配置的展示內容與對應渲染
+
+沒有 `community` 設定，也沒有把一段 markdown 轉成卡片版面的慣例與樣式。
+
+### 修改 - 新增 `community` 設定與「關於」頁社群區塊
+
+- `config.py` 新增 `community`（預設 `Docs/community.md`）；`community.py` 以慣例解析（`#` 標題／`##` 卡片／說明／獨立成行的連結＝行動），組成 `<section class="community">`，說明與行動連結都交給 `markdown.js` 就地渲染，沿用同一套相對連結改寫。
+- `server.py`／`export.py` 於「關於」頁注入區塊與來源脈絡（動態 `CK_COMMUNITY`、靜態 `CK_DOC_PATH` 等）；`about.html`／`static_about.html` 加上渲染腳本；`theme.css` 新增卡片樣式。
+- 新增 CLI `community-init`：明示產生 `Docs/community.md` 範本（已存在不覆蓋）；`serve`／`export` 仍唯讀，未設定或無檔時該區塊不顯示。
+- `buildinfo.py` 抽出 `origin_slug()`，`export.py` 改為共用（去除重複）。
+- `__init__.py` 版號來源優先序改為「原始碼 `pyproject.toml` → 已安裝中介資料 → 字面值」：以 `PYTHONPATH=src` 直接跑時「所見即所跑」，不再被環境中殘留的舊安裝版號誤導。
+
+---
+
+## 2026.10.14 changelogkit 0.6.0 發佈
+
+**類型**: 修正 · **檔案**: `assets/markdown.js`、`assets/index.js`、`assets/index.html`、`assets/dev.js`、`assets/file.js`、`assets/static_history.html`、`assets/static_doc.html`、`assets/static_dev.html`、`index.py`、`server.py`、`export.py`
+
+### 問題 - 變更歷史的「相關文件」相對連結在站內找不到
+
+歷史／文件內的相對連結（如 `development/RECORDING_COMPRESSION.md`）被瀏覽器對站根解析成 `/development/RECORDING_COMPRESSION.md`，落入開發索引的 404；在 GitHub 上可用的連結，進了 changelogkit 反而打不開（動態 404、靜態相對路徑也算錯）。
+
+### 根因 - 連結改寫只接在檔案檢視一處
+
+`markdown.js` 早有 `resolveHref` 機制，但只有 `file.js` 接了；變更歷史頁另寫一套 `mdToHtml`、靜態歷史／文件／開發頁與 `dev.js` 的 `mdInline` 都原樣輸出 href。
+
+### 修改 - 抽出共用解析器，所有渲染點統一接上
+
+- `markdown.js`：`resolve` 改為顯式傳參（不再用模組級狀態）；新增 `window.markdownResolver(repo, docPath, options)`（動態：相對路徑 → `/development/file?…`）與 `window.markdownStaticResolver(docPath)`（靜態：命中匯出的文件頁，否則 GitHub blob）。
+- `file.js` 改用共用解析器（移除本地重複實作）；`dev.js` 的功能摘要與符號註釋也接上。
+- 變更歷史頁改用 `markdown.js` 渲染（移除自寫的 `mdToHtml`），並由 `server.py` 注入 `window.CK_HISTORY`（歷史檔的 repo 相對路徑）作為相對基準；`index.py` 新增 `rel_path` 並在 `snapshot()` 提供 `contexts`。
+- 靜態匯出由 `export.py` 注入 `CK_SITE_BASE`／`CK_DOC_PAGES`／`CK_BLOB_BASE`／`CK_DOC_PATH`，歷史／文件／開發頁與符號註釋皆以來源文件路徑為基準改寫。
+- 文件：`usage.md`／`architecture.md` 說明相對連結語意（以文件所在目錄為基準，與 GitHub 相同）；`history.py` 格式範例一併更正。
+
+---
+
 ## 2026.10.11 changelogkit 0.5.0 發佈
 
 **類型**: 功能 · **檔案**: `assets/markdown.js`、`assets/dev.js`、`assets/static_dev.html`、`assets/dev.css`、`export.py`、`lang/*.json`

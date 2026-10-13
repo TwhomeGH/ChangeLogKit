@@ -6,10 +6,11 @@
 changelogkit                       # 等同 serve：啟動本機網頁 GUI
 changelogkit serve [--port 8710] [--no-browser]
 changelogkit add "標題" [--type 修復] [--file a/b.swift] \
-    [--date YYYY.MM.DD] [--time HH:MM] [--ref "[說明](Docs/x.md)"（可重複）]
+    [--date YYYY.MM.DD] [--time HH:MM] [--ref "[說明](development/notes.md)"（可重複）]
 changelogkit list [--grep X] [--since YYYY.MM.DD] [--file X] [--type X] [--limit N]
 changelogkit show <編號|關鍵字>
 changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 _site）
+changelogkit community-init                    # 產生「社群與開發交流」範本（Docs/community.md）
 ```
 
 未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。
@@ -30,6 +31,8 @@ changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 
 | `/development` | 開發索引：功能／API 宣告／文件／近期改動（提交可展開看 diff） |
 | `/development/file?repo=app&path=…` | 檔案檢視：行號、語法上色；`.md` 預設排版檢視 |
 
+> 變更歷史與文件內部的**相對連結會自動改寫成站內連結**（詳見「變更歷史格式」），不需手寫 `/development/file?...`。
+
 ## 設定：`.changelog.toml`
 
 放 repo 根目錄；工具從工作目錄**往上**尋找，找不到用預設值。
@@ -39,6 +42,7 @@ changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 
 title    = "My Project 變更歷史"                # 網頁標題（預設＝repo 目錄名）
 history  = "Docs/ChangeHistory.md"             # 變更歷史 markdown
 features = "Docs/development/features.json"    # 選填：功能清單
+community = "Docs/community.md"                # 選填：關於頁的「社群與開發交流」區塊
 assets   = "Scripts/changelog-overrides"       # 選填：覆寫預設網頁資產
 
 [[tool.changelog.sources]]                     # 開發索引要一起看的來源
@@ -57,6 +61,7 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 | `title` | repo 目錄名 | 頁面標題 |
 | `history` | `Docs/ChangeHistory.md` | 變更歷史檔（必要） |
 | `features` | `Docs/development/features.json` | 功能清單（不存在則功能分頁留空） |
+| `community` | `Docs/community.md` | 「關於」頁的社群區塊（不存在則不顯示） |
 | `assets` | 無 | 覆寫資產目錄 |
 | `sources` | 單一（`name="app"`、`path="."`） | 開發索引來源；`path` 支援 `${ENV}` |
 | `include` | 無 | 額外納入的 glob（相對 root；**可涵蓋被 `.gitignore` 忽略者**，如特定 `node_modules` 套件的 `.d.ts`） |
@@ -78,15 +83,42 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 - 其他改動
 
 **相關文件**:
-- [說明](Docs/x.md)
-- [另一份](Docs/y.md)
+- [說明](development/notes.md)
+- [另一份](../guide.md)
 
 ---
 ```
 
-相關文件：**單筆**可寫成一行 `**相關文件**: [說明](Docs/x.md)`；**多筆**建議逐行條列（如上），避免原始檔出現一大長行。兩種寫法在 GUI 與靜態站都會正常渲染。
+相關文件：**單筆**可寫成一行 `**相關文件**: [說明](development/notes.md)`；**多筆**建議逐行條列（如上），避免原始檔出現一大長行。兩種寫法在 GUI 與靜態站都會正常渲染。
+
+**相對連結以「該文件所在目錄」為基準**（與 GitHub 相同）自動改寫成站內連結，點擊即在站內開啟目標文件——不必手寫 `/development/file?...`。同一套改寫也適用於文件內互連：動態站指向檔案檢視頁，靜態站優先指向匯出的文件頁、其次 GitHub blob；外部 `https://` 連結維持原樣。
 
 時間可省略（舊資料相容）。
+
+## 社群與開發交流（選填）
+
+在「關於」頁顯示社群／開發管道卡片（Discord、Twitch、原始碼、Issues…）。內容來自 `community` 指定的 markdown（預設 `Docs/community.md`）；**未設定或檔案不存在時該區塊不顯示**。
+
+格式慣例（極簡，說明文用一般 markdown，不新增方言）：
+
+```markdown
+# <區塊標題>
+## <卡片標題>
+<卡片說明（markdown）>
+[<行動文字>](<連結>)
+```
+
+- 第一個 `#` 為區塊標題；每個 `##` 起一張卡片。
+- 卡片內**獨立成行的第一個連結**作為行動按鈕，該行不列入說明；行內連結則留在說明中。
+- 相對連結以本檔所在目錄為基準改寫（同「相關文件」）。靜態站優先連到站內文件頁，其次 GitHub blob。
+
+產生範本：
+
+```bash
+changelogkit community-init      # 寫入 Docs/community.md（已存在則不覆蓋）
+```
+
+> 工具對 repo **唯讀**：`serve`／`export` 不會自動建立或修改此檔，需以 `community-init` 明示產生。
 
 ## 資產覆寫
 

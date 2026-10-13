@@ -1,4 +1,4 @@
-"""命令列介面：serve / add / list / show / languages / locales / symbols / export / backfill-dates。
+"""命令列介面：serve / add / list / show / languages / locales / symbols / export / backfill-dates / community-init。
 
 網頁 GUI 為主要介面；CLI 供腳本化使用。字串經 :mod:`i18n`（預設跟隨系統、
 判定為非中文時回退 ``en``；可用 ``--locale`` 覆寫）。
@@ -7,7 +7,7 @@
 import argparse
 import sys
 
-from . import backfill, buildinfo, export as static_export, history, i18n, server
+from . import backfill, buildinfo, community, export as static_export, history, i18n, server
 
 
 def _prescan_locale(argv):
@@ -184,6 +184,8 @@ def main(argv=None):
     bf.add_argument("--strip-number", action="store_true", help=i18n.t("cli.backfill.strip_number"))
     bf.add_argument("--sort", action="store_true", help=i18n.t("cli.backfill.sort"))
 
+    sub.add_parser("community-init", help=i18n.t("cli.community.help"))
+
     args = p.parse_args(argv)
     if args.cmd in (None, "serve"):
         server.serve(getattr(args, "port", 8710), not getattr(args, "no_browser", False))
@@ -204,6 +206,9 @@ def main(argv=None):
         print(i18n.t("msg.exported", path=str(out)))
     elif args.cmd == "backfill-dates":
         cmd_backfill(args)
+    elif args.cmd == "community-init":
+        path, created = community.write_template()
+        print(i18n.t("msg.community_created" if created else "msg.community_exists", path=str(path)))
 
 
 if __name__ == "__main__":

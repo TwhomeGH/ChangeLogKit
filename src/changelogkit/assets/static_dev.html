@@ -6,6 +6,7 @@
 <meta name="generator" content="changelogkit">
 <script src="../assets/theme.js"></script>
 <script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script>window.CK_SITE_BASE = {{site_base}}; window.CK_DOC_PAGES = {{doc_pages}}; window.CK_BLOB_BASE = {{blob_base}}; window.CK_DOC_PATH = {{doc_path}};</script>
 <script src="../assets/i18n.js"></script>
 <script src="../assets/highlight.js"></script>
 <script src="../assets/markdown.js"></script>
@@ -27,7 +28,8 @@
 <script>
 for (const el of document.querySelectorAll("[data-md]")) {
   const tpl = el.querySelector("template");
-  if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent);
+  if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent,
+    window.markdownStaticResolver(window.CK_DOC_PATH));
 }
 /* diff 內文（+／-／context）以 highlight.js 就地語法上色；行首符號另以 dmark 呈現。 */
 for (const el of document.querySelectorAll(".dline[data-line]")) {
@@ -40,9 +42,11 @@ for (const el of document.querySelectorAll(".dline[data-line]")) {
 for (const el of document.querySelectorAll("pre.sig")) {
   el.innerHTML = window.HL.block(el.textContent);
 }
-/* 符號註釋以 markdown／JSDoc 規則就地渲染（原始註釋置於 data-raw）。 */
+/* 符號註釋以 markdown／JSDoc 規則就地渲染（原始註釋置於 data-raw）。
+   連結以該符號所屬檔案的路徑為基準改寫（命中文件頁否則 GitHub blob）。 */
 for (const el of document.querySelectorAll(".doc[data-raw]")) {
-  el.innerHTML = window.renderDoc(el.getAttribute("data-raw"));
+  el.innerHTML = window.renderDoc(el.getAttribute("data-raw"),
+    window.markdownStaticResolver(el.getAttribute("data-file") || ""));
 }
 const tt = document.getElementById("totop");
 if (tt) { tt.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });

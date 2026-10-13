@@ -23,6 +23,7 @@ except ModuleNotFoundError:  # 3.10：需 tomli
 CONFIG_NAME = ".changelog.toml"
 DEFAULT_HISTORY = "Docs/ChangeHistory.md"
 DEFAULT_FEATURES = "Docs/development/features.json"
+DEFAULT_COMMUNITY = "Docs/community.md"
 
 
 @dataclass
@@ -41,6 +42,7 @@ class Config:
     title: str                       # 網頁標題
     history: Path                    # ChangeHistory.md
     features: Path | None            # 功能清單（可能不存在）
+    community: Path | None           # 「社群與開發交流」區塊的 markdown（可能不存在）
     assets: Path | None              # 覆寫資產目錄（可選）
     sources: list = field(default_factory=list)  # 開發索引來源
     include: tuple = ()      # 額外納入的 glob（相對 root；可涵蓋被 .gitignore 忽略者，如 node_modules）
@@ -63,6 +65,7 @@ def _default_config(root):
         title=root.name,
         history=root / DEFAULT_HISTORY,
         features=root / DEFAULT_FEATURES,
+        community=root / DEFAULT_COMMUNITY,
         assets=None,
         # 主來源固定命名為 "app"，讓預設網頁資產（連結用 repo=app）可直接運作。
         sources=[Source("app", root)],
@@ -78,6 +81,7 @@ def _from_table(root, table):
     """由 ``[tool.changelog]`` 表建出 :class:`Config`。"""
     history = root / table.get("history", DEFAULT_HISTORY)
     features = root / table["features"] if table.get("features") else root / DEFAULT_FEATURES
+    community = root / table["community"] if table.get("community") else root / DEFAULT_COMMUNITY
     assets = root / table["assets"] if table.get("assets") else None
     sources = [
         Source(str(s.get("name") or root.name), _resolve(root, s.get("path") or "."))
@@ -88,6 +92,7 @@ def _from_table(root, table):
         title=table.get("title") or root.name,
         history=history,
         features=features,
+        community=community,
         assets=assets,
         sources=sources or [Source("app", root)],
         include=tuple(str(x) for x in table.get("include", [])),

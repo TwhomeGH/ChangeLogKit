@@ -34,6 +34,7 @@
   "cli.backfill.apply": "实际写入（默认只显示）",
   "cli.backfill.strip_number": "同时移除 `## N.`／`### Na.` 编号",
   "cli.backfill.sort": "按日期从新到旧重排（默认保留原顺序）",
+  "cli.community.help": "生成「社群与开发交流」区块模板（Docs/community.md）",
   "msg.inserted": "已插入: {date} {time} {title}",
   "msg.list_summary": "符合 {hits} / 共 {total} 条",
   "msg.not_found": "找不到匹配的记录: {query}",
@@ -42,6 +43,8 @@
   "msg.symbols_summary": "符合 {hits} / 共 {total} 个符号（支持语言：{langs}）",
   "msg.languages_header": "支持语言（API 声明扫描）：",
   "msg.locales_header": "UI 语言（当前：{current}，* 为当前）：",
+  "msg.community_created": "已生成社群模板：{path}",
+  "msg.community_exists": "社群文件已存在（保留未覆盖）：{path}",
 
   "nav.history": "变更历史",
   "nav.dev": "开发索引",
@@ -144,6 +147,7 @@
   "about.home": "项目主页",
   "about.unknown": "（无法判定；可能非 git 安装）",
   "about.load_failed": "读取失败",
+  "about.community_title": "社群与开发交流",
 
   "static.export_hint": "changelogkit 静态导出（只读）：{{count}} 条变更记录。",
   "static.dev_hint": "changelogkit 静态导出（只读）：符号 {{symbols}}、文档 {{documents}}、来源 {{sources}}。",

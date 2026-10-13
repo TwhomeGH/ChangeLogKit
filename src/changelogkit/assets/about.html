@@ -5,7 +5,10 @@
 <title data-i18n="about.title">{{t.about.title}}</title>
 <script src="/assets/theme.js"></script>
 <script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script>window.CK_COMMUNITY = {{community_json}};</script>
 <script src="/assets/i18n.js"></script>
+<script src="/assets/highlight.js"></script>
+<script src="/assets/markdown.js"></script>
 <link rel="stylesheet" href="/assets/theme.css">
 <style>
   main { max-width: 720px; margin: 0 auto; padding: 24px }
@@ -33,7 +36,17 @@
       <dt data-i18n="about.home">{{t.about.home}}</dt><dd><a href="https://github.com/TwhomeGH/ChangeLogKit">github.com/TwhomeGH/ChangeLogKit</a></dd>
     </dl>
   </article>
+  {{community}}
 </main>
+<script>
+/* 社群卡片說明：以 markdown.js 就地渲染；相對連結依該檔所在目錄改寫。 */
+const c = window.CK_COMMUNITY || {};
+const cResolve = window.markdownResolver(c.repo, c.path);
+for (const el of document.querySelectorAll(".community [data-md]")) {
+  const tpl = el.querySelector("template");
+  if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent, cResolve);
+}
+</script>
 <script src="/assets/about.js"></script>
 <script>document.addEventListener("ck-locale-change", () => location.reload());</script>
 </body></html>

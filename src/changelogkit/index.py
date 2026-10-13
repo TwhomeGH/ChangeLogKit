@@ -31,6 +31,21 @@ def default_repo():
     return config.load().sources[0].name
 
 
+def rel_path(path):
+    """路徑相對於 repo root 的正規化相對路徑；不在 root 內或無法解析時回 None。
+
+    供前端把「文件內相對連結」以該文件所在目錄為基準改寫成站內連結。
+    """
+    if path is None:
+        return None
+    root = config.load().root.resolve()
+    try:
+        resolved = Path(path).resolve()
+        return resolved.relative_to(root).as_posix()
+    except (OSError, ValueError):
+        return None
+
+
 def git(root, *args):
     """固定參數呼叫 Git；不透過 shell，失敗明確回報。"""
     result = subprocess.run(["git", "-C", str(root), *args], capture_output=True,
@@ -272,6 +287,12 @@ def snapshot():
                 continue
             data["symbols"].extend(_nest(scan_symbols(text, repo, name), text.splitlines()))
     data["lockedPackages"] = _locked_packages()
+    # 前端渲染 markdown 時所需的「來源文件脈絡」（相對連結的基準目錄）。
+    cfg = config.load()
+    data["contexts"] = {
+        "features": {"repo": default_repo(), "path": rel_path(cfg.features) or ""},
+        "history": {"repo": default_repo(), "path": rel_path(cfg.history) or ""},
+    }
     return data
 
 

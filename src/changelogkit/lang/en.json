@@ -34,6 +34,7 @@
   "cli.backfill.apply": "Write changes (default is dry-run)",
   "cli.backfill.strip_number": "Also strip `## N.` / `### Na.` numbering",
   "cli.backfill.sort": "Re-sort entries newest-first by date",
+  "cli.community.help": "Write a community section template (Docs/community.md)",
   "msg.inserted": "Inserted: {date} {time} {title}",
   "msg.list_summary": "{hits} of {total} entries matched",
   "msg.not_found": "No matching entry: {query}",
@@ -42,6 +43,8 @@
   "msg.symbols_summary": "{hits} of {total} symbols matched (languages: {langs})",
   "msg.languages_header": "Supported languages (API declaration scanning):",
   "msg.locales_header": "UI languages (current: {current}, * = active):",
+  "msg.community_created": "Community template written: {path}",
+  "msg.community_exists": "Community file already exists (kept): {path}",
 
   "nav.history": "Changelog",
   "nav.dev": "Dev index",
@@ -144,6 +147,7 @@
   "about.home": "Homepage",
   "about.unknown": "(unknown; possibly not a git install)",
   "about.load_failed": "Load failed",
+  "about.community_title": "Community & Development",
 
   "static.export_hint": "changelogkit static export (read-only): {{count}} entries.",
   "static.dev_hint": "changelogkit static export (read-only): {{symbols}} symbols, {{documents}} documents, {{sources}} sources.",

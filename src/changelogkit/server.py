@@ -12,7 +12,7 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from . import assets, buildinfo, history, i18n, index
+from . import assets, buildinfo, community, config, history, i18n, index
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -48,9 +48,22 @@ class Handler(BaseHTTPRequestHandler):
         if u.path.startswith("/assets/"):
             return self._serve_asset(u.path[len("/assets/"):])
         if u.path == "/":
-            return self._send(200, self._page("index.html"), "text/html; charset=utf-8")
+            # 歷史頁的 markdown 連結以歷史檔所在目錄為基準改寫（前端注入 CK_HISTORY）。
+            meta = json.dumps({"repo": index.default_repo(),
+                               "path": index.rel_path(config.load().history) or ""},
+                              ensure_ascii=False)
+            return self._send(200, assets.render(
+                "index.html", i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+                history_json=meta, **i18n.subs()), "text/html; charset=utf-8")
         if u.path == "/about":
-            return self._send(200, self._page("about.html"), "text/html; charset=utf-8")
+            # 社群區塊：未設定或無檔時為空字串（不顯示）；卡片說明的連結以該檔目錄為基準。
+            block = community.html_block(community.load(), i18n.t("about.community_title"))
+            meta = json.dumps({"repo": index.default_repo(),
+                               "path": index.rel_path(config.load().community) or ""},
+                              ensure_ascii=False)
+            return self._send(200, assets.render(
+                "about.html", i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+                community=block, community_json=meta, **i18n.subs()), "text/html; charset=utf-8")
         if u.path == "/api/buildinfo":
             return self._send(200, json.dumps(
                 {"version": buildinfo.version(), "commit": buildinfo.commit(),
