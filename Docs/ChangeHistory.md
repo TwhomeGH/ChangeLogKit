@@ -1,5 +1,24 @@
 # ChangeHistory
 
+## 2026.10.14 changelogkit 0.7.2 發佈
+
+**類型**: 修正 · **檔案**: `assets/highlight.js`、`assets/file.js`
+
+### 問題 - 檔案檢視底部的連結失效，無法點擊跳轉
+
+Markdown 檔（如 `Docs/development/METRICKIT.md`）底部「參考」行在排版檢視中，`[文字](URL)` 的方括號消失、也生不出可點的連結。
+
+### 根因 - 上色器會改字，且來源取自「已上色」的 DOM
+
+`highlight.js` 的 `markdownLine` 把 `[文字](URL)` 換成 `<span>文字</span>(URL)`（吃掉 `[` `]`）；而 `file.js` 又以「已上色」逐行 span 的 `textContent` 當作 markdown 來源，連結語法因此被破壞，`renderMarkdown` 解析不到連結。
+
+### 修改 - 上色只加色不改字；來源改取上色前的原文
+
+- `markdownLine` 的連結規則保留方括號（輸出純文字必須等於原字串）。
+- `file.js` 先保留原始逐行文字、再上色；排版檢視改用該原文。
+
+---
+
 ## 2026.10.14 changelogkit 0.7.1 發佈
 
 **類型**: 修正 · **檔案**: `community.py`、`tests/test_changelogkit.py`

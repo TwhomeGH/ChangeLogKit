@@ -8,6 +8,8 @@
   const isMarkdown = /\.(md|markdown)$/i.test(src.dataset.path || "");
 
   // 1) 原始碼逐行上色（Markdown 也用於「原始碼」模式）。
+  //    上色只影響「顯示」：先保留原始文字供排版檢視當來源，避免被上色改寫汙染。
+  const rawLines = Array.from(src.querySelectorAll(".code")).map((el) => el.textContent);
   const state = { block: false };
   src.querySelectorAll(".code").forEach((el) => {
     el.innerHTML = isMarkdown ? HL.markdownLine(el.textContent) : HL.swift(el.textContent, state);
@@ -72,8 +74,7 @@
   }
 
   if (isMarkdown && rendered && modeBtn) {
-    const raw = Array.from(src.querySelectorAll(".code")).map((el) => el.textContent).join("\n");
-    rendered.innerHTML = window.renderMarkdown(raw, resolveHref);
+    rendered.innerHTML = window.renderMarkdown(rawLines.join("\n"), resolveHref);
     // 文件內的 #L 行號連結：切回原始碼模式再跳行（就地，不重載）。
     rendered.addEventListener("click", (e) => {
       const a = e.target.closest ? e.target.closest("a") : null;

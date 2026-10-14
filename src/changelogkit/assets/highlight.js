@@ -52,13 +52,15 @@
     return out;
   }
 
-  /* Markdown 逐行上色（原始碼檢視用）：標題、引言、行內程式碼與連結。 */
+  /* Markdown 逐行上色（原始碼檢視用）：標題、引言、行內程式碼與連結。
+     只加色、不改字——上色輸出去掉標籤後必須等於原字串（否則會汙染下游用途，例如
+     檔案檢視以逐行 textContent 取回 markdown 來源）。 */
   function markdownLine(line) {
     if (/^\s{0,3}#{1,6}\s/.test(line)) return span("k", line);
     if (/^\s{0,3}>\s?/.test(line)) return span("c", line);
     return esc(line)
       .replace(/`([^`]+)`/g, '<span class="tok-s">`$1`</span>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<span class="tok-t">$1</span>($2)');
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '[<span class="tok-t">$1</span>]($2)');
   }
 
   /* 整段程式碼上色：Markdown 用逐行；其餘語言共用 Swift 掃描（近似）。 */
