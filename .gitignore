@@ -11,3 +11,6 @@ venv/
 _site/
 # 建置時由 hatch_build.py 產生（內含 COMMIT／DIRTY／BUILT_AT）
 src/changelogkit/_buildinfo.py
+
+# 排除playwright-mcp
+.playwright-mcp/*
