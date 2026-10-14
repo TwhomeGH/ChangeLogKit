@@ -29,8 +29,17 @@ hr { border: none; border-top: 1px solid var(--line); margin: 1em 0 }
 .foot { position: sticky; bottom: 0; background: var(--card); border-top: 1px solid var(--line); margin-top: 18px; padding: 12px 0 18px }
 .right { display: flex; justify-content: flex-end; gap: 8px }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px }
-#raw { width: 100%; min-height: 320px; font: 13px/1.6 ui-monospace, Consolas, "Courier New", monospace; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--code); color: var(--fg); resize: vertical; white-space: pre; overflow: auto; tab-size: 2 }
-#raw:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring) }
+/* Markdown 編輯器：透明 textarea 疊在「上色後的 <pre>」上（零依賴的顏色區分）。 */
+.editor { position: relative }
+.editor #raw, .editor #raw-view {
+  width: 100%; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px;
+  font: 13px/1.6 ui-monospace, Consolas, "Courier New", monospace;
+  white-space: pre; tab-size: 2; box-sizing: border-box;
+}
+.editor #raw-view { position: absolute; inset: 0; overflow: hidden; background: var(--code); color: var(--fg); border-color: transparent; pointer-events: none }
+.editor #raw { display: block; position: relative; min-height: 320px; background: transparent; color: transparent; caret-color: var(--fg); resize: vertical; overflow: auto }
+.editor #raw:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring) }
+.editor #raw::selection { background: rgba(120, 140, 180, .35) }
 button.danger { background: #dc2626; color: #fff; border-color: #dc2626 }
 .err { color: #ef4444; font-size: 13px; min-height: 1.2em; margin-top: 8px }
 .alert { border: 1px solid; border-left-width: 4px; border-radius: 10px; padding: 10px 14px; margin: .9em 0 }

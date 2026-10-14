@@ -1,5 +1,20 @@
 # ChangeHistory
 
+## 2026.10.15 changelogkit 0.7.3 發佈
+
+**類型**: 功能 · **檔案**: `assets/index.js`、`assets/index.css`
+
+### 問題 - 編輯器無法 Tab 縮排，且 Markdown 只能單色
+
+在網頁編輯變更歷史時，Tab 只會移動焦點（無法縮排、Shift-Tab 無法反縮排）；`<textarea>` 又是單色，看不出 Markdown 結構。
+
+### 修改 - Tab／Shift-Tab 縮排＋以透明 textarea 疊上色 `<pre>`
+
+- Tab 插入 2 空白、Shift-Tab 反縮排；多行選取逐行處理（游標與選取範圍依縮排量校正），以 `execCommand("insertText")` 保留原生復原（Ctrl+Z）。
+- 編輯器改為「透明 `<textarea>` 疊在上色後的 `<pre>` 上」：`<pre>` 由 `HL.markdownLine` 逐行上色（標題／引言／行內程式碼／連結），零依賴；兩者字體與尺寸一致、捲動同步，且 `markdownLine` 無損，不影響輸入內容。
+
+---
+
 ## 2026.10.14 changelogkit 0.7.2 發佈
 
 **類型**: 修正 · **檔案**: `assets/highlight.js`、`assets/file.js`

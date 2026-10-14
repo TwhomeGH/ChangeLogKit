@@ -8,6 +8,48 @@ function esc(s) {
   ));
 }
 
+/* Tab 縮排／Shift-Tab 反縮排（2 空白，與 #raw 的 tab-size 一致）。
+   多行選取時逐行縮排；用 execCommand insertText 以保留原生復原（Ctrl+Z）。 */
+const INDENT = "  ";
+function indentSelection(ta, outdent) {
+  const value = ta.value;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+
+  if (start === end && !outdent) {              // 游標處：插入縮排
+    document.execCommand("insertText", false, INDENT);
+    return;
+  }
+
+  const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+  const nextNl = value.indexOf("\n", end);
+  const lineEnd = nextNl === -1 ? value.length : nextNl;
+  const block = value.slice(lineStart, lineEnd);
+  const changes = [];
+  const out = block.split("\n").map((line) => {
+    if (outdent) {
+      const match = line.match(/^(?:\t| {1,2})/);   // 移除最多一個縮排單位
+      const removed = match ? match[0].length : 0;
+      changes.push(-removed);
+      return line.slice(removed);
+    }
+    changes.push(INDENT.length);
+    return INDENT + line;
+  });
+  const newBlock = out.join("\n");
+  if (newBlock === block) return;               // 無變化（例如反縮排已無縮排）
+
+  // 某位置之前累積的位移（以「已縮排的行」為界；行首不計入該行自身）。
+  const shiftAt = (pos) => {
+    const count = value.slice(lineStart, pos).split("\n").length - (pos === lineStart || value[pos - 1] === "\n" ? 1 : 0);
+    return changes.slice(0, count).reduce((sum, n) => sum + n, 0);
+  };
+
+  ta.setSelectionRange(lineStart, lineEnd);
+  document.execCommand("insertText", false, newBlock);
+  ta.setSelectionRange(Math.max(lineStart, start + shiftAt(start)),
+                       Math.max(lineStart, end + shiftAt(end)));
+}
+
 async function load() {
   const q = encodeURIComponent($("#q").value), t = encodeURIComponent($("#type").value);
   const r = await fetch("/api/entries?q=" + q + "&type=" + t);
@@ -41,11 +83,26 @@ function renderView(e) {
 function renderEdit(e) {
   $("#detail").innerHTML =
     '<div class="toolbar"><button id="save" class="primary">' + CK_T("btn.save") + '</button><button id="cancel-edit">' + CK_T("btn.cancel") + "</button></div>" +
-    '<textarea id="raw" spellcheck="false"></textarea>';
-  const ta = $("#raw"); ta.value = e.raw;
-  const autosize = () => { ta.style.height = "auto"; ta.style.height = Math.max(320, ta.scrollHeight + 6) + "px"; };
-  ta.addEventListener("input", autosize); autosize(); ta.focus();
-  ta.addEventListener("keydown", (ev) => { if ((ev.ctrlKey || ev.metaKey) && ev.key === "s") { ev.preventDefault(); $("#save").click(); } });
+    '<div class="editor"><pre id="raw-view" aria-hidden="true"></pre>' +
+    '<textarea id="raw" spellcheck="false" aria-label="Markdown"></textarea></div>';
+  const ta = $("#raw"), view = $("#raw-view");
+  ta.value = e.raw;
+  // 透明 textarea 疊在「上色後的 <pre>」上：textarea 只負責輸入與游標，
+  // 顏色由後方的 HL.markdownLine（無損、只加色）呈現；兩者字體與尺寸一致。
+  const sync = () => {
+    view.innerHTML = ta.value.split("\n").map((line) => window.HL.markdownLine(line)).join("\n") + "\n";
+    ta.style.height = "auto";
+    ta.style.height = Math.max(320, ta.scrollHeight + 6) + "px";
+    view.scrollTop = ta.scrollTop;
+    view.scrollLeft = ta.scrollLeft;
+  };
+  ta.addEventListener("input", sync);
+  ta.addEventListener("scroll", () => { view.scrollTop = ta.scrollTop; view.scrollLeft = ta.scrollLeft; });
+  ta.addEventListener("keydown", (ev) => {
+    if (ev.key === "Tab") { ev.preventDefault(); indentSelection(ta, ev.shiftKey); return; }
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "s") { ev.preventDefault(); $("#save").click(); }
+  });
+  sync(); ta.focus();
   $("#cancel-edit").onclick = () => renderView(e);
   $("#save").onclick = async () => {
     await fetch("/api/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ i: e.i, raw: ta.value }) });
