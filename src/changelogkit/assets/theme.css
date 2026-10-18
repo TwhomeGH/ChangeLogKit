@@ -25,6 +25,9 @@ body {
 a { color: var(--accent); text-underline-offset: 2px; overflow-wrap: anywhere }
 code { background: var(--code); padding: 1px 6px; border-radius: 6px; font-size: .92em }
 pre.code { background: var(--code); padding: 12px 14px; border-radius: 10px; overflow: auto; border: 1px solid var(--line); white-space: pre-wrap }
+/* pre 內的 code 是區塊，不是行內程式碼：行內樣式的 padding-left 只作用在換行前的第一行，
+   會讓程式碼區塊首行比其餘行多縮 6px。 */
+pre.code > code { padding: 0; background: none; border-radius: 0 }
 .muted { color: var(--mut) }
 small { color: var(--mut) }
 

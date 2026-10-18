@@ -10,9 +10,10 @@
   // 1) 原始碼逐行上色（Markdown 也用於「原始碼」模式）。
   //    上色只影響「顯示」：先保留原始文字供排版檢視當來源，避免被上色改寫汙染。
   const rawLines = Array.from(src.querySelectorAll(".code")).map((el) => el.textContent);
-  const state = { block: false };
+  const state = { block: "" };
+  const lang = HL.langFromPath(src.dataset.path || "");
   src.querySelectorAll(".code").forEach((el) => {
-    el.innerHTML = isMarkdown ? HL.markdownLine(el.textContent) : HL.swift(el.textContent, state);
+    el.innerHTML = isMarkdown ? HL.markdownLine(el.textContent) : HL.code(el.textContent, state, lang);
   });
 
   const lines = src.querySelectorAll(".ln");

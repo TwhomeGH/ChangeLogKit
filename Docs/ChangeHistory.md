@@ -1,5 +1,27 @@
 # ChangeHistory
 
+## 2026.10.18 changelogkit 0.7.4 發佈
+
+**類型**: 修正 · **檔案**: `assets/highlight.js`、`assets/file.js`、`assets/theme.css`
+
+### 問題 - 程式碼區塊漏字、註釋誤判且首行多縮
+
+檔案檢視的排版模式中，PowerShell 區塊的 `pwsh scripts/tools/forward-quick-test.ps1` 路徑被吃掉一部分；`# 快樂路徑` 等註釋沒有上色，`http://localhost:882` 反而被當成註釋；程式碼區塊首行又比其餘行多縮約一個字元。
+
+### 根因 - 標點規則未錨定、上色器只認 Swift 註釋、行內 code 樣式滲入 pre
+
+- `highlight.js` 的標點／空白正規式 `^[^\s…]+|\s+` 第二個分支沒有 `^`：遇到 `/` 會從後方的空白開始匹配，`i` 一次跳過中間字元。
+- 上色器只認 `//` 與 `/* */`，沒有語言概念：PowerShell 的 `#` 不是註釋，URL 的 `//` 卻被當成註釋。
+- `theme.css` 的 `code { padding: 1px 6px }` 也套到 `pre.code > code`；行內元素跨行時 `padding-left` 只作用在第一行。
+
+### 修改 - 語言感知的無損上色；pre 內的 code 取消行內樣式
+
+- 以語言設定（行／區塊註釋、字串引號、關鍵字）驅動掃描，新增 `HL.code`／`HL.langFromPath`；檔案檢視依副檔名、Markdown 區塊依 fence 語言上色。
+- 修正標點正規式錨定，並保留「去標籤後等於原字串」的無損保證（含區塊註釋跨行狀態）。
+- `pre.code > code` 重設 `padding`／`background`／`border-radius`，首行不再多縮。
+
+---
+
 ## 2026.10.15 changelogkit 0.7.3 發佈
 
 **類型**: 功能 · **檔案**: `assets/index.js`、`assets/index.css`
