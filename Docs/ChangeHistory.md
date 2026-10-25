@@ -1,5 +1,21 @@
 # ChangeHistory
 
+## 2026.10.26 changelogkit 0.7.5 發佈
+
+**類型**: 功能 · **檔案**: `cli.py`、`lang/*.json`、`tests/test_changelogkit.py`
+
+### 問題 - CLI 只能給標題，無法帶入問題／根因／修改
+
+`changelogkit add` 只有位置參數 `title`；`history.build_block` 雖支援 `problem`／`root_cause`／`changes`，`cmd_add` 卻完全沒接，內文只能事後用網頁 GUI 補。
+
+### 修改 - 新增 --problem／--cause／--change（可重複）
+
+- `--problem`／`--cause` 的第一行成為 `### 問題 - `／`### 根因 - ` 的摘要，其餘行是細節。
+- `--change` 可重複；第一筆當 `### 修改 - ` 摘要，其餘轉成條列；多行值會逐行拆開。
+- 同步更新 `--help`、`Docs/usage.md`、README 與測試。
+
+---
+
 ## 2026.10.18 changelogkit 0.7.4 發佈
 
 **類型**: 修正 · **檔案**: `assets/highlight.js`、`assets/file.js`、`assets/theme.css`

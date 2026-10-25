@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from changelogkit import assets, backfill, community, config, history, index  # noqa: E402
+from changelogkit import assets, backfill, cli, community, config, history, index  # noqa: E402
 
 SAMPLE = """# 變更歷史
 
@@ -101,6 +101,18 @@ class HistoryTests(unittest.TestCase):
         with TempRepo():
             history.insert_block(history.build_block("2026.02.01", "新紀錄", "功能", "b.swift"))
             self.assertEqual(history.parse_entries()[0]["title"], "新紀錄")
+
+    def test_add_cli_body(self):
+        with TempRepo():
+            cli.main(["add", "CLI 測試", "--type", "新增",
+                      "--problem", "症狀摘要\n細節", "--cause", "根因摘要",
+                      "--change", "核心改動", "--change", "其他改動"])
+            raw = history.parse_entries()[0]["raw"]
+            self.assertIn("### 問題 - 症狀摘要", raw)
+            self.assertIn("細節", raw)
+            self.assertIn("### 根因 - 根因摘要", raw)
+            self.assertIn("### 修改 - 核心改動", raw)
+            self.assertIn("- 其他改動", raw)
 
     def test_git_changed_files(self):
         with TempRepo() as repo:

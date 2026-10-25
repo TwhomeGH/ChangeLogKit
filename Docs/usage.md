@@ -6,12 +6,15 @@
 changelogkit                       # 等同 serve：啟動本機網頁 GUI
 changelogkit serve [--port 8710] [--no-browser]
 changelogkit add "標題" [--type 修復] [--file a/b.swift] \
+    [--problem "問題摘要"] [--cause "根因摘要"] [--change "修改摘要"（可重複）] \
     [--date YYYY.MM.DD] [--time HH:MM] [--ref "[說明](development/notes.md)"（可重複）]
 changelogkit list [--grep X] [--since YYYY.MM.DD] [--file X] [--type X] [--limit N]
 changelogkit show <編號|關鍵字>
 changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 _site）
 changelogkit community-init                    # 產生「社群與開發交流」範本（Docs/community.md）
 ```
+
+`add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - ` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列。只給標題時插入空骨架。
 
 未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。
 

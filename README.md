@@ -69,7 +69,8 @@ python -m venv .venv
 ```bash
 changelogkit                 # 等同 serve：啟動本機網頁 GUI
 changelogkit serve --port 8710 --no-browser
-changelogkit add "修正 XXX" --type 修復 --file a/b.swift
+changelogkit add "修正 XXX" --type 修復 --file a/b.swift \
+    --problem "症狀" --cause "根因" --change "核心改動"
 changelogkit list --grep RTMP
 changelogkit show 3
 ```

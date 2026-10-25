@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "changelogkit"
-version = "0.7.4"
+version = "0.7.5"
 description = "本機變更歷史 GUI 與開發索引：解析 ChangeHistory.md、唯讀索引 Git／文件／API 宣告"
 readme = "README.md"
 requires-python = ">=3.10"
