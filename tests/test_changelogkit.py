@@ -19,7 +19,7 @@ _DEV_SPEC = importlib.util.spec_from_file_location(
 dev_tool = importlib.util.module_from_spec(_DEV_SPEC)
 _DEV_SPEC.loader.exec_module(dev_tool)
 
-from changelogkit import assets, backfill, cli, community, config, docs, history, index  # noqa: E402
+from changelogkit import assets, backfill, cli, community, config, docs, export, history, index  # noqa: E402
 
 SAMPLE = """# 變更歷史
 
@@ -235,6 +235,42 @@ class DocsTests(unittest.TestCase):
             self.assertEqual(doc["group"], "dev")
             self.assertEqual(doc["groupTitle"], "開發者指南")
             self.assertTrue(any(g["id"] == "dev" for g in data["docGroups"]))
+
+
+class ExportTests(unittest.TestCase):
+    def test_doc_url_is_stable_and_encoded(self):
+        self.assertEqual(export._doc_url("Docs/api/README.md"), "docs/Docs/api/README.html")
+        self.assertEqual(export._doc_url("Docs/my doc.md"), "docs/Docs/my%20doc.html")
+
+    def test_static_pages_use_stable_urls_and_split_repos(self):
+        with TempRepo() as repo:
+            api = repo.root / "Docs" / "api"
+            api.mkdir()
+            (api / "README.md").write_text("# API\n", encoding="utf-8")
+            out = repo.root / "_site"
+            export.export(out)
+
+            self.assertTrue((out / "docs" / "Docs" / "api" / "README.html").is_file())
+            self.assertFalse((out / "docs" / "0.html").exists())
+
+            dev = (out / "development" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("../docs/Docs/api/README.html", dev)
+            self.assertNotIn('class="commit"', dev)
+            self.assertNotIn('class="sig"', dev)
+
+            symbols_page = (out / "development" / "symbols.html").read_text(encoding="utf-8")
+            self.assertIn('class="sig"', symbols_page)
+
+            repos = (out / "development" / "repos.html").read_text(encoding="utf-8")
+            self.assertIn('class="commit"', repos)
+            self.assertIn("init", repos)
+
+            doc = (out / "docs" / "Docs" / "api" / "README.html").read_text(encoding="utf-8")
+            self.assertIn("../../../assets/theme.css", doc)
+            self.assertIn("../../../development/", doc)
+            self.assertIn('class="docbadge color-blue"', doc)
+            self.assertIn("doc-group-auto-dev", doc)
+            self.assertIn('id="doctoc"', doc)
 
 
 class HistoryTests(unittest.TestCase):

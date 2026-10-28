@@ -4,25 +4,27 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{t.dev.title}} · {{title}}</title>
 <meta name="generator" content="changelogkit">
-<script src="../assets/theme.js"></script>
+<script src="{{base}}assets/theme.js"></script>
 <script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
 <script>window.CK_SITE_BASE = {{site_base}}; window.CK_DOC_PAGES = {{doc_pages}}; window.CK_BLOB_BASE = {{blob_base}}; window.CK_DOC_PATH = {{doc_path}};</script>
-<script src="../assets/i18n.js"></script>
-<script src="../assets/highlight.js"></script>
-<script src="../assets/markdown.js"></script>
-<link rel="stylesheet" href="../assets/theme.css">
-<link rel="stylesheet" href="../assets/dev.css">
+<script src="{{base}}assets/i18n.js"></script>
+<script src="{{base}}assets/highlight.js"></script>
+<script src="{{base}}assets/markdown.js"></script>
+<link rel="stylesheet" href="{{base}}assets/theme.css">
+<link rel="stylesheet" href="{{base}}assets/dev.css">
 </head><body>
 <header class="appbar">
   <h1 data-i18n="dev.title">{{t.dev.title}}</h1>
-  <a href="../" data-i18n="nav.history">{{t.nav.history}}</a>
-  <a href="../about/" data-i18n="nav.about">{{t.nav.about}}</a>
+  <a href="{{base}}" data-i18n="nav.history">{{t.nav.history}}</a>
+  <a href="{{base}}about/" data-i18n="nav.about">{{t.nav.about}}</a>
+  <a href="{{base}}development/symbols.html" data-i18n="tab.symbols">{{t.tab.symbols}}</a>
+  <a href="{{base}}development/repos.html" data-i18n="tab.repos">{{t.tab.repos}}</a>
   <span class="spacer"></span>
   <button id="locale" type="button">🌐</button>
   <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
 <main>
-  <p class="muted" data-i18n="static.dev_hint">{{t.static.dev_hint}}</p>
+  <p class="muted" data-i18n="static.overview_hint">{{t.static.overview_hint}}</p>
 {{content}}
 </main>
 <script>
@@ -31,27 +33,9 @@ for (const el of document.querySelectorAll("[data-md]")) {
   if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent,
     window.markdownStaticResolver(window.CK_DOC_PATH));
 }
-/* diff 內文（+／-／context）以 highlight.js 就地語法上色；行首符號另以 dmark 呈現。 */
-for (const el of document.querySelectorAll(".dline[data-line]")) {
-  const raw = el.getAttribute("data-line");
-  const mark = raw[0] || " ";
-  el.innerHTML = '<span class="dmark">' + window.HL.esc(mark) + "</span>" +
-    window.HL.swift(raw.slice(1), { block: false });
-}
-/* API 宣告卡片內的簽名區塊以 highlight.js 就地語法上色（靜態頁由前端處理）。 */
-for (const el of document.querySelectorAll("pre.sig")) {
-  el.innerHTML = window.HL.block(el.textContent);
-}
-/* 符號註釋以 markdown／JSDoc 規則就地渲染（原始註釋置於 data-raw）。
-   連結以該符號所屬檔案的路徑為基準改寫（命中文件頁否則 GitHub blob）。 */
-for (const el of document.querySelectorAll(".doc[data-raw]")) {
-  el.innerHTML = window.renderDoc(el.getAttribute("data-raw"),
-    window.markdownStaticResolver(el.getAttribute("data-file") || ""));
-}
 const tt = document.getElementById("totop");
 if (tt) { tt.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
   addEventListener("scroll", () => { tt.hidden = window.scrollY < 400; }); }
-/* 分組小標題固定在頂列之下（appbar 高度以實際量測為準；靜態頁無分頁／篩選列）。 */
 const measure = () => {
   const s = document.documentElement.style;
   const bar = document.querySelector(".appbar");

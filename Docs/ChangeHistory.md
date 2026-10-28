@@ -1,5 +1,23 @@
 # ChangeHistory
 
+## 2026.10.28 changelogkit 0.9.0 發佈
+
+**類型**: 功能 · **檔案**: `export.py`、`assets/static_*.html`、`assets/markdown.js`、`assets/file.js`、`assets/file.css`
+
+### 問題 - 靜態站一次載入所有 diff；文件頁缺少脈絡與導覽
+
+靜態 `development/index.html` 把 API、文件與 20 筆完整 diff 全部塞在同一頁（VideoServer 實測 1.8 MB），文件被埋在後面；文件頁只有原始路徑，沒有群組、備註、目錄，長文件難以跳轉。
+
+### 修改 - 靜態站三頁化、穩定文件 URL、文件頁脈絡與 sticky 目錄
+
+- 開發索引拆成 `development/index.html`（文件＋功能）、`symbols.html`（API）、`repos.html`（近期改動／diff）；VideoServer 首頁 1.8 MB → 56 KB。
+- 文件頁改用穩定的 `docs/<原路徑>.html`（不再使用排序編號），巢狀路徑的 assets／導覽與文件互連一併修正。
+- 文件頁顯示標題、群組色 badge（連回群組）、來源路徑、備註；標題產生 anchor id 與目錄（TOC）。
+- TOC 桌面為 sticky 側欄、手機為浮動「目錄」抽屜；只收 h2–h3；隨捲動高亮目前章節（`aria-current`）。
+- 動態檔檢視與靜態文件頁共用 `renderTOC`／`bindTOC`／`watchTOC`；切到原始碼模式自動隱藏目錄。
+
+---
+
 ## 2026.10.28 changelogkit 0.8.0 發佈
 
 **類型**: 功能 · **檔案**: `docs.py`、`config.py`、`index.py`、`export.py`、`globs.py`、`assets/dev.js`、`tools/dev.py`

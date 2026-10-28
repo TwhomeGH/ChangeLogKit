@@ -17,6 +17,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote
 
 from . import assets, buildinfo, community, config, history, i18n, index
 
@@ -27,6 +28,32 @@ STATIC_ASSETS = ("theme.css", "theme.js", "i18n.js", "dev.css", "file.css", "hig
 def _esc(text):
     """HTML 轉義（None 視為空字串）。"""
     return html.escape(str(text if text is not None else ""))
+
+
+def _doc_rel(name):
+    """文件在站內的相對檔案路徑（穩定、與排序無關）：``docs/<path>.html``。"""
+    clean = str(name).replace("\\", "/")
+    while clean.startswith("./"):
+        clean = clean[2:]
+    clean = clean.strip("/")
+    stem = clean[:-3] if clean.lower().endswith(".md") else clean
+    return "docs/" + stem + ".html"
+
+
+def _doc_url(name):
+    """文件頁的 URL（站根相對；逐段 percent-encode）。"""
+    return "/".join(quote(part, safe="") for part in _doc_rel(name).split("/"))
+
+
+def _site_base(rel):
+    """從站根相對的路徑推得該頁面回到站根的相對前綴（``../`` …）。"""
+    return "../" * len(Path(rel).parent.parts)
+
+
+def _group_anchor(group_id):
+    """群組標題的 HTML id（``auto:dev`` → ``doc-group-auto-dev``）。"""
+    slug = re.sub(r"[^A-Za-z0-9_-]+", "-", str(group_id)).strip("-")
+    return "doc-group-" + (slug or "other")
 
 
 def _diff_class(line):
@@ -164,11 +191,11 @@ def _render_doc_warnings(warnings):
             % (_esc(i18n.t("docs.warn_title")), items))
 
 
-def _render_documents(documents, groups):
-    """文件卡片（摘要預覽）；依群組分節，標題連到靜態文件頁 ``docs/<i>.html``。"""
+def _render_documents(documents, groups, base="../"):
+    """文件卡片（摘要預覽）；依群組分節，標題連到穩定的 ``docs/<path>.html``。"""
     by_group = {}
-    for i, doc in enumerate(documents):
-        by_group.setdefault(doc.get("group", ""), []).append((i, doc))
+    for doc in documents:
+        by_group.setdefault(doc.get("group", ""), []).append(doc)
     out = []
     for group in groups:
         items = by_group.get(group["id"]) or []
@@ -178,16 +205,18 @@ def _render_documents(documents, groups):
                  or (i18n.t(group["titleKey"]) if group.get("titleKey")
                      else i18n.t("docs.unclassified")))
         gnote = ('<span class="gnote">%s</span>' % _esc(group.get("note"))) if group.get("note") else ""
-        out.append('<h2 class="docgroup color-%s"><span class="dot"></span>'
+        out.append('<h2 id="%s" class="docgroup color-%s"><span class="dot"></span>'
                    '<span class="gtitle">%s</span><span class="count">(%d)</span>%s</h2>'
-                   % (_esc(group.get("color", "slate")), _esc(title), len(items), gnote))
-        for i, doc in items:
+                   % (_esc(_group_anchor(group["id"])), _esc(group.get("color", "slate")),
+                      _esc(title), len(items), gnote))
+        for doc in items:
             text = doc["text"]
             preview = text[:260] + (" …" if len(text) > 260 else "")
             dnote = ('<div class="docnote">%s</div>' % _esc(doc["note"])) if doc.get("note") else ""
-            out.append('<article class="card"><h2><a href="../docs/%d.html">%s</a></h2>'
+            href = base + _doc_url(doc["name"])
+            out.append('<article class="card"><h2><a href="%s">%s</a></h2>'
                        '<div class="meta">%s%s</div>%s<div class="preview">%s</div></article>'
-                       % (i, _esc(doc.get("title") or doc["name"]), _esc(doc["name"]),
+                       % (_esc(href), _esc(doc.get("title") or doc["name"]), _esc(doc["name"]),
                           (" · " + _esc(doc["repo"])) if doc.get("repo") else "", dnote,
                           _esc(preview)))
     return "\n".join(out)
@@ -215,38 +244,52 @@ def _render_repos(repos):
     return "\n".join(parts)
 
 
-def _render_dev(data, blob_base):
-    """開發索引頁內容；回傳 (HTML, symbols, documents, sources 計數)。"""
-    blocks = ['<h1 data-i18n="tab.symbols">%s</h1><p class="muted"><span data-i18n="filter.supported">%s</span>%s</p>'
-              % (_esc(i18n.t("tab.symbols")), _esc(i18n.t("filter.supported")),
-                 _esc("、".join(data.get("languages", []))))
-              + _render_symbols(data["symbols"], blob_base),
-              '<h1 id="docs" data-i18n="tab.documents">%s</h1>' % _esc(i18n.t("tab.documents"))
+def _render_overview(data):
+    """靜態開發索引首頁：文件優先，其次是功能；API／近期改動各自獨立一頁。"""
+    blocks = ['<h1 id="docs" data-i18n="tab.documents">%s</h1>' % _esc(i18n.t("tab.documents"))
               + _render_doc_warnings(data.get("docWarnings") or [])
-              + _render_documents(data["documents"], data.get("docGroups") or []),
-              '<h1 data-i18n="tab.repos">%s</h1>' % _esc(i18n.t("tab.repos")) + _render_repos(data["repos"])]
+              + _render_documents(data["documents"], data.get("docGroups") or [])]
     if data["features"]:
         cards = "".join(
             '<article class="card"><h2>%s</h2><div class="meta">%s</div><p>%s</p></article>'
             % (_esc(f.get("name")), _esc(f.get("id")), _esc(f.get("summary")))
             for f in data["features"])
-        blocks.insert(0, '<h1 data-i18n="tab.features">%s</h1>' % _esc(i18n.t("tab.features")) + cards)
-    return ("\n".join(blocks), sum(1 for _ in index.iter_symbols(data["symbols"])),
-            len(data["documents"]), len(data["repos"]))
+        blocks.append('<h1 data-i18n="tab.features">%s</h1>' % _esc(i18n.t("tab.features")) + cards)
+    return "\n".join(blocks), len(data["documents"]), len(data["features"])
+
+
+def _render_symbols_page(data, blob_base):
+    """靜態 API 宣告頁；回傳 (HTML, symbols 計數)。"""
+    hint = ('<p class="muted"><span data-i18n="filter.supported">%s</span>%s</p>'
+            % (_esc(i18n.t("filter.supported")), _esc("、".join(data.get("languages", [])))))
+    return (hint + _render_symbols(data["symbols"], blob_base),
+            sum(1 for _ in index.iter_symbols(data["symbols"])))
 
 
 def _write_docs(out, documents, footer, doc_pages_json, blob_base_json):
-    """為每份 Markdown 文件產生一個靜態檢視頁 ``docs/<i>.html``。
+    """為每份 Markdown 文件產生穩定的靜態頁 ``docs/<path>.html``。
 
-    注入站內脈絡，讓文件內的相對連結改寫到正確的站內頁（或 GitHub blob）。
+    巢狀路徑要依深度改寫 ``base``／``site_base``，文件內的相對連結才會
+    指回正確的站內頁（或 GitHub blob）。
     """
-    docs_dir = out / "docs"
-    docs_dir.mkdir()
-    for i, doc in enumerate(documents):
-        (docs_dir / ("%d.html" % i)).write_text(assets.render(
-            "static_doc.html", docname=_esc(doc["name"]), title=_esc(config.load().title),
-            content=_esc(doc["text"]), footer=footer, **i18n.subs(),
-            site_base=json.dumps("../"), doc_pages=doc_pages_json, blob_base=blob_base_json,
+    for doc in documents:
+        rel = _doc_rel(doc["name"])
+        base = _site_base(rel)
+        target = out / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        gtitle = (doc.get("groupTitle")
+                  or (i18n.t(doc["groupTitleKey"]) if doc.get("groupTitleKey")
+                      else i18n.t("docs.unclassified")))
+        note = doc.get("note") or ""
+        note_html = ('<div class="rendered docnote" data-md><template>%s</template></div>'
+                     % _esc(note)) if note else ""
+        target.write_text(assets.render(
+            "static_doc.html", docname=_esc(doc.get("title") or doc["name"]),
+            title=_esc(config.load().title), content=_esc(doc["text"]), footer=footer,
+            **i18n.subs(), base=base, docpath=_esc(doc["name"]),
+            grouptitle=_esc(gtitle), groupcolor=_esc(doc.get("groupColor") or "slate"),
+            groupanchor=_esc(_group_anchor(doc.get("group", ""))), docnote=note_html,
+            site_base=json.dumps(base), doc_pages=doc_pages_json, blob_base=blob_base_json,
             doc_path=json.dumps(doc["name"], ensure_ascii=False)), encoding="utf-8")
 
 
@@ -299,9 +342,9 @@ def export(out_dir, branch="main"):
         where = "（無 git 資訊）"
     footer = i18n.t("static.built_by", src=where, time=datetime.now().strftime("%Y-%m-%d %H:%M"))
 
-    # 站內連結脈絡：文件相對路徑 → 匯出的文件頁；其餘退回 GitHub blob。
-    doc_pages_json = json.dumps({doc["name"]: "docs/%d.html" % i
-                                 for i, doc in enumerate(data["documents"])}, ensure_ascii=False)
+    # 站內連結脈絡：文件相對路徑 → 穩定文件頁；其餘退回 GitHub blob。
+    doc_pages_json = json.dumps({doc["name"]: _doc_url(doc["name"])
+                                 for doc in data["documents"]}, ensure_ascii=False)
     blob_base_json = json.dumps(blob_base, ensure_ascii=False)
     hist_rel = index.rel_path(cfg.history) or ""
 
@@ -312,12 +355,23 @@ def export(out_dir, branch="main"):
         site_base=json.dumps(""), doc_pages=doc_pages_json, blob_base=blob_base_json,
         doc_path=json.dumps(hist_rel, ensure_ascii=False)), encoding="utf-8")
 
-    dev_content, symbols, documents, sources = _render_dev(data, blob_base)
+    overview_content, documents, features = _render_overview(data)
     (out / "development" / "index.html").write_text(assets.render(
-        "static_dev.html", **i18n.subs(), title=_esc(cfg.title), content=dev_content,
-        symbols=str(symbols), documents=str(documents), sources=str(sources),
-        footer=footer, site_base=json.dumps("../"), doc_pages=doc_pages_json,
+        "static_dev.html", **i18n.subs(), title=_esc(cfg.title), content=overview_content,
+        documents=str(documents), features=str(features), footer=footer, base="../",
+        site_base=json.dumps("../"), doc_pages=doc_pages_json,
         blob_base=blob_base_json, doc_path=json.dumps("")), encoding="utf-8")
+
+    symbols_content, symbols = _render_symbols_page(data, blob_base)
+    (out / "development" / "symbols.html").write_text(assets.render(
+        "static_symbols.html", **i18n.subs(), title=_esc(cfg.title), content=symbols_content,
+        symbols=str(symbols), sources=str(len(data["repos"])), footer=footer, base="../",
+        site_base=json.dumps("../"), doc_pages=doc_pages_json,
+        blob_base=blob_base_json, doc_path=json.dumps("")), encoding="utf-8")
+
+    (out / "development" / "repos.html").write_text(assets.render(
+        "static_repos.html", **i18n.subs(), title=_esc(cfg.title),
+        content=_render_repos(data["repos"]), footer=footer, base="../"), encoding="utf-8")
 
     _write_docs(out, data["documents"], footer, doc_pages_json, blob_base_json)
     community_html = community.html_block(community.load(), i18n.t("about.community_title"))

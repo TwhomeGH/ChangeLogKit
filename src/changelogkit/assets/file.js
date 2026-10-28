@@ -5,7 +5,13 @@
   const rendered = document.getElementById("rendered");
   const modeBtn = document.getElementById("mode");
   const jump = document.getElementById("jump");
+  const toc = document.getElementById("doctoc");
+  const tocList = document.getElementById("toclist");
+  const tocBtn = document.getElementById("tocbtn");
+  const layout = document.getElementById("doclayout");
   const isMarkdown = /\.(md|markdown)$/i.test(src.dataset.path || "");
+  let hasTOC = false;
+  window.bindTOC(toc, tocBtn, document.getElementById("tocclose"));
 
   // 1) 原始碼逐行上色（Markdown 也用於「原始碼」模式）。
   //    上色只影響「顯示」：先保留原始文字供排版檢視當來源，避免被上色改寫汙染。
@@ -71,11 +77,18 @@
     src.hidden = renderedMode;
     if (rendered) rendered.hidden = !renderedMode;
     if (jump) jump.hidden = renderedMode;
+    if (toc) toc.hidden = !(renderedMode && hasTOC);
+    if (tocBtn) tocBtn.hidden = !(renderedMode && hasTOC);
+    if (layout) layout.classList.toggle("source", !renderedMode);
+    document.body.classList.remove("toc-open");
     if (modeBtn) modeBtn.textContent = renderedMode ? CK_T("file.source") : CK_T("file.rendered");
   }
 
   if (isMarkdown && rendered && modeBtn) {
     rendered.innerHTML = window.renderMarkdown(rawLines.join("\n"), resolveHref);
+    hasTOC = window.renderTOC(rendered, tocList, toc);
+    if (tocBtn) tocBtn.hidden = !hasTOC;
+    if (hasTOC) window.watchTOC(rendered, tocList, document.querySelector(".wrap"));
     // 文件內的 #L 行號連結：切回原始碼模式再跳行（就地，不重載）。
     rendered.addEventListener("click", (e) => {
       const a = e.target.closest ? e.target.closest("a") : null;

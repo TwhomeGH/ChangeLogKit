@@ -140,6 +140,8 @@
   "file.jump": "行號",
   "file.copy": "複製路徑",
   "file.copied": "已複製",
+  "file.toc": "目錄",
+  "file.toc_close": "關閉目錄",
 
   "about.title": "關於",
   "about.intro": "通用變更歷史與開發索引工具。",
@@ -169,6 +171,8 @@
 
   "static.export_hint": "changelogkit 靜態匯出（唯讀）：{{count}} 筆變更紀錄。",
   "static.dev_hint": "changelogkit 靜態匯出（唯讀）：符號 {{symbols}}、文件 {{documents}}、來源 {{sources}}。",
+  "static.overview_hint": "changelogkit 靜態匯出（唯讀）：{{documents}} 份文件、{{features}} 項功能。",
+  "static.symbols_hint": "changelogkit 靜態匯出（唯讀）：{{symbols}} 個宣告，來自 {{sources}} 個來源。",
   "static.built_by": "本站由 {src} 產生 · {time}",
   "static.support_langs": "支援語言",
   "static.no_diff": "（無差異）"

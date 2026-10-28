@@ -140,6 +140,8 @@
   "file.jump": "行",
   "file.copy": "パスをコピー",
   "file.copied": "コピーしました",
+  "file.toc": "目次",
+  "file.toc_close": "目次を閉じる",
 
   "about.title": "このツールについて",
   "about.intro": "汎用の変更履歴・開発インデックスツール。",
@@ -169,6 +171,8 @@
 
   "static.export_hint": "changelogkit 静的エクスポート（読み取り専用）：変更 {{count}} 件。",
   "static.dev_hint": "changelogkit 静的エクスポート（読み取り専用）：シンボル {{symbols}}、ドキュメント {{documents}}、ソース {{sources}}。",
+  "static.overview_hint": "changelogkit 静的エクスポート（読み取り専用）：ドキュメント {{documents}} 件、機能 {{features}} 件。",
+  "static.symbols_hint": "changelogkit 静的エクスポート（読み取り専用）：宣言 {{symbols}} 件（{{sources}} ソース）。",
   "static.built_by": "{src} により生成 · {time}",
   "static.support_langs": "対応言語",
   "static.no_diff": "（差分なし）"

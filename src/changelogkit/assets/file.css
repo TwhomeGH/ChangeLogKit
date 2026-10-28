@@ -21,3 +21,52 @@
 /* Markdown 排版檢視（外框版面；內容樣式在 theme.css） */
 .wrap > [hidden] { display: none }
 .rendered { max-width: 920px; margin: 0 auto; padding: 22px 22px 64px; line-height: 1.75 }
+
+/* 文件頁：桌面 sticky 側欄；手機用浮動按鈕開抽屜。 */
+.doclayout { display: flex; justify-content: center; align-items: flex-start; gap: 28px; max-width: 1180px; margin: 0 auto; padding: 0 22px }
+.docmain { flex: 1 1 auto; min-width: 0; width: 100%; max-width: 900px; padding: 22px 0 64px }
+.docmain .rendered { max-width: none; margin: 0; padding: 0 }
+.docmain .docmeta, .docmain .docnote { max-width: none; margin-left: 0; margin-right: 0; padding-left: 0; padding-right: 0 }
+.doclayout.source { max-width: none; padding: 0 }
+.doclayout.source .docmain { max-width: none; padding: 0 }
+.docmeta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; margin: 0 0 8px; padding: 0 }
+.docbadge { display: inline-flex; align-items: center; gap: 6px; color: var(--fg); text-decoration: none }
+.docbadge .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--doc-color) }
+.docbadge:hover { color: var(--accent) }
+.docpath { color: var(--mut); font: 12.5px ui-monospace, Consolas, "Courier New", monospace }
+.docnote { margin: 0 0 10px; padding: 0; font-size: 13px; color: var(--mut) }
+
+.doctoc {
+  flex: 0 0 220px; width: 220px; align-self: flex-start;
+  position: sticky; top: var(--appbar-h, 53px);
+  max-height: calc(100vh - var(--appbar-h, 53px) - 32px);
+  overflow: auto; padding: 22px 0 16px; border-left: 1px solid var(--line);
+}
+.wrap .doctoc { top: 0; max-height: calc(100vh - 53px - 32px) }
+.doctoc[hidden] { display: none }
+.doctoc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-left: 14px; margin-bottom: 8px; color: var(--mut); font-size: 12px; font-weight: 700 }
+.doctoc-close { display: none; border: 0; background: none; color: var(--mut); cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 6px }
+.doctoc nav { display: flex; flex-direction: column; gap: 1px }
+.doctoc a { display: block; padding: 4px 10px 4px 14px; border-left: 2px solid transparent; color: var(--mut); font-size: 13px; line-height: 1.45; text-decoration: none }
+.doctoc a:hover, .doctoc a.active { color: var(--accent); background: var(--line2); border-left-color: var(--accent) }
+.doctoc a.active { font-weight: 600 }
+.doctoc .toc-h3 { padding-left: 26px; font-size: 12.5px }
+
+/* 手機：目錄抽屜＋浮動按鈕；原始碼模式不顯示。 */
+.tocbtn { display: none; position: fixed; right: 16px; bottom: 16px; z-index: 30; align-items: center; border-radius: 999px; padding: 8px 14px; box-shadow: var(--shadow) }
+.tocbtn[hidden] { display: none !important }
+@media (max-width: 1099px) {
+  .doclayout { display: block; padding: 0 16px }
+  .docmain { max-width: none; padding: 0 0 56px }
+  .doctoc, .wrap .doctoc {
+    position: fixed; left: 16px; right: 16px; top: auto; bottom: 76px;
+    width: auto; max-height: 60vh; padding: 12px 14px; z-index: 30;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--card); box-shadow: var(--shadow); display: none;
+  }
+  body.toc-open .doctoc:not([hidden]) { display: block }
+  .doctoc-head { padding-left: 0 }
+  .doctoc-close { display: inline-flex }
+  .tocbtn { display: inline-flex }
+}
+@media (min-width: 1100px) { .tocbtn { display: none } }

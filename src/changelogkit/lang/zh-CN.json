@@ -140,6 +140,8 @@
   "file.jump": "行号",
   "file.copy": "复制路径",
   "file.copied": "已复制",
+  "file.toc": "目录",
+  "file.toc_close": "关闭目录",
 
   "about.title": "关于",
   "about.intro": "通用变更历史与开发索引工具。",
@@ -169,6 +171,8 @@
 
   "static.export_hint": "changelogkit 静态导出（只读）：{{count}} 条变更记录。",
   "static.dev_hint": "changelogkit 静态导出（只读）：符号 {{symbols}}、文档 {{documents}}、来源 {{sources}}。",
+  "static.overview_hint": "changelogkit 静态导出（只读）：{{documents}} 份文档、{{features}} 项功能。",
+  "static.symbols_hint": "changelogkit 静态导出（只读）：{{symbols}} 个声明，来自 {{sources}} 个来源。",
   "static.built_by": "本站由 {src} 生成 · {time}",
   "static.support_langs": "支持语言",
   "static.no_diff": "（无差异）"

@@ -31,6 +31,12 @@ pre.code > code { padding: 0; background: none; border-radius: 0 }
 .muted { color: var(--mut) }
 small { color: var(--mut) }
 
+/* 文件分類色票（dev.css 的群組標題與 file.css 的文件頁 badge 共用）。 */
+.color-blue { --doc-color: #3b82f6 } .color-green { --doc-color: #10b981 }
+.color-amber { --doc-color: #f59e0b } .color-violet { --doc-color: #8b5cf6 }
+.color-rose { --doc-color: #f43f5e } .color-cyan { --doc-color: #06b6d4 }
+.color-slate { --doc-color: #64748b }
+
 /* 語法上色（檔案檢視、差異檢視共用）：深色預設，淺色主題再覆寫。 */
 .tok-k { color: #c586c0 } /* 關鍵字 */
 .tok-t { color: #4ec9b0 } /* 型別 */
@@ -110,7 +116,7 @@ footer.built {
 }
 
 /* Markdown 排版內容（共用；外框版面交由各頁 CSS，例如 .rendered 的 max-width 在 file.css）。 */
-.rendered h1, .rendered h2, .rendered h3, .rendered h4 { line-height: 1.3; margin: 1.4em 0 .5em }
+.rendered h1, .rendered h2, .rendered h3, .rendered h4 { line-height: 1.3; margin: 1.4em 0 .5em; scroll-margin-top: calc(var(--appbar-h, 53px) + 12px) }
 .rendered h1 { font-size: 1.7em; border-bottom: 1px solid var(--line); padding-bottom: .3em }
 .rendered h2 { font-size: 1.35em; border-bottom: 1px solid var(--line); padding-bottom: .25em }
 .rendered h3 { font-size: 1.15em }

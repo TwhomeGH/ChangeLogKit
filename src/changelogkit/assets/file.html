@@ -21,9 +21,21 @@
   <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
 <div class="wrap">
-  <pre id="src" data-repo="{{repo}}" data-path="{{path}}" data-line="{{line}}">{{content}}</pre>
-  <article id="rendered" class="rendered" hidden></article>
+  <div class="doclayout" id="doclayout">
+    <aside class="doctoc" id="doctoc" hidden>
+      <div class="doctoc-head">
+        <span data-i18n="file.toc">{{t.file.toc}}</span>
+        <button type="button" class="doctoc-close" id="tocclose" aria-label="{{t.file.toc_close}}">×</button>
+      </div>
+      <nav id="toclist"></nav>
+    </aside>
+    <div class="docmain">
+      <pre id="src" data-repo="{{repo}}" data-path="{{path}}" data-line="{{line}}">{{content}}</pre>
+      <article id="rendered" class="rendered" hidden></article>
+    </div>
+  </div>
 </div>
+<button type="button" class="tocbtn" id="tocbtn" hidden aria-controls="doctoc" aria-expanded="false" data-i18n="file.toc">{{t.file.toc}}</button>
 <script src="/assets/highlight.js"></script>
 <script src="/assets/markdown.js"></script>
 <script src="/assets/file.js"></script>

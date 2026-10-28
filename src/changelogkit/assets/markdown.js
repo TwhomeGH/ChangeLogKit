@@ -52,17 +52,31 @@
     return emit(root);
   }
 
+  /* 標題 anchor：由純文字產生穩定 id；同一份文件重複標題自動加序號。 */
+  function headingId(text, ids) {
+    const plain = String(text)
+      .replace(/`([^`]*)`/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/[*_~]/g, "")
+      .trim();
+    const base = plain.toLowerCase().replace(/[^\w\u00C0-\uFFFF]+/g, "-").replace(/^-+|-+$/g, "") || "section";
+    let id = base, n = 2;
+    while (ids.has(id)) { id = base + "-" + n; n++; }
+    ids.add(id);
+    return id;
+  }
+
   /* 引言；若首行為 [!TYPE] 則輸出提示框，其餘內容照 markdown 渲染。 */
-  function quote(lines, resolve) {
+  function quote(lines, resolve, ids) {
     const alert = lines[0] && lines[0].match(/^\s*\[!(\w+)\]\s*(.*)$/);
     if (alert && ALERTS[alert[1].toLowerCase()]) {
       const meta = ALERTS[alert[1].toLowerCase()];
       const title = alert[2].trim() || meta.label;
-      const body = render(lines.slice(1).join("\n"), resolve);
+      const body = render(lines.slice(1).join("\n"), resolve, ids);
       return `<div class="alert alert-${alert[1].toLowerCase()}">` +
         `<p class="alert-title"><span class="alert-icon">${meta.icon}</span>${inline(title, resolve)}</p>${body}</div>`;
     }
-    return `<blockquote>${render(lines.join("\n"), resolve)}</blockquote>`;
+    return `<blockquote>${render(lines.join("\n"), resolve, ids)}</blockquote>`;
   }
 
   const isBlockStart = (line, next) => {
@@ -74,7 +88,8 @@
     return false;
   };
 
-  function render(text, resolve) {
+  function render(text, resolve, ids) {
+    const seen = ids || new Set();
     const lines = String(text).replace(/\r\n?/g, "\n").split("\n");
     const out = [];
     let i = 0;
@@ -93,7 +108,12 @@
       }
 
       const heading = line.match(/^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/);
-      if (heading) { const l = heading[1].length; out.push(`<h${l}>${inline(heading[2], resolve)}</h${l}>`); i++; continue; }
+      if (heading) {
+        const l = heading[1].length;
+        const id = headingId(heading[2], seen);
+        out.push(`<h${l} id="${esc(id)}">${inline(heading[2], resolve)}</h${l}>`);
+        i++; continue;
+      }
 
       if (/^\s{0,3}([-*_])(\s*\1){2,}\s*$/.test(line)) { out.push("<hr>"); i++; continue; }
 
@@ -109,7 +129,7 @@
       if (/^\s{0,3}>/.test(line)) {
         const buf = [];
         while (i < lines.length && /^\s{0,3}>/.test(lines[i])) { buf.push(lines[i].replace(/^\s{0,3}>\s?/, "")); i++; }
-        out.push(quote(buf, resolve));
+        out.push(quote(buf, resolve, seen));
         continue;
       }
 
@@ -139,7 +159,80 @@
   const IDENTITY = (href) => href;
 
   window.renderMarkdown = (text, resolveHref) =>
-    render(text, typeof resolveHref === "function" ? resolveHref : IDENTITY);
+    render(text, typeof resolveHref === "function" ? resolveHref : IDENTITY, new Set());
+
+  /* 把容器內的 h2–h3 建成目錄（h1 是頁面標題，h4+ 太細）；少於兩項就隱藏。 */
+  window.renderTOC = function (content, nav, panel) {
+    if (!content || !nav) return false;
+    const heads = [...content.querySelectorAll("h2, h3")].filter((h) => h.id);
+    nav.textContent = "";
+    if (heads.length < 2) {
+      if (panel) panel.hidden = true;
+      return false;
+    }
+    for (const h of heads) {
+      const a = document.createElement("a");
+      a.className = "toc-h" + h.tagName[1];
+      a.href = "#" + h.id;
+      a.textContent = h.textContent;
+      nav.append(a);
+    }
+    if (panel) panel.hidden = false;
+    return true;
+  };
+
+  /* 手機目錄抽屜的開關；桌面由 CSS 固定顯示側欄。 */
+  window.bindTOC = function (panel, btn, close) {
+    if (!panel || !btn) return;
+    const expanded = () => document.body.classList.contains("toc-open");
+    const setOpen = (open) => {
+      document.body.classList.toggle("toc-open", open);
+      btn.setAttribute("aria-expanded", String(open));
+    };
+    btn.addEventListener("click", () => setOpen(!expanded()));
+    if (close) close.addEventListener("click", () => setOpen(false));
+    panel.addEventListener("click", (e) => {
+      const link = e.target.closest ? e.target.closest("a") : null;
+      if (link) setOpen(false);
+    });
+    addEventListener("resize", () => {
+      if (innerWidth >= 1100) setOpen(false);   /* 回到桌面版時收起抽屜 */
+    });
+  };
+
+  /* 目前章節高亮（scroll-spy）：scroller 省略時監聽視窗；動態檔檢視傳入 .wrap。 */
+  window.watchTOC = function (content, nav, scroller) {
+    const links = [...nav.querySelectorAll('a[href^="#"]')];
+    if (!links.length) return;
+    const appbar = document.querySelector(".appbar");
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const offset = (appbar ? appbar.getBoundingClientRect().bottom : 0) + 12;
+      let active = links[0];
+      for (const link of links) {
+        const id = link.getAttribute("href").slice(1);
+        const head = document.getElementById(id);
+        if (!head) continue;
+        if (head.getBoundingClientRect().top <= offset) active = link;
+        else break;
+      }
+      const box = scroller || document.scrollingElement || document.documentElement;
+      if (box && box.scrollHeight - box.scrollTop - box.clientHeight < 8) {
+        active = links[links.length - 1];
+      }
+      links.forEach((link) => {
+        const on = link === active;
+        link.classList.toggle("active", on);
+        if (on) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    (scroller || window).addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    update();
+  };
 
   /* ── 連結解析：所有渲染點共用的唯一來源 ─────────────────────
      依「來源文件」把相對連結改寫成站內連結。

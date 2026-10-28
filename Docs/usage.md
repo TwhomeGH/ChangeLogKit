@@ -53,6 +53,20 @@ python C:\Users\agp05\OneDrive\桌面\ChangeLogTools\tools\dev.py serve
 
 > 變更歷史與文件內部的**相對連結會自動改寫成站內連結**（詳見「變更歷史格式」），不需手寫 `/development/file?...`。
 
+## 靜態站（export）
+
+`changelogkit export [OUT]` 產生唯讀靜態站（預設 `_site`）。開發索引拆成三頁，避免一次載入所有 diff：
+
+| 路徑 | 內容 |
+| --- | --- |
+| `development/index.html` | 文件（分組／顏色／備註）＋功能 |
+| `development/symbols.html` | API 宣告 |
+| `development/repos.html` | 近期改動與完整 diff |
+| `docs/<原路徑>.html` | 每份文件的穩定頁面（例：`docs/Docs/api/README.html`） |
+| `about/index.html` | 關於 |
+
+文件頁會顯示群組 badge、來源路徑、備註與目錄（TOC）；標題有 anchor id。桌面版目錄固定在左側（sticky），手機版用右下角「目錄」按鈕開抽屜。文件 URL 以原路徑為準，不再使用排序編號（舊的 `docs/0.html` 會失效）。
+
 ## 設定：`.changelog.toml`
 
 放 repo 根目錄；工具從工作目錄**往上**尋找，找不到用預設值。

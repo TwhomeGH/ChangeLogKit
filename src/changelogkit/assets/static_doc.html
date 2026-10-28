@@ -4,33 +4,61 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{docname}} · {{title}}</title>
 <meta name="generator" content="changelogkit">
-<script src="../assets/theme.js"></script>
+<script src="{{base}}assets/theme.js"></script>
 <script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
 <script>window.CK_SITE_BASE = {{site_base}}; window.CK_DOC_PAGES = {{doc_pages}}; window.CK_BLOB_BASE = {{blob_base}}; window.CK_DOC_PATH = {{doc_path}};</script>
-<script src="../assets/i18n.js"></script>
-<script src="../assets/highlight.js"></script>
-<script src="../assets/markdown.js"></script>
-<link rel="stylesheet" href="../assets/theme.css">
-<link rel="stylesheet" href="../assets/file.css">
-</head><body>
+<script src="{{base}}assets/i18n.js"></script>
+<script src="{{base}}assets/highlight.js"></script>
+<script src="{{base}}assets/markdown.js"></script>
+<link rel="stylesheet" href="{{base}}assets/theme.css">
+<link rel="stylesheet" href="{{base}}assets/file.css">
+</head><body class="static-doc">
 <header class="appbar">
   <h1>{{docname}}</h1>
-  <a href="../development/" data-i18n="nav.dev">{{t.nav.dev}}</a>
-  <a href="../" data-i18n="nav.history">{{t.nav.history}}</a>
-  <a href="../about/" data-i18n="nav.about">{{t.nav.about}}</a>
+  <a href="{{base}}development/" data-i18n="nav.dev">{{t.nav.dev}}</a>
+  <a href="{{base}}" data-i18n="nav.history">{{t.nav.history}}</a>
+  <a href="{{base}}about/" data-i18n="nav.about">{{t.nav.about}}</a>
   <span class="spacer"></span>
   <button id="locale" type="button">🌐</button>
   <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
 <main>
-  <div class="rendered" data-md><template>{{content}}</template></div>
+  <div class="doclayout">
+    <aside class="doctoc" id="doctoc" hidden>
+      <div class="doctoc-head">
+        <span data-i18n="file.toc">{{t.file.toc}}</span>
+        <button type="button" class="doctoc-close" id="tocclose" aria-label="{{t.file.toc_close}}">×</button>
+      </div>
+      <nav id="toclist"></nav>
+    </aside>
+    <div class="docmain">
+      <div class="docmeta">
+        <a class="docbadge color-{{groupcolor}}" href="{{base}}development/#{{groupanchor}}"><span class="dot"></span>{{grouptitle}}</a>
+        <span class="docpath">{{docpath}}</span>
+      </div>
+      {{docnote}}
+      <div class="rendered" id="doccontent" data-md><template>{{content}}</template></div>
+    </div>
+  </div>
 </main>
+<button type="button" class="tocbtn" id="tocbtn" hidden aria-controls="doctoc" aria-expanded="false" data-i18n="file.toc">{{t.file.toc}}</button>
 <script>
 const resolve = window.markdownStaticResolver(window.CK_DOC_PATH);
 for (const el of document.querySelectorAll("[data-md]")) {
   const tpl = el.querySelector("template");
   if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent, resolve);
 }
+/* 目錄：桌面 sticky 側欄、手機抽屜；與動態檔案檢視共用 renderTOC／bindTOC。 */
+const toc = document.getElementById("doctoc");
+const tocBtn = document.getElementById("tocbtn");
+const doccontent = document.getElementById("doccontent");
+const tocList = document.getElementById("toclist");
+const hasTOC = window.renderTOC(doccontent, tocList, toc);
+if (tocBtn) tocBtn.hidden = !hasTOC;
+if (hasTOC) window.watchTOC(doccontent, tocList, null);
+window.bindTOC(toc, tocBtn, document.getElementById("tocclose"));
+const bar = document.querySelector(".appbar");
+if (bar) document.documentElement.style.setProperty("--appbar-h", bar.offsetHeight + "px");
 </script>
 <footer class="built">{{footer}}</footer>
 </body></html>
