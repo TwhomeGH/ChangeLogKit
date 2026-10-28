@@ -3,7 +3,9 @@
 以暫存 git repo 為測試對象（不觸碰真實專案）。
 """
 
+import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -12,7 +14,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from changelogkit import assets, backfill, cli, community, config, history, index  # noqa: E402
+_DEV_SPEC = importlib.util.spec_from_file_location(
+    "ck_dev", Path(__file__).resolve().parents[1] / "tools" / "dev.py")
+dev_tool = importlib.util.module_from_spec(_DEV_SPEC)
+_DEV_SPEC.loader.exec_module(dev_tool)
+
+from changelogkit import assets, backfill, cli, community, config, docs, history, index  # noqa: E402
 
 SAMPLE = """# 變更歷史
 
@@ -87,6 +94,147 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(cfg.history, repo.root / "Docs/ChangeHistory.md")
             self.assertEqual(cfg.community, repo.root / "Docs/community.md")
             self.assertEqual([s.name for s in cfg.sources], ["app"])
+
+    def test_doc_group_accepts_single_path_string(self):
+        groups = config._doc_groups([{"id": "x", "paths": "Docs/**"}])
+        self.assertEqual(groups[0].paths, ("Docs/**",))
+
+    def test_parses_docs_section(self):
+        with TempRepo() as repo:
+            (repo.root / ".changelog.toml").write_text(
+                TOML + '\n[tool.changelog.docs]\nunlisted = "folder"\nauto = false\n\n'
+                '[[tool.changelog.docs.groups]]\nid = "dev"\ntitle = "開發者指南"\n'
+                'color = "blue"\norder = 10\npaths = ["Docs/**"]\n\n'
+                '[[tool.changelog.docs.entries]]\npath = "Docs/install.md"\nnote = "安裝"\n',
+                encoding="utf-8")
+            config.reset()
+            cfg = config.load(repo.root)
+            self.assertEqual(cfg.docs_unlisted, "folder")
+            self.assertFalse(cfg.docs_auto)
+            self.assertEqual(cfg.doc_groups[0].id, "dev")
+            self.assertEqual(cfg.doc_groups[0].paths, ("Docs/**",))
+            self.assertEqual(cfg.doc_entries[0].note, "安裝")
+
+
+class DevToolTests(unittest.TestCase):
+    def test_build_env_prepends_source(self):
+        env = dev_tool.build_env({"PYTHONPATH": "existing"})
+        self.assertTrue(env["PYTHONPATH"].startswith(str(dev_tool.SOURCE) + os.pathsep))
+        self.assertTrue(env["PYTHONPATH"].endswith("existing"))
+
+    def test_find_config_walks_up(self):
+        with TempRepo() as repo:
+            nested = repo.root / "Docs" / "development"
+            nested.mkdir()
+            self.assertEqual(dev_tool.find_config(nested), repo.root / ".changelog.toml")
+
+
+class DocsTests(unittest.TestCase):
+    @staticmethod
+    def cfg(groups=(), entries=(), unlisted="other", auto=True):
+        return config.Config(
+            root=Path("."), title="t", history=Path("h"), features=None,
+            community=None, assets=None, doc_groups=list(groups),
+            doc_entries=list(entries), docs_unlisted=unlisted, docs_auto=auto)
+
+    def test_groups_and_entry_override(self):
+        cfg = self.cfg(
+            groups=[config.DocGroup("dev", "開發者指南", "blue", "說明", 10,
+                                    ("Docs/development/**", "Docs/api/**"))],
+            entries=[config.DocEntry("Docs/api/README.md", "API 總覽", "先看這份")])
+        result, groups, warnings = docs.resolve([
+            {"name": "Docs/api/README.md", "repo": "app", "url": "u", "text": "x"},
+            {"name": "Docs/development/testing.md", "repo": "app", "url": "u", "text": "x"},
+            {"name": "Docs/misc.md", "repo": "app", "url": "u", "text": "x"},
+        ], cfg)
+        self.assertEqual([d["group"] for d in result], ["dev", "dev", "other"])
+        self.assertEqual(result[0]["title"], "API 總覽")
+        self.assertEqual(result[0]["note"], "先看這份")
+        self.assertEqual(result[1]["title"], "testing")
+        self.assertEqual(groups[-1]["id"], "other")
+        self.assertEqual(warnings, [])
+
+    def test_overlap_is_warning_not_guess(self):
+        cfg = self.cfg(groups=[
+            config.DocGroup("a", "A", "blue", "", 10, ("Docs/**",)),
+            config.DocGroup("b", "B", "green", "", 20, ("Docs/api/**",)),
+        ])
+        result, _, warnings = docs.resolve([{"name": "Docs/api/x.md"}], cfg)
+        self.assertEqual(result[0]["group"], "other")
+        self.assertTrue(any(w["type"] == "overlap" for w in warnings))
+
+    def test_bad_color_falls_back(self):
+        cfg = self.cfg(groups=[config.DocGroup("a", "A", "pink", "", 10, ("Docs/**",))])
+        result, _, warnings = docs.resolve([{"name": "Docs/x.md"}], cfg)
+        self.assertEqual(result[0]["groupColor"], "slate")
+        self.assertTrue(any(w["type"] == "bad_color" for w in warnings))
+
+    def test_hidden_unlisted(self):
+        result, _, _ = docs.resolve([{"name": "Docs/x.md"}], self.cfg(unlisted="hidden"))
+        self.assertEqual(result, [])
+
+    def test_folder_unlisted(self):
+        result, _, _ = docs.resolve(
+            [{"name": "Docs/api/x.md"}, {"name": "Docs/ops/y.md"}],
+            self.cfg(unlisted="folder", auto=False))
+        self.assertEqual([d["group"] for d in result], ["folder:api", "folder:ops"])
+
+    def test_auto_fallback_groups(self):
+        result, groups, warnings = docs.resolve([
+            {"name": "Docs/api/README.md"},
+            {"name": "Docs/development/guide.md"},
+            {"name": "Docs/guide/start.md"},
+            {"name": "Docs/deploy/run.md"},
+            {"name": "Docs/design/adr.md"},
+            {"name": "Docs/misc.md"},
+        ], self.cfg())
+        self.assertEqual([d["group"] for d in result],
+                         ["auto:dev", "auto:dev", "auto:guide", "auto:ops",
+                          "auto:design", "other"])
+        self.assertEqual(result[0]["groupTitleKey"], "docs.auto.dev")
+        self.assertEqual(warnings, [])
+
+    def test_config_overrides_auto(self):
+        cfg = self.cfg(groups=[config.DocGroup(
+            "custom", "自訂", "violet", "", 5, ("Docs/api/**",))])
+        result, _, _ = docs.resolve(
+            [{"name": "Docs/api/x.md"}, {"name": "Docs/development/y.md"}], cfg)
+        self.assertEqual([d["group"] for d in result], ["custom", "auto:dev"])
+
+    def test_auto_disabled(self):
+        result, _, _ = docs.resolve([{"name": "Docs/api/x.md"}], self.cfg(auto=False))
+        self.assertEqual(result[0]["group"], "other")
+
+    def test_auto_uses_deepest_folder(self):
+        result, _, _ = docs.resolve([{"name": "Docs/guide/design/x.md"}], self.cfg())
+        self.assertEqual(result[0]["group"], "auto:design")
+
+    def test_unmatched_pattern_warning(self):
+        cfg = self.cfg(groups=[config.DocGroup("a", "A", "blue", "", 10, ("Docs/none/**",))])
+        _, _, warnings = docs.resolve([{"name": "Docs/x.md"}], cfg)
+        self.assertTrue(any(w["type"] == "unmatched_pattern" for w in warnings))
+
+    def test_all_patterns_count_as_used(self):
+        cfg = self.cfg(groups=[config.DocGroup(
+            "a", "A", "blue", "", 10, ("Docs/**", "Docs/api/**"))])
+        _, _, warnings = docs.resolve([{"name": "Docs/api/x.md"}], cfg)
+        self.assertFalse(any(w["type"] == "unmatched_pattern" for w in warnings))
+
+    def test_snapshot_classifies_documents(self):
+        with TempRepo() as repo:
+            api = repo.root / "Docs" / "api"
+            api.mkdir()
+            (api / "README.md").write_text("# API\n", encoding="utf-8")
+            (repo.root / ".changelog.toml").write_text(
+                TOML + '\n[[tool.changelog.docs.groups]]\nid = "dev"\ntitle = "開發者指南"\n'
+                'color = "blue"\npaths = ["Docs/api/**"]\n', encoding="utf-8")
+            config.reset()
+            config.load(repo.root)
+            data = index.snapshot()
+            doc = next(d for d in data["documents"] if d["name"] == "Docs/api/README.md")
+            self.assertEqual(doc["group"], "dev")
+            self.assertEqual(doc["groupTitle"], "開發者指南")
+            self.assertTrue(any(g["id"] == "dev" for g in data["docGroups"]))
 
 
 class HistoryTests(unittest.TestCase):
@@ -399,6 +547,11 @@ class I18nKeyTests(unittest.TestCase):
         for name, catalog in self.catalogs.items():
             missing = sorted(k for k in reference if k not in catalog)
             self.assertEqual(missing, [], "%s 缺少 en 有的 key：%s" % (name, ", ".join(missing)))
+
+    def test_auto_doc_group_titles(self):
+        for key in ("docs.auto.dev", "docs.auto.guide", "docs.auto.ops", "docs.auto.design"):
+            for name, catalog in self.catalogs.items():
+                self.assertIn(key, catalog, "%s 缺少 %s" % (name, key))
 
 
 if __name__ == "__main__":

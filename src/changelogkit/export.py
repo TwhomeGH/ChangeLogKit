@@ -126,15 +126,70 @@ def _render_symbols(symbols, blob_base):
     return "\n".join(out)
 
 
-def _render_documents(documents):
-    """文件卡片（摘要預覽）；標題連到靜態文件頁 ``docs/<i>.html``。"""
-    out = []
+def _t_args(key, *args):
+    """取原始字串後以位置參數代入（前端 CK_T 用 ``{0}``，與 i18n.t 的具名格式不同）。"""
+    return i18n.t(key).format(*args)
+
+
+def _warning_text(warning):
+    """把分類警告轉成目前語系的句子。"""
+    kind = warning.get("type")
+    if kind == "overlap":
+        return _t_args("docs.warn_overlap", warning.get("path", ""),
+                       "、".join(warning.get("groups", [])))
+    if kind == "unknown_group":
+        return _t_args("docs.warn_unknown_group", warning.get("group", ""), warning.get("path", ""))
+    if kind == "bad_color":
+        return _t_args("docs.warn_bad_color", warning.get("color", ""), warning.get("group", ""))
+    if kind == "duplicate_group":
+        return _t_args("docs.warn_duplicate_group", warning.get("group", ""))
+    if kind == "group_without_id":
+        return i18n.t("docs.warn_group_without_id")
+    if kind == "bad_unlisted":
+        return _t_args("docs.warn_bad_unlisted", warning.get("value", ""))
+    if kind == "unmatched_pattern":
+        return _t_args("docs.warn_unmatched_pattern", warning.get("group", ""),
+                       warning.get("pattern", ""))
+    if kind == "unmatched_entry":
+        return _t_args("docs.warn_unmatched_entry", warning.get("path", ""))
+    return str(kind)
+
+
+def _render_doc_warnings(warnings):
+    """文件分類設定的警告；沒有就回空字串。"""
+    if not warnings:
+        return ""
+    items = "".join("<li>%s</li>" % _esc(_warning_text(w)) for w in warnings)
+    return ('<div class="docwarn"><strong>%s</strong><ul>%s</ul></div>'
+            % (_esc(i18n.t("docs.warn_title")), items))
+
+
+def _render_documents(documents, groups):
+    """文件卡片（摘要預覽）；依群組分節，標題連到靜態文件頁 ``docs/<i>.html``。"""
+    by_group = {}
     for i, doc in enumerate(documents):
-        text = doc["text"]
-        preview = text[:260] + (" …" if len(text) > 260 else "")
-        out.append('<article class="card"><h2><a href="../docs/%d.html">%s</a></h2>'
-                   '<div class="meta">%s</div><div class="preview">%s</div></article>'
-                   % (i, _esc(doc["name"]), _esc(doc["repo"]), _esc(preview)))
+        by_group.setdefault(doc.get("group", ""), []).append((i, doc))
+    out = []
+    for group in groups:
+        items = by_group.get(group["id"]) or []
+        if not items:
+            continue
+        title = (group.get("title")
+                 or (i18n.t(group["titleKey"]) if group.get("titleKey")
+                     else i18n.t("docs.unclassified")))
+        gnote = ('<span class="gnote">%s</span>' % _esc(group.get("note"))) if group.get("note") else ""
+        out.append('<h2 class="docgroup color-%s"><span class="dot"></span>'
+                   '<span class="gtitle">%s</span><span class="count">(%d)</span>%s</h2>'
+                   % (_esc(group.get("color", "slate")), _esc(title), len(items), gnote))
+        for i, doc in items:
+            text = doc["text"]
+            preview = text[:260] + (" …" if len(text) > 260 else "")
+            dnote = ('<div class="docnote">%s</div>' % _esc(doc["note"])) if doc.get("note") else ""
+            out.append('<article class="card"><h2><a href="../docs/%d.html">%s</a></h2>'
+                       '<div class="meta">%s%s</div>%s<div class="preview">%s</div></article>'
+                       % (i, _esc(doc.get("title") or doc["name"]), _esc(doc["name"]),
+                          (" · " + _esc(doc["repo"])) if doc.get("repo") else "", dnote,
+                          _esc(preview)))
     return "\n".join(out)
 
 
@@ -167,7 +222,8 @@ def _render_dev(data, blob_base):
                  _esc("、".join(data.get("languages", []))))
               + _render_symbols(data["symbols"], blob_base),
               '<h1 id="docs" data-i18n="tab.documents">%s</h1>' % _esc(i18n.t("tab.documents"))
-              + _render_documents(data["documents"]),
+              + _render_doc_warnings(data.get("docWarnings") or [])
+              + _render_documents(data["documents"], data.get("docGroups") or []),
               '<h1 data-i18n="tab.repos">%s</h1>' % _esc(i18n.t("tab.repos")) + _render_repos(data["repos"])]
     if data["features"]:
         cards = "".join(

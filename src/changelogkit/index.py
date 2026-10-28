@@ -17,7 +17,8 @@ import subprocess
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from . import assets, config, i18n
+from . import assets, config, docs as docmeta, i18n
+from .globs import regex as _glob_re
 from .scanners import SUPPORTED_LANGUAGES, SUPPORTED_SUFFIXES, scan_symbols
 from .scanners.common import link
 
@@ -53,34 +54,6 @@ def git(root, *args):
     if result.returncode:
         raise ValueError("無法讀取 Git 資訊：" + result.stderr[:200])
     return result.stdout
-
-
-_GLOB_CACHE = {}
-
-
-def _glob_re(pattern):
-    """把含 ``**`` 的 glob 轉成正規式（``**`` 跨目錄、``*`` 單層、``?`` 單字元）。"""
-    if pattern not in _GLOB_CACHE:
-        out, i = "", 0
-        while i < len(pattern):
-            if pattern[i:i + 2] == "**":
-                i += 2
-                if pattern[i:i + 1] == "/":     # ``**/`` 可匹配零層目錄
-                    out += "(?:.*/)?"
-                    i += 1
-                else:
-                    out += ".*"
-            elif pattern[i] == "*":
-                out += "[^/]*"
-                i += 1
-            elif pattern[i] == "?":
-                out += "[^/]"
-                i += 1
-            else:
-                out += re.escape(pattern[i])
-                i += 1
-        _GLOB_CACHE[pattern] = re.compile("^" + out + "$")
-    return _GLOB_CACHE[pattern]
 
 
 def files(root):
@@ -286,6 +259,8 @@ def snapshot():
                                           "text": text[:100000]})
                 continue
             data["symbols"].extend(_nest(scan_symbols(text, repo, name), text.splitlines()))
+    # 文件分類（群組／標題／備註）；設定問題以警告回傳，不中斷索引。
+    data["documents"], data["docGroups"], data["docWarnings"] = docmeta.resolve(data["documents"])
     data["lockedPackages"] = _locked_packages()
     # 前端渲染 markdown 時所需的「來源文件脈絡」（相對連結的基準目錄）。
     cfg = config.load()

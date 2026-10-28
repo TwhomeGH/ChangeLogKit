@@ -159,6 +159,36 @@ function symbolCard(r, nested) {
   return `<article class="card${nested ? " member" : ""}">${head}${memberHtml}</article>`;
 }
 
+/* 文件分組標題：色點＋群組名＋（目前篩選後的）數量＋備註。 */
+function docGroupHtml(r, count) {
+  const title = r.groupTitle ||
+    (r.groupTitleKey ? CK_T(r.groupTitleKey) : CK_T("docs.unclassified"));
+  const note = r.groupNote ? `<span class="gnote">${mdInline(r.groupNote)}</span>` : "";
+  return `<h2 class="docgroup color-${esc(r.groupColor || "slate")}">` +
+    `<span class="dot"></span><span class="gtitle">${esc(title)}</span>` +
+    `<span class="count">(${count})</span>${note}</h2>`;
+}
+
+/* 文件分類設定的警告文字（重疊、未知群組、沒命中的 pattern 等）。 */
+function warningText(w) {
+  switch (w.type) {
+    case "overlap": return CK_T("docs.warn_overlap", w.path, (w.groups || []).join("、"));
+    case "unknown_group": return CK_T("docs.warn_unknown_group", w.group, w.path);
+    case "bad_color": return CK_T("docs.warn_bad_color", w.color, w.group);
+    case "duplicate_group": return CK_T("docs.warn_duplicate_group", w.group);
+    case "group_without_id": return CK_T("docs.warn_group_without_id");
+    case "bad_unlisted": return CK_T("docs.warn_bad_unlisted", w.value);
+    case "unmatched_pattern": return CK_T("docs.warn_unmatched_pattern", w.group, w.pattern);
+    case "unmatched_entry": return CK_T("docs.warn_unmatched_entry", w.path);
+    default: return w.type;
+  }
+}
+
+function docWarningsHtml(list) {
+  return '<div class="docwarn"><strong>' + CK_T("docs.warn_title") + "</strong><ul>" +
+    list.map((w) => "<li>" + esc(warningText(w)) + "</li>").join("") + "</ul></div>";
+}
+
 /* 單一資料列的 HTML（依分頁型別）。 */
 function rowHtml(r) {
   if (tab === "features") {
@@ -175,8 +205,11 @@ function rowHtml(r) {
   }
   if (tab === "symbols") return symbolCard(r);
   if (tab === "documents") {
-    return `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.name)}</a></h2>` +
-      `<div class="meta">${esc(r.repo)}</div><div class="preview">${esc(r.text.slice(0, 260))}${r.text.length > 260 ? " …" : ""}</div></article>`;
+    const text = r.text || "";
+    return `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.title || r.name)}</a></h2>` +
+      `<div class="meta">${esc(r.name)}${r.repo ? " · " + esc(r.repo) : ""}</div>` +
+      (r.note ? `<div class="docnote">${mdInline(r.note)}</div>` : "") +
+      `<div class="preview">${esc(text.slice(0, 260))}${text.length > 260 ? " …" : ""}</div></article>`;
   }
   const list = (r.commits || []).map((c) => commitCard(r.name, c)).join("");
   return `<article class="card"><h2>${esc(r.name)}</h2><div class="meta">HEAD：${esc(r.head)}</div>` +
@@ -223,7 +256,13 @@ function render() {
   lastGroup = null;
   const box = $("#results");
   box.innerHTML = "";
-  if (!rows.length) { box.innerHTML = '<p class="empty">' + CK_T("dev.no_data") + "</p>"; updateStatus(); return; }
+  if (tab === "documents" && (data.docWarnings || []).length) {
+    box.insertAdjacentHTML("beforeend", docWarningsHtml(data.docWarnings));
+  }
+  if (!rows.length) {
+    box.insertAdjacentHTML("beforeend", '<p class="empty">' + CK_T("dev.no_data") + "</p>");
+    updateStatus(); return;
+  }
   if (tab === "repos") box.insertAdjacentHTML("beforeend", lockedHtml());
   appendChunk();   /* 先渲染第一批，其餘捲到底再追加 */
 }
@@ -236,6 +275,11 @@ function appendChunk() {
     if (tab === "symbols" && group === "file" && r.file !== lastGroup) {
       lastGroup = r.file;
       out += `<h3 class="group">${esc(r.file)}</h3>`;
+    }
+    if (tab === "documents" && r.group !== lastGroup) {
+      lastGroup = r.group;
+      const count = rows.filter((x) => x.group === r.group).length;
+      out += docGroupHtml(r, count);
     }
     out += rowHtml(r);
   }

@@ -34,6 +34,28 @@ class Source:
     path: Path
 
 
+@dataclass(frozen=True)
+class DocGroup:
+    """文件分類的一個群組（[tool.changelog.docs.groups]）。"""
+
+    id: str
+    title: str = ""
+    color: str = "slate"
+    note: str = ""
+    order: int = 100
+    paths: tuple = ()
+
+
+@dataclass(frozen=True)
+class DocEntry:
+    """單一文件的分類覆寫（[tool.changelog.docs.entries]）。"""
+
+    path: str
+    title: str = ""
+    note: str = ""
+    group: str = ""
+
+
 @dataclass
 class Config:
     """一次執行所使用、已解析的設定。"""
@@ -47,6 +69,10 @@ class Config:
     sources: list = field(default_factory=list)  # 開發索引來源
     include: tuple = ()      # 額外納入的 glob（相對 root；可涵蓋被 .gitignore 忽略者，如 node_modules）
     exclude: tuple = ()      # 排除的 glob（相對 root）
+    doc_groups: list = field(default_factory=list)   # 文件群組
+    doc_entries: list = field(default_factory=list)  # 單檔覆寫
+    docs_unlisted: str = "other"                     # 未分類：other／folder／hidden
+    docs_auto: bool = True                           # 未命中設定時依資料夾自動分類
 
 
 def _find_root(start):
@@ -77,6 +103,50 @@ def _resolve(root, value):
     return Path(os.path.expandvars(os.path.expanduser(str(value))))
 
 
+def _doc_groups(raw):
+    """解析 ``[[tool.changelog.docs.groups]]``；型別不對的項目略過。"""
+    groups = []
+    for item in raw or []:
+        if not isinstance(item, dict):
+            continue
+        try:
+            order = int(item.get("order", 100))
+        except (TypeError, ValueError):
+            order = 100
+        paths = item.get("paths") or []
+        if isinstance(paths, str):          # 允許單一字串，不必寫成陣列
+            paths = [paths]
+        elif not isinstance(paths, (list, tuple)):
+            paths = []
+        groups.append(DocGroup(
+            id=str(item.get("id") or "").strip(),
+            title=str(item.get("title") or "").strip(),
+            color=str(item.get("color") or "slate").strip().lower(),
+            note=str(item.get("note") or "").strip(),
+            order=order,
+            paths=tuple(str(p).strip() for p in paths if str(p).strip()),
+        ))
+    return groups
+
+
+def _doc_entries(raw):
+    """解析 ``[[tool.changelog.docs.entries]]``；型別不對的項目略過。"""
+    entries = []
+    for item in raw or []:
+        if not isinstance(item, dict):
+            continue
+        path = str(item.get("path") or "").strip()
+        if not path:
+            continue
+        entries.append(DocEntry(
+            path=path,
+            title=str(item.get("title") or "").strip(),
+            note=str(item.get("note") or "").strip(),
+            group=str(item.get("group") or "").strip(),
+        ))
+    return entries
+
+
 def _from_table(root, table):
     """由 ``[tool.changelog]`` 表建出 :class:`Config`。"""
     history = root / table.get("history", DEFAULT_HISTORY)
@@ -87,6 +157,12 @@ def _from_table(root, table):
         Source(str(s.get("name") or root.name), _resolve(root, s.get("path") or "."))
         for s in table.get("sources", [])
     ]
+    docs_table = table.get("docs") or {}
+    if not isinstance(docs_table, dict):
+        docs_table = {}
+    auto = docs_table.get("auto", True)
+    if not isinstance(auto, bool):       # TOML 的布林才是布林；字串不當成 true
+        auto = True
     return Config(
         root=root,
         title=table.get("title") or root.name,
@@ -97,6 +173,10 @@ def _from_table(root, table):
         sources=sources or [Source("app", root)],
         include=tuple(str(x) for x in table.get("include", [])),
         exclude=tuple(str(x) for x in table.get("exclude", [])),
+        doc_groups=_doc_groups(docs_table.get("groups")),
+        doc_entries=_doc_entries(docs_table.get("entries")),
+        docs_unlisted=str(docs_table.get("unlisted") or "other").strip().lower(),
+        docs_auto=auto,
     )
 
 

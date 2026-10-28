@@ -24,6 +24,23 @@ changelogkit community-init                    # 產生「社群與開發交流�
 
 查詢類子命令：`languages`（列出**程式語言**：API 宣告掃描涵蓋範圍）與 `locales`（列出 **UI 語系**，`*` 標示目前生效者）。
 
+## 本機開發（用工作區原始碼）
+
+`changelogkit` 指令永遠是安裝版（`site-packages`）；要測這個 repo 的改動，用 `tools/dev.py`：
+
+```powershell
+# 在 ChangeLogTools repo 內，指向目標 repo
+python tools\dev.py --repo F:\VideoServer serve --port 8710
+
+# 或先 cd 到目標 repo，用工具的絕對路徑
+cd F:\VideoServer
+python C:\Users\agp05\OneDrive\桌面\ChangeLogTools\tools\dev.py serve
+```
+
+它會把 `src/` 前置到 `PYTHONPATH`、切到目標 repo（套用該 repo 的 `.changelog.toml`），再把參數原封不動轉給 `python -m changelogkit`。任何子命令都適用（`serve`／`export`／`add`／`list`）。啟動前會印出 `source`／`target`／`config`；`--dry-run` 只顯示指令。`tools/dev.ps1` 是等價的 PowerShell 外殼。
+
+> 只影響該次執行，不會安裝或修改 `site-packages`。前端資產會被瀏覽器快取，改完記得 Ctrl+F5。單元測試仍用 `pytest`。
+
 ## 網頁 GUI
 
 `serve` 之後：
@@ -71,6 +88,50 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 | `exclude` | 無 | 排除的 glob（相對 root），例如 `**/dist/**`、`**/*.min.js` |
 
 > glob 語法：`**` 跨目錄、`*` 單層、`?` 單字元。索引預設只看版本控管（含未忽略）的檔案；`include` 用於**選擇性**納入被忽略者（例如只看幾個已安裝套件的型別定義），`exclude` 用來排除建置產物。
+
+## 文件分類（Documents 分頁）
+
+`/development` 的「文件」分頁可在 `.changelog.toml` 手動分類、加備註與顏色：
+
+```toml
+[tool.changelog.docs]
+unlisted = "other"            # other（預設）／folder／hidden
+auto     = true               # 未命中設定時，依資料夾名稱自動分類（預設開）
+
+[[tool.changelog.docs.groups]]
+id = "dev"                    # 必填、唯一
+title = "開發者指南"
+color = "blue"                # blue／green／amber／violet／rose／cyan／slate
+note = "開發流程、測試、資料模型與 API"
+order = 10                    # 數字越小越前面（預設 100）
+paths = ["Docs/development/**", "Docs/api/**"]
+
+[[tool.changelog.docs.entries]]
+path = "Docs/api/README.md"   # 精確路徑或 glob
+title = "API 總覽"            # 選填：覆寫顯示標題
+note = "先看這份，再看各端點"  # 選填：卡片備註
+group = "dev"                 # 選填：強制指定群組
+```
+
+判定順序：
+
+1. `entries` 命中 → 套用標題／備註；有 `group` 就強制使用。
+2. 否則由 `groups.paths` 比對；**同一份文件最多只能命中一個群組**，重疊視為設定錯誤。
+3. 都沒命中且 `auto = true` → 依路徑中的資料夾自動分類（取**最深**命中的資料夾）。
+4. 還是沒有 → 依 `unlisted`：`other` 放「其他」（預設）、`folder` 依所在資料夾分組、`hidden` 不顯示。
+
+自動分類的資料夾（不分大小寫；`api` 與 `development` 都歸「開發者指南」）：
+
+| 資料夾 | 群組 |
+| --- | --- |
+| `api`、`apis`、`development`、`dev` | 開發者指南 |
+| `guide`、`guides`、`manual`、`usage` | 使用指南 |
+| `deploy`、`deployment`、`ops`、`operations` | 部署與維運 |
+| `design`、`adr`、`architecture` | 架構與設計 |
+
+設定群組永遠優先於自動分類；要改預設群組的標題／顏色，就定義一個 `paths` 相同的群組覆蓋它。`auto = false` 可完全關閉自動分類。
+
+分類設定有問題時（群組重疊、未知群組／顏色、pattern 沒命中任何文件…），Documents 分頁上方會顯示警告；文件不會因此消失。glob 語法與上面 `include`／`exclude` 相同。
 
 ## 變更歷史格式
 

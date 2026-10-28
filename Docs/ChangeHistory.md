@@ -1,5 +1,23 @@
 # ChangeHistory
 
+## 2026.10.28 changelogkit 0.8.0 發佈
+
+**類型**: 功能 · **檔案**: `docs.py`、`config.py`、`index.py`、`export.py`、`globs.py`、`assets/dev.js`、`tools/dev.py`
+
+### 問題 - 文件分頁平鋪，沒有分類；本機開發難以指向目標 repo
+
+`/development` 的「文件」分頁把所有 Markdown 平鋪，`api/`、`development/` 這類用途無法區分，也沒有備註與顏色；要測工作區改動時，`changelogkit` 指令永遠是安裝版，必須手動設 `PYTHONPATH` 與工作目錄。
+
+### 修改 - 可設定的文件群組＋資料夾自動 fallback；tools/dev.py 開發啟動器
+
+- `.changelog.toml` 新增 `[tool.changelog.docs]`：`groups`（id／title／color／note／order／paths）、`entries`（path／title／note／group）、`unlisted`（other／folder／hidden）、`auto`。
+- 判定序：entries → groups → 資料夾自動分類 → unlisted；`api`／`development` 等常見資料夾會自動歸類，設定群組永遠優先；`auto = false` 可關閉。
+- Documents 分頁與靜態匯出都依群組分節（色點／數量／備註）；設定錯誤（重疊、未知群組／顏色、未命中的 pattern）以警告呈現，不丟文件。
+- 新增 `tools/dev.py`／`tools/dev.ps1`：把 `src/` 接到 `PYTHONPATH`、切到目標 repo，再轉發給 `python -m changelogkit`；啟動前印出 source／target／config。
+- glob 邏輯抽到 `globs.py`，`files()` 與文件分類共用；補齊文件與測試。
+
+---
+
 ## 2026.10.26 changelogkit 0.7.5 發佈
 
 **類型**: 功能 · **檔案**: `cli.py`、`lang/*.json`、`tests/test_changelogkit.py`

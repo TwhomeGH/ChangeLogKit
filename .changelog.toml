@@ -3,3 +3,17 @@
 title    = "changelogkit 變更歷史"
 history  = "Docs/ChangeHistory.md"
 features = "Docs/development/features.json"   # 目前不存在 → 開發索引的「功能」分頁會留空
+
+[[tool.changelog.docs.groups]]
+id    = "guide"
+title = "使用指南"
+color = "green"
+order = 10
+paths = ["Docs/install.md", "Docs/usage.md", "Docs/publishing.md", "Docs/pages.md"]
+
+[[tool.changelog.docs.groups]]
+id    = "design"
+title = "架構與設計"
+color = "violet"
+order = 20
+paths = ["Docs/architecture.md"]
