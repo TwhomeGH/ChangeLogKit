@@ -127,6 +127,44 @@ def _symbol_matches(symbol, query, lang, kind, repo):
     return True
 
 
+def cmd_docs(args):
+    """檢查文件分類：列出解析後的群組與警告；設定錯誤回傳 1。"""
+    from . import docs as docmeta, index
+
+    records, groups, warnings = docmeta.resolve(index.documents())
+    print(i18n.t("msg.docs_summary", docs=len(records), groups=len(groups)))
+    for group in groups:
+        items = [record for record in records if record["group"] == group["id"]]
+        title = (group.get("title")
+                 or (i18n.t(group["titleKey"]) if group.get("titleKey")
+                     else i18n.t("docs.unclassified")))
+        print("[%s] %s (%d)" % (group["id"], title, len(items)))
+        if not args.summary:
+            for record in items:
+                note = ("  # " + record["note"]) if record.get("note") else ""
+                print("  " + record["name"] + note)
+    for warning in warnings:
+        level = "ERROR" if warning.get("type") in docmeta.ERROR_TYPES else "WARN "
+        print(level + " " + docmeta.warning_text(warning))
+    errors = [w for w in warnings if w.get("type") in docmeta.ERROR_TYPES]
+    if errors:
+        print(i18n.t("msg.docs_errors", count=len(errors)))
+        return 1
+    if warnings:
+        print(i18n.t("msg.docs_warnings", count=len(warnings)))
+    else:
+        print(i18n.t("msg.docs_ok"))
+    return 0
+
+
+def cmd_docs_init(args):
+    """印出由目前資料夾推測的分類 TOML；不修改任何檔案。"""
+    from . import docs as docmeta, index
+
+    print(docmeta.toml_suggestion(index.documents()), end="")
+    print(i18n.t("msg.docs_init_hint"), file=sys.stderr)
+
+
 def cmd_symbols(args):
     """查詢開發索引掃到的 API 宣告（語言／種類／關鍵字）。"""
     from . import index
@@ -181,6 +219,12 @@ def main(argv=None):
     sub.add_parser("languages", help=i18n.t("cli.languages.help"))
     sub.add_parser("locales", help=i18n.t("cli.locales.help"))
 
+    dc = sub.add_parser("docs", help=i18n.t("cli.docs.help"))
+    dc.add_argument("--check", action="store_true", help=i18n.t("cli.docs.check"))
+    dc.add_argument("--summary", action="store_true", help=i18n.t("cli.docs.summary"))
+
+    sub.add_parser("docs-init", help=i18n.t("cli.docs_init.help"))
+
     sy = sub.add_parser("symbols", help=i18n.t("cli.symbols.help"))
     sy.add_argument("query", nargs="?", default="", help=i18n.t("cli.symbols.query"))
     sy.add_argument("--lang", default="", help=i18n.t("cli.symbols.lang"))
@@ -212,6 +256,10 @@ def main(argv=None):
         cmd_languages(args)
     elif args.cmd == "locales":
         cmd_locales(args)
+    elif args.cmd == "docs":
+        raise SystemExit(cmd_docs(args))
+    elif args.cmd == "docs-init":
+        cmd_docs_init(args)
     elif args.cmd == "symbols":
         cmd_symbols(args)
     elif args.cmd == "export":

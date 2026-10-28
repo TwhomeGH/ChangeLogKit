@@ -3,8 +3,9 @@
 ``changelogkit --version`` 會顯示版本，並盡量附上**此安裝的來源 commit**。
 取得順序（任一成功即用）：
 
-1. 建置時蓋章的 ``_buildinfo.py``（打包時寫入，隨 wheel 帶走）。
-2. 套件目錄本身是 git checkout（例如以 ``PYTHONPATH=src`` 直接跑）。
+1. 套件目錄本身是 git checkout（例如以 ``PYTHONPATH=src`` 直接跑）→ 實際 HEAD，
+   避免原始碼 checkout 被舊的建置蓋章誤導。
+2. 建置時蓋章的 ``_buildinfo.py``（打包時寫入，隨 wheel 帶走）。
 3. pip 的 ``direct_url.json``（``pip install <路徑>`` 會記錄來源目錄）。
 """
 
@@ -49,7 +50,14 @@ def _from_direct_url():
 
 
 def commit():
-    """盡量找出此安裝的來源 commit（失敗回空字串）。"""
+    """盡量找出此安裝的來源 commit（失敗回空字串）。
+
+    原始碼 checkout 優先讀 git HEAD：``_buildinfo.py`` 是打包當下的蓋章，
+    在 checkout 裡可能是舊的；只有 wheel（非 git）才用它。
+    """
+    checkout = _git_head(Path(__file__).resolve().parent)
+    if checkout:
+        return checkout
     try:
         from . import _buildinfo
         stamped = getattr(_buildinfo, "COMMIT", "")
@@ -57,7 +65,7 @@ def commit():
             return stamped + ("+dirty" if getattr(_buildinfo, "DIRTY", False) else "")
     except Exception:
         pass
-    return _git_head(Path(__file__).resolve().parent) or _from_direct_url()
+    return _from_direct_url()
 
 
 def version():

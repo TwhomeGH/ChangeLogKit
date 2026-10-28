@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
 
-from . import assets, buildinfo, community, config, history, i18n, index
+from . import assets, buildinfo, community, config, docs as docmeta, history, i18n, index
 
 # 需要複製到輸出 assets/ 的檔案（其餘為 server 動態用，不需要）。
 STATIC_ASSETS = ("theme.css", "theme.js", "i18n.js", "dev.css", "file.css", "highlight.js", "markdown.js")
@@ -153,40 +153,11 @@ def _render_symbols(symbols, blob_base):
     return "\n".join(out)
 
 
-def _t_args(key, *args):
-    """取原始字串後以位置參數代入（前端 CK_T 用 ``{0}``，與 i18n.t 的具名格式不同）。"""
-    return i18n.t(key).format(*args)
-
-
-def _warning_text(warning):
-    """把分類警告轉成目前語系的句子。"""
-    kind = warning.get("type")
-    if kind == "overlap":
-        return _t_args("docs.warn_overlap", warning.get("path", ""),
-                       "、".join(warning.get("groups", [])))
-    if kind == "unknown_group":
-        return _t_args("docs.warn_unknown_group", warning.get("group", ""), warning.get("path", ""))
-    if kind == "bad_color":
-        return _t_args("docs.warn_bad_color", warning.get("color", ""), warning.get("group", ""))
-    if kind == "duplicate_group":
-        return _t_args("docs.warn_duplicate_group", warning.get("group", ""))
-    if kind == "group_without_id":
-        return i18n.t("docs.warn_group_without_id")
-    if kind == "bad_unlisted":
-        return _t_args("docs.warn_bad_unlisted", warning.get("value", ""))
-    if kind == "unmatched_pattern":
-        return _t_args("docs.warn_unmatched_pattern", warning.get("group", ""),
-                       warning.get("pattern", ""))
-    if kind == "unmatched_entry":
-        return _t_args("docs.warn_unmatched_entry", warning.get("path", ""))
-    return str(kind)
-
-
 def _render_doc_warnings(warnings):
     """文件分類設定的警告；沒有就回空字串。"""
     if not warnings:
         return ""
-    items = "".join("<li>%s</li>" % _esc(_warning_text(w)) for w in warnings)
+    items = "".join("<li>%s</li>" % _esc(docmeta.warning_text(w)) for w in warnings)
     return ('<div class="docwarn"><strong>%s</strong><ul>%s</ul></div>'
             % (_esc(i18n.t("docs.warn_title")), items))
 

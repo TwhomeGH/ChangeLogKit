@@ -233,6 +233,30 @@ def iter_symbols(symbols):
         yield from iter_symbols(sym.get("members", []))
 
 
+def _document_entry(repo, root, name):
+    """讀取單一 Markdown 文件（給 snapshot 與 docs CLI 共用）；不可讀回 None。"""
+    try:
+        path = (root / name).resolve()
+        if not path.is_relative_to(root.resolve()) or path.stat().st_size > 2_000_000:
+            return None
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except (ValueError, OSError):
+        return None
+    return {"name": name, "repo": repo, "url": link(repo, name), "text": text[:100000]}
+
+
+def documents():
+    """只回傳所有 Markdown 文件（不做 Git log／符號掃描）；供 ``docs --check`` 用。"""
+    result = []
+    for repo, root in roots().items():
+        for name in files(root):
+            if name.endswith(".md"):
+                entry = _document_entry(repo, root, name)
+                if entry:
+                    result.append(entry)
+    return result
+
+
 def snapshot():
     """即時取得版本和近期提交；不把 Git 修改檔案推測成新增功能。"""
     data = {"features": validate(), "repos": [], "symbols": [], "documents": [],
@@ -247,16 +271,17 @@ def snapshot():
                 "--format=%x1e%h%x1f%ad%x1f%s", "--name-only")),
         })
         for name in files(root):
+            if name.endswith(".md"):
+                entry = _document_entry(repo, root, name)
+                if entry:
+                    data["documents"].append(entry)
+                continue
             try:
                 path = (root / name).resolve()
                 if not path.is_relative_to(root.resolve()) or path.stat().st_size > 2_000_000:
                     continue
                 text = path.read_text(encoding="utf-8", errors="replace")
             except (ValueError, OSError):
-                continue
-            if name.endswith(".md"):
-                data["documents"].append({"name": name, "repo": repo, "url": link(repo, name),
-                                          "text": text[:100000]})
                 continue
             data["symbols"].extend(_nest(scan_symbols(text, repo, name), text.splitlines()))
     # 文件分類（群組／標題／備註）；設定問題以警告回傳，不中斷索引。

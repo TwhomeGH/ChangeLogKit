@@ -12,6 +12,8 @@ changelogkit list [--grep X] [--since YYYY.MM.DD] [--file X] [--type X] [--limit
 changelogkit show <編號|關鍵字>
 changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 _site）
 changelogkit community-init                    # 產生「社群與開發交流」範本（Docs/community.md）
+changelogkit docs [--check] [--summary]        # 檢查文件分類（錯誤回 1）
+changelogkit docs-init                         # 印出可貼上的 docs TOML 範本
 ```
 
 `add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - ` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列。只給標題時插入空骨架。
@@ -40,6 +42,15 @@ python C:\Users\agp05\OneDrive\桌面\ChangeLogTools\tools\dev.py serve
 它會把 `src/` 前置到 `PYTHONPATH`、切到目標 repo（套用該 repo 的 `.changelog.toml`），再把參數原封不動轉給 `python -m changelogkit`。任何子命令都適用（`serve`／`export`／`add`／`list`）。啟動前會印出 `source`／`target`／`config`；`--dry-run` 只顯示指令。`tools/dev.ps1` 是等價的 PowerShell 外殼。
 
 > 只影響該次執行，不會安裝或修改 `site-packages`。前端資產會被瀏覽器快取，改完記得 Ctrl+F5。單元測試仍用 `pytest`。
+
+`--help` 是旗標的來源；要看 changelogkit 自己的子命令說明，用 `--` 傳給它：
+
+```powershell
+python tools\dev.py -- serve --help
+python tools\dev.py -- docs --help
+```
+
+Python 沒有 PowerShell 的 `Get-Help`；等價的是 `--help`、`python -m pydoc tools.dev`（顯示模組 docstring 與範例），或在 REPL 用 `help(tools.dev)`。`Docs/usage.md` 只寫流程與範例，精確旗標以 `--help` 為準。
 
 ## 網頁 GUI
 
@@ -145,7 +156,17 @@ group = "dev"                 # 選填：強制指定群組
 
 設定群組永遠優先於自動分類；要改預設群組的標題／顏色，就定義一個 `paths` 相同的群組覆蓋它。`auto = false` 可完全關閉自動分類。
 
-分類設定有問題時（群組重疊、未知群組／顏色、pattern 沒命中任何文件…），Documents 分頁上方會顯示警告；文件不會因此消失。glob 語法與上面 `include`／`exclude` 相同。
+分類設定有問題時（群組重疊、未知群組／顏色、pattern 沒命中任何文件…），Documents 分頁上方會顯示警告；文件不會因此消失。glob 語法與上面 `include`／`exclude` 相同。Documents 分頁也有群組 chips 可篩選（會記住上次選擇）。
+
+驗證與起始設定：
+
+```bash
+changelogkit docs --check            # 列出解析後的群組／文件與警告；設定錯誤 exit 1
+changelogkit docs --check --summary  # 只看群組數量
+changelogkit docs-init > docs.toml   # 依現有資料夾印出可貼上的 TOML（不修改任何檔案）
+```
+
+`docs-init` 只把 TOML 印到 stdout（提示訊息走 stderr），不會改寫 `.changelog.toml`。
 
 ## 變更歷史格式
 

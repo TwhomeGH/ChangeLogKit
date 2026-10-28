@@ -56,12 +56,33 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="tools/dev.py",
         description="Run the working-tree changelogkit (src/) against a target repo.",
-        epilog="Remaining arguments are forwarded to `python -m changelogkit`.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  python tools/dev.py --repo F:\\VideoServer serve --port 8710\n"
+            "  python tools/dev.py serve --port 8710\n"
+            "  python tools/dev.py --repo F:\\VideoServer docs --check\n"
+            "  python tools/dev.py --repo F:\\VideoServer docs-init > docs.toml\n"
+            "  python tools/dev.py --repo F:\\VideoServer export C:\\Temp\\site\n"
+            "\n"
+            "Changelogkit's own help (after `--`):\n"
+            "  python tools/dev.py -- serve --help\n"
+            "  python tools/dev.py -- docs --help\n"
+            "\n"
+            "Python has no Get-Help; use --help or `python -m pydoc tools.dev`."
+        ),
         allow_abbrev=False,
     )
     parser.add_argument("--repo", default="", help="target repo (default: current directory)")
     parser.add_argument("--dry-run", action="store_true", help="print the command and exit")
-    args, forwarded = parser.parse_known_args(list(sys.argv[1:] if argv is None else argv))
+    raw = list(sys.argv[1:] if argv is None else argv)
+    if "--" in raw:
+        split = raw.index("--")
+        own, tail = raw[:split], raw[split + 1:]
+    else:
+        own, tail = raw, []
+    args, extra = parser.parse_known_args(own)
+    forwarded = extra + tail
 
     target = Path(args.repo or Path.cwd()).expanduser().resolve()
     if not target.is_dir():
@@ -70,10 +91,12 @@ def main(argv=None):
         parser.error("source package not found: %s" % SOURCE)
 
     command = [sys.executable, "-m", "changelogkit", *forwarded]
-    print("source : %s" % SOURCE)
-    print("target : %s" % target)
-    print("config : %s" % (find_config(target) or "(default; no .changelog.toml found)"))
-    print("command: %s" % _display(command))
+    # 診斷訊息走 stderr，避免污染 `docs-init > docs.toml` 之類的 stdout 管線。
+    print("source : %s" % SOURCE, file=sys.stderr)
+    print("target : %s" % target, file=sys.stderr)
+    print("config : %s" % (find_config(target) or "(default; no .changelog.toml found)"),
+          file=sys.stderr)
+    print("command: %s" % _display(command), file=sys.stderr)
     if args.dry_run:
         return 0
 

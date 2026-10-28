@@ -1,5 +1,23 @@
 # ChangeHistory
 
+## 2026.10.28 changelogkit 0.10.0 發佈
+
+**類型**: 功能 · **檔案**: `cli.py`、`docs.py`、`index.py`、`assets/dev.js`、`buildinfo.py`、`tools/dev.py`
+
+### 問題 - 文件分類只能靠畫面看，難以在 CI 驗證；來源 commit 會讀到舊蓋章
+
+`docs` 設定沒有命令列檢查，`docs-init` 也要手寫；`buildinfo.commit()` 在原始碼 checkout 先讀 `_buildinfo.py`，會顯示舊的建置 commit。
+
+### 修改 - docs --check／docs-init、文件群組 chips、來源 commit 優先 git HEAD
+
+- `changelogkit docs --check`：列出群組／文件與警告；重疊、未知群組／顏色等設定錯誤 exit 1；`--summary` 只看群組數。
+- `changelogkit docs-init`：依現有資料夾印出可貼上的 `[tool.changelog.docs]` 範本（stdout 乾淨、不改檔）。
+- Documents 分頁加群組 chips（顏色／數量、記住選擇）。
+- `buildinfo.commit()`：原始碼 checkout 優先 git HEAD，`_buildinfo.py` 只用於 wheel。
+- `tools/dev.py`：`--help` 加範例與 `--` 轉發子命令說明；診斷訊息改走 stderr，`docs-init > docs.toml` 不被污染。
+
+---
+
 ## 2026.10.28 changelogkit 0.9.0 發佈
 
 **類型**: 功能 · **檔案**: `export.py`、`assets/static_*.html`、`assets/markdown.js`、`assets/file.js`、`assets/file.css`

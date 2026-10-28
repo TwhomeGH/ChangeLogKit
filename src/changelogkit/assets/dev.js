@@ -1,6 +1,6 @@
 /* 開發索引：功能／API 宣告／文件／近期改動。資料來自 /development/data。 */
 const $ = (s) => document.querySelector(s);
-let data = null, tab = "features", lang = "", kind = "", group = "file";
+let data = null, tab = "features", lang = "", kind = "", group = "file", docGroup = "";
 let rows = [], shown = 0, lastGroup = null;   /* 目前篩選結果與已渲染進度（lazy） */
 const CHUNK = 80;                              /* 每次追加渲染的筆數 */
 const STORE = "changelogkit.devstate";         /* localStorage：記住分頁／篩選／分組 */
@@ -47,7 +47,7 @@ function links(items) {
 /* ── 記住上次瀏覽狀態（分頁／語言／種類／分組） ── */
 
 function saveState() {
-  try { localStorage.setItem(STORE, JSON.stringify({ tab, lang, kind, group })); } catch (e) { /* 私密模式等 */ }
+  try { localStorage.setItem(STORE, JSON.stringify({ tab, lang, kind, group, docGroup })); } catch (e) { /* 私密模式等 */ }
 }
 
 function loadState() {
@@ -56,6 +56,7 @@ function loadState() {
     if (LABELS[s.tab]) tab = s.tab;
     if (typeof s.lang === "string") lang = s.lang;
     if (typeof s.kind === "string") kind = s.kind;
+    if (typeof s.docGroup === "string") docGroup = s.docGroup;
     if (s.group === "file" || s.group === "none") group = s.group;
   } catch (e) { /* 壞資料就忽略 */ }
 }
@@ -123,9 +124,30 @@ async function loadDiff(box, params) {
   }
 }
 
-/* 「API 宣告」頁的篩選列：支援語言 + 語言 chips + 種類下拉 + 分組下拉。 */
+/* 文件群組標題（設定 title 優先，否則用 i18n 的預設分類名）。 */
+function groupLabel(group) {
+  return group.title || (group.titleKey ? CK_T(group.titleKey) : CK_T("docs.unclassified"));
+}
+
+/* 「API 宣告」頁的篩選列；「文件」頁只顯示群組 chips。 */
 function renderFilters() {
   const box = $("#filters");
+  if (tab === "documents") {
+    const docs = data.documents || [];
+    const groups = data.docGroups || [];
+    const counts = {};
+    docs.forEach((doc) => { counts[doc.group] = (counts[doc.group] || 0) + 1; });
+    if (docGroup && !groups.some((g) => g.id === docGroup)) docGroup = "";
+    const chip = (value, label, color) =>
+      `<button class="chip${value === docGroup ? " on" : ""}" data-docgroup="${esc(value)}">` +
+      (color ? `<span class="dot color-${esc(color)}"></span>` : "") + esc(label) + "</button>";
+    box.hidden = false;
+    box.innerHTML = `<div class="chips">${chip("", CK_T("filter.all_groups"))}` +
+      groups.filter((g) => counts[g.id]).map((g) =>
+        chip(g.id, `${groupLabel(g)} (${counts[g.id]})`, g.color)).join("") +
+      "</div>";
+    return;
+  }
   if (tab !== "symbols") { box.hidden = true; box.innerHTML = ""; return; }
   box.hidden = false;
   const symbols = data.symbols || [];
@@ -249,6 +271,7 @@ function render() {
   const repo = $("#repo").value;
   const match = (r) => JSON.stringify(r).toLowerCase().includes(q) &&
     (!repo || r.repo === repo || (r.id && tab === "features")) &&
+    (tab !== "documents" || !docGroup || r.group === docGroup) &&
     (tab !== "symbols" || ((!lang || r.lang === lang) && (!kind || r.kind === kind || (r.members || []).some((m) => m.kind === kind))));
 
   rows = (data[tab] || []).filter(match);
@@ -338,7 +361,10 @@ $("#reload").onclick = load;
 
 $("#filters").addEventListener("click", (e) => {
   const chip = e.target.closest(".chip");
-  if (chip) { lang = chip.dataset.lang; render(); }
+  if (!chip) return;
+  if (chip.dataset.docgroup !== undefined) docGroup = chip.dataset.docgroup;
+  else lang = chip.dataset.lang;
+  render();
 });
 $("#filters").addEventListener("change", (e) => {
   if (e.target.id === "kindsel") { kind = e.target.value; render(); }

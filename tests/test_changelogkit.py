@@ -4,12 +4,15 @@
 """
 
 import importlib.util
+import io
 import json
 import os
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -122,6 +125,19 @@ class DevToolTests(unittest.TestCase):
         self.assertTrue(env["PYTHONPATH"].startswith(str(dev_tool.SOURCE) + os.pathsep))
         self.assertTrue(env["PYTHONPATH"].endswith("existing"))
 
+    def test_help_and_forwarded_help(self):
+        script = Path(__file__).resolve().parents[1] / "tools" / "dev.py"
+        env = dict(os.environ, PYTHONIOENCODING="utf-8")
+        run = subprocess.run([sys.executable, str(script), "--help"],
+                             capture_output=True, text=True, encoding="utf-8", env=env)
+        self.assertEqual(run.returncode, 0)
+        self.assertIn("--repo", run.stdout)
+        self.assertIn("serve --help", run.stdout)
+        run = subprocess.run([sys.executable, str(script), "--dry-run", "--", "serve", "--help"],
+                             capture_output=True, text=True, encoding="utf-8", env=env)
+        self.assertEqual(run.returncode, 0)
+        self.assertIn("-m changelogkit serve --help", run.stderr)
+
     def test_find_config_walks_up(self):
         with TempRepo() as repo:
             nested = repo.root / "Docs" / "development"
@@ -219,6 +235,53 @@ class DocsTests(unittest.TestCase):
             "a", "A", "blue", "", 10, ("Docs/**", "Docs/api/**"))])
         _, _, warnings = docs.resolve([{"name": "Docs/api/x.md"}], cfg)
         self.assertFalse(any(w["type"] == "unmatched_pattern" for w in warnings))
+
+    def test_suggestion_builds_folder_patterns(self):
+        groups = docs.suggestion([
+            {"name": "Docs/api/x.md"},
+            {"name": "Docs/development/y.md"},
+            {"name": "Docs/guide/z.md"},
+            {"name": "Docs/random.md"},
+        ])
+        by_id = {group["id"]: group for group in groups}
+        self.assertEqual(by_id["dev"]["patterns"], ["Docs/api/**", "Docs/development/**"])
+        self.assertEqual(by_id["guide"]["patterns"], ["Docs/guide/**"])
+        self.assertNotIn("other", by_id)
+
+    def test_docs_cli_check_and_init(self):
+        with TempRepo() as repo:
+            (repo.root / "Docs" / "api").mkdir()
+            (repo.root / "Docs" / "api" / "README.md").write_text("# API\n", encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with redirect_stdout(out), redirect_stderr(err):
+                code = cli.cmd_docs(types.SimpleNamespace(summary=False))
+            self.assertEqual(code, 0)
+            self.assertIn("Docs/api/README.md", out.getvalue())
+            self.assertIn("[auto:dev]", out.getvalue())
+
+            out, err = io.StringIO(), io.StringIO()
+            with redirect_stdout(out), redirect_stderr(err):
+                cli.cmd_docs_init(types.SimpleNamespace())
+            toml = out.getvalue()
+            self.assertIn("[tool.changelog.docs]", toml)
+            self.assertIn('id = "dev"', toml)
+            self.assertIn('"Docs/api/**"', toml)
+
+    def test_docs_cli_returns_error_on_overlap(self):
+        with TempRepo() as repo:
+            (repo.root / ".changelog.toml").write_text(
+                TOML + '\n[[tool.changelog.docs.groups]]\nid = "a"\npaths = ["Docs/**"]\n\n'
+                '[[tool.changelog.docs.groups]]\nid = "b"\npaths = ["Docs/api/**"]\n',
+                encoding="utf-8")
+            (repo.root / "Docs" / "api").mkdir()
+            (repo.root / "Docs" / "api" / "x.md").write_text("# X\n", encoding="utf-8")
+            config.reset()
+            config.load(repo.root)
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = cli.cmd_docs(types.SimpleNamespace(summary=True))
+            self.assertEqual(code, 1)
+            self.assertIn("ERROR", out.getvalue())
 
     def test_snapshot_classifies_documents(self):
         with TempRepo() as repo:

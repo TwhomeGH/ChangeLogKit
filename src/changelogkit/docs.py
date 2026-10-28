@@ -26,9 +26,10 @@
 未分類文件預設進「其他」，不會消失。
 """
 
+import json
 from pathlib import PurePosixPath
 
-from . import config
+from . import config, i18n
 from .globs import matches
 
 PALETTE = ("blue", "green", "amber", "violet", "rose", "cyan", "slate")
@@ -50,6 +51,10 @@ AUTO_FOLDERS = {
     "deploy": "ops", "deployment": "ops", "ops": "ops", "operations": "ops",
     "design": "design", "adr": "design", "architecture": "design",
 }
+
+# 會讓 `docs --check` 回非 0 的設定錯誤；未命中的 pattern／entry 只是警告。
+ERROR_TYPES = {"overlap", "unknown_group", "duplicate_group", "group_without_id",
+               "bad_color", "bad_unlisted"}
 
 
 def normalize(path):
@@ -244,3 +249,80 @@ def resolve(documents, cfg=None):
     index = {meta["id"]: i for i, meta in enumerate(groups)}
     records.sort(key=lambda record: index.get(record["group"], UNLISTED_ORDER))
     return records, groups, warnings
+
+
+def warning_text(warning):
+    """把一筆分類警告轉成目前語系的句子（CLI 與靜態匯出共用）。"""
+    kind = warning.get("type")
+
+    def fmt(key, *args):
+        return i18n.t(key).format(*args)
+
+    if kind == "overlap":
+        return fmt("docs.warn_overlap", warning.get("path", ""),
+                   "、".join(warning.get("groups", [])))
+    if kind == "unknown_group":
+        return fmt("docs.warn_unknown_group", warning.get("group", ""), warning.get("path", ""))
+    if kind == "bad_color":
+        return fmt("docs.warn_bad_color", warning.get("color", ""), warning.get("group", ""))
+    if kind == "duplicate_group":
+        return fmt("docs.warn_duplicate_group", warning.get("group", ""))
+    if kind == "group_without_id":
+        return i18n.t("docs.warn_group_without_id")
+    if kind == "bad_unlisted":
+        return fmt("docs.warn_bad_unlisted", warning.get("value", ""))
+    if kind == "unmatched_pattern":
+        return fmt("docs.warn_unmatched_pattern", warning.get("group", ""),
+                   warning.get("pattern", ""))
+    if kind == "unmatched_entry":
+        return fmt("docs.warn_unmatched_entry", warning.get("path", ""))
+    return str(kind)
+
+
+def suggestion(documents):
+    """由目前的文件推測可用的群組與資料夾 pattern（``docs-init`` 用）。"""
+    found = {}
+    for doc in documents:
+        parts = PurePosixPath(normalize(doc.get("name"))).parts[:-1]
+        category, depth = None, -1
+        for i, segment in enumerate(parts):
+            hit = AUTO_FOLDERS.get(segment.lower())
+            if hit:
+                category, depth = hit, i
+        if category is None:
+            continue
+        prefix = "/".join(parts[:depth + 1])
+        found.setdefault(category, set()).add(prefix + "/**")
+    result = []
+    for category, spec in AUTO_GROUPS.items():
+        patterns = sorted(found.get(category, ()))
+        if patterns:
+            result.append({"id": category, "titleKey": spec["titleKey"],
+                           "color": spec["color"], "order": spec["order"],
+                           "patterns": patterns})
+    return result
+
+
+def _toml_string(text):
+    """TOML 基本字串（JSON 的雙引號跳脫在此同樣有效）。"""
+    return json.dumps(str(text), ensure_ascii=False)
+
+
+def toml_suggestion(documents):
+    """產生可貼進 ``.changelog.toml`` 的 ``[tool.changelog.docs]`` 區塊。"""
+    groups = suggestion(documents)
+    lines = ["[tool.changelog.docs]", 'unlisted = "other"', "auto = true", ""]
+    if not groups:
+        lines.append("# " + i18n.t("msg.docs_init_empty"))
+        return "\n".join(lines).rstrip() + "\n"
+    for group in groups:
+        lines += [
+            "[[tool.changelog.docs.groups]]",
+            "id = %s" % _toml_string(group["id"]),
+            "title = %s" % _toml_string(i18n.t(group["titleKey"])),
+            "color = %s" % _toml_string(group["color"]),
+            "order = %d" % group["order"],
+            "paths = [%s]" % ", ".join(_toml_string(p) for p in group["patterns"]),
+            "",
+        ]
+    return "\n".join(lines).rstrip() + "\n"
