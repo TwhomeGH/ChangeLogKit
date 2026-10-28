@@ -133,7 +133,8 @@
   "dev.uncommitted": "未コミットの変更（未追跡を含む）",
   "dev.clean": "作業ツリーはクリーン",
   "dev.worktree": "作業ツリーの差分を表示",
-  "dev.commits20": "直近 20 件のコミットとファイル",
+  "dev.commits20": "最近のコミットとファイル",
+  "dev.recent_note": "最新 {0} 件のコミットを表示しています。",
   "dev.ui_entry": "UI／導線",
   "dev.verification": "検証状況",
   "filter.supported": "対応言語：",
@@ -185,6 +186,9 @@
   "static.overview_hint": "changelogkit 静的エクスポート（読み取り専用）：ドキュメント {{documents}} 件、機能 {{features}} 件。",
   "static.symbols_hint": "changelogkit 静的エクスポート（読み取り専用）：宣言 {{symbols}} 件（{{sources}} ソース）。",
   "static.built_by": "{src} により生成 · {time}",
+  "static.recent_note": "最新 {{count}} 件のコミットを表示しています。",
+  "static.older_github": "さらに古いコミット → GitHub",
+  "static.older_history": "さらに前の履歴 → 変更履歴",
   "static.support_langs": "対応言語",
   "static.no_diff": "（差分なし）"
 }

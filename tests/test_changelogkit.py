@@ -7,6 +7,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -105,7 +106,7 @@ class ConfigTests(unittest.TestCase):
     def test_parses_docs_section(self):
         with TempRepo() as repo:
             (repo.root / ".changelog.toml").write_text(
-                TOML + '\n[tool.changelog.docs]\nunlisted = "folder"\nauto = false\n\n'
+                TOML + '\nrecent_commits = 5\n\n[tool.changelog.docs]\nunlisted = "folder"\nauto = false\n\n'
                 '[[tool.changelog.docs.groups]]\nid = "dev"\ntitle = "開發者指南"\n'
                 'color = "blue"\norder = 10\npaths = ["Docs/**"]\n\n'
                 '[[tool.changelog.docs.entries]]\npath = "Docs/install.md"\nnote = "安裝"\n',
@@ -114,6 +115,7 @@ class ConfigTests(unittest.TestCase):
             cfg = config.load(repo.root)
             self.assertEqual(cfg.docs_unlisted, "folder")
             self.assertFalse(cfg.docs_auto)
+            self.assertEqual(cfg.recent_commits, 5)
             self.assertEqual(cfg.doc_groups[0].id, "dev")
             self.assertEqual(cfg.doc_groups[0].paths, ("Docs/**",))
             self.assertEqual(cfg.doc_entries[0].note, "安裝")
@@ -325,8 +327,15 @@ class ExportTests(unittest.TestCase):
             self.assertIn('class="sig"', symbols_page)
 
             repos = (out / "development" / "repos.html").read_text(encoding="utf-8")
-            self.assertIn('class="commit"', repos)
+            self.assertIn('class="commit-row"', repos)
             self.assertIn("init", repos)
+            match = re.search(r'href="commits/app/([^"]+)"', repos)
+            self.assertIsNotNone(match)
+            commit_page = out / "development" / "commits" / "app" / match.group(1)
+            self.assertTrue(commit_page.is_file())
+            commit_html = commit_page.read_text(encoding="utf-8")
+            self.assertIn('class="dline', commit_html)
+            self.assertIn("init", commit_html)
 
             doc = (out / "docs" / "Docs" / "api" / "README.html").read_text(encoding="utf-8")
             self.assertIn("../../../assets/theme.css", doc)

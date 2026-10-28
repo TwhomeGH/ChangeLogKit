@@ -1,5 +1,22 @@
 # ChangeHistory
 
+## 2026.10.29 changelogkit 0.10.1 發佈
+
+**類型**: 修正／功能 · **檔案**: `export.py`、`assets/static_commit.html`、`assets/dev.js`、`config.py`、`index.py`
+
+### 問題 - 靜態近期改動頁塞滿 diff；功能檔案連結寫死 repo=app
+
+`repos.html` 一次內嵌 20 筆完整 diff（VideoServer 1.46 MB、約一萬行），載入與上色都重；多來源時功能卡片的檔案連結固定指向 `app`。
+
+### 修改 - 每筆 commit 獨立頁、recent_commits 設定、來源修正
+
+- `repos.html` 改為列表；完整 diff 移到 `development/commits/<repo>/<hash>.html`（VideoServer 1.46 MB → 55.7 KB）。
+- 新增 `recent_commits`（預設 20、1–200）；靜態頁提供「更舊的提交 → GitHub／變更歷史」。
+- `dev.js` 功能檔案連結改用 `contexts.features.repo`，不再寫死 `repo=app`。
+- 動態／靜態近期改動都顯示目前筆數。
+
+---
+
 ## 2026.10.28 changelogkit 0.10.0 發佈
 
 **類型**: 功能 · **檔案**: `cli.py`、`docs.py`、`index.py`、`assets/dev.js`、`buildinfo.py`、`tools/dev.py`

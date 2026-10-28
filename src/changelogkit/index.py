@@ -259,15 +259,16 @@ def documents():
 
 def snapshot():
     """即時取得版本和近期提交；不把 Git 修改檔案推測成新增功能。"""
+    recent = config.load().recent_commits
     data = {"features": validate(), "repos": [], "symbols": [], "documents": [],
-            "languages": SUPPORTED_LANGUAGES}
+            "languages": SUPPORTED_LANGUAGES, "recentCommits": recent}
     for repo, root in roots().items():
         data["repos"].append({
             "name": repo,
             "head": git(root, "rev-parse", "HEAD").strip(),
             "changes": git(root, "status", "--short"),
             "commits": _parse_commits(git(
-                root, "log", "-20", "--date=iso-strict",
+                root, "log", "-%d" % recent, "--date=iso-strict",
                 "--format=%x1e%h%x1f%ad%x1f%s", "--name-only")),
         })
         for name in files(root):

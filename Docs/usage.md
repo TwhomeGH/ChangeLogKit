@@ -72,11 +72,14 @@ Python 沒有 PowerShell 的 `Get-Help`；等價的是 `--help`、`python -m pyd
 | --- | --- |
 | `development/index.html` | 文件（分組／顏色／備註）＋功能 |
 | `development/symbols.html` | API 宣告 |
-| `development/repos.html` | 近期改動與完整 diff |
+| `development/repos.html` | 近期改動列表（hash／標題／檔案） |
+| `development/commits/<repo>/<hash>.html` | 單筆 commit 的完整 diff（按需載入） |
 | `docs/<原路徑>.html` | 每份文件的穩定頁面（例：`docs/Docs/api/README.html`） |
 | `about/index.html` | 關於 |
 
 文件頁會顯示群組 badge、來源路徑、備註與目錄（TOC）；標題有 anchor id。桌面版目錄固定在左側（sticky），手機版用右下角「目錄」按鈕開抽屜。文件 URL 以原路徑為準，不再使用排序編號（舊的 `docs/0.html` 會失效）。
+
+近期改動只列 `recent_commits` 筆；更舊的提交連到 GitHub（單一來源且有 origin 時），否則連回「變更歷史」。
 
 ## 設定：`.changelog.toml`
 
@@ -89,6 +92,7 @@ history  = "Docs/ChangeHistory.md"             # 變更歷史 markdown
 features = "Docs/development/features.json"    # 選填：功能清單
 community = "Docs/community.md"                # 選填：關於頁的「社群與開發交流」區塊
 assets   = "Scripts/changelog-overrides"       # 選填：覆寫預設網頁資產
+recent_commits = 20                            # 選填：列出的 commit 數（1–200）
 
 [[tool.changelog.sources]]                     # 開發索引要一起看的來源
 name = "app"
@@ -108,6 +112,7 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 | `features` | `Docs/development/features.json` | 功能清單（不存在則功能分頁留空） |
 | `community` | `Docs/community.md` | 「關於」頁的社群區塊（不存在則不顯示） |
 | `assets` | 無 | 覆寫資產目錄 |
+| `recent_commits` | `20` | 開發索引／靜態近期改動列出的 commit 數（1–200） |
 | `sources` | 單一（`name="app"`、`path="."`） | 開發索引來源；`path` 支援 `${ENV}` |
 | `include` | 無 | 額外納入的 glob（相對 root；**可涵蓋被 `.gitignore` 忽略者**，如特定 `node_modules` 套件的 `.d.ts`） |
 | `exclude` | 無 | 排除的 glob（相對 root），例如 `**/dist/**`、`**/*.min.js` |

@@ -73,6 +73,7 @@ class Config:
     doc_entries: list = field(default_factory=list)  # 單檔覆寫
     docs_unlisted: str = "other"                     # 未分類：other／folder／hidden
     docs_auto: bool = True                           # 未命中設定時依資料夾自動分類
+    recent_commits: int = 20                         # 開發索引列出的 commit 數（1–200）
 
 
 def _find_root(start):
@@ -163,6 +164,11 @@ def _from_table(root, table):
     auto = docs_table.get("auto", True)
     if not isinstance(auto, bool):       # TOML 的布林才是布林；字串不當成 true
         auto = True
+    try:
+        recent = int(table.get("recent_commits", 20))
+    except (TypeError, ValueError):
+        recent = 20
+    recent = max(1, min(recent, 200))
     return Config(
         root=root,
         title=table.get("title") or root.name,
@@ -177,6 +183,7 @@ def _from_table(root, table):
         doc_entries=_doc_entries(docs_table.get("entries")),
         docs_unlisted=str(docs_table.get("unlisted") or "other").strip().lower(),
         docs_auto=auto,
+        recent_commits=recent,
     )
 
 

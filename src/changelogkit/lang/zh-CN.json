@@ -133,7 +133,8 @@
   "dev.uncommitted": "未提交变更（含未跟踪文件）",
   "dev.clean": "工作区干净",
   "dev.worktree": "查看工作区差异",
-  "dev.commits20": "最近 20 条提交与文件",
+  "dev.commits20": "近期提交与文件",
+  "dev.recent_note": "只列出最近 {0} 次提交。",
   "dev.ui_entry": "前端／使用入口",
   "dev.verification": "验证状态",
   "filter.supported": "支持语言：",
@@ -185,6 +186,9 @@
   "static.overview_hint": "changelogkit 静态导出（只读）：{{documents}} 份文档、{{features}} 项功能。",
   "static.symbols_hint": "changelogkit 静态导出（只读）：{{symbols}} 个声明，来自 {{sources}} 个来源。",
   "static.built_by": "本站由 {src} 生成 · {time}",
+  "static.recent_note": "只列出最近 {{count}} 次提交。",
+  "static.older_github": "更早的提交 → GitHub",
+  "static.older_history": "更多历史 → 变更历史",
   "static.support_langs": "支持语言",
   "static.no_diff": "（无差异）"
 }

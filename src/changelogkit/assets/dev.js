@@ -40,8 +40,13 @@ function kindOf(name) {
   return m ? m[1] : "decl";
 }
 
+/* 功能清單的檔案／文件一定屬於預設來源（features.json 驗證時用的 repo），
+   不要寫死 "app"；多來源或自訂來源名時才不會連錯。 */
 function links(items) {
-  return items.map((p) => `<a href="/development/file?repo=app&path=${encodeURIComponent(p)}">${esc(p)}</a>`).join("");
+  const context = (data && data.contexts && data.contexts.features) || {};
+  const repo = context.repo || "app";
+  return items.map((p) =>
+    `<a href="/development/file?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(p)}">${esc(p)}</a>`).join("");
 }
 
 /* ── 記住上次瀏覽狀態（分頁／語言／種類／分組） ── */
@@ -238,7 +243,8 @@ function rowHtml(r) {
     `<h3>${CK_T("dev.uncommitted")}</h3><pre class="blob">${esc(r.changes || CK_T("dev.clean"))}</pre>` +
     `<div class="wt-wrap"><button class="wt-btn" type="button" data-repo="${esc(r.name)}">${CK_T("dev.worktree")}</button>` +
     `<div class="diff" hidden></div></div>` +
-    `<h3>${CK_T("dev.commits20")}</h3><div class="commits">${list}</div></article>`;
+    `<h3>${CK_T("dev.commits20")}</h3><div class="commits">${list}</div>` +
+    `<p class="muted">${CK_T("dev.recent_note", (data && data.recentCommits) || 20)}</p></article>`;
 }
 
 /* 「近期改動／版本」頁開頭的鎖定套件卡片。 */

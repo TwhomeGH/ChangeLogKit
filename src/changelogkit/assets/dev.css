@@ -70,6 +70,19 @@ pre.blob { background: var(--code); border: 1px solid var(--line); border-radius
 
 /* 近期改動：提交卡片與差異檢視。 */
 .commits { display: flex; flex-direction: column; gap: 6px }
+/* 近期改動列表：每筆 commit 一列，連到各自的 diff 頁。 */
+.commit-list { display: flex; flex-direction: column; gap: 4px }
+.commit-row {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px;
+  padding: 8px 10px; border: 1px solid var(--line2); border-radius: 8px;
+  color: var(--fg); text-decoration: none; background: var(--bg);
+}
+.commit-row:hover { background: var(--line2); border-color: var(--line) }
+.commit-row .commit-top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.commit-row .hash { color: var(--accent); font-size: 12.5px; background: none; padding: 0 }
+.commit-row .when { color: var(--mut); font-size: 12px; white-space: nowrap }
+.commit-row .subject { font-weight: 600; flex: 1 1 240px; overflow-wrap: anywhere }
+.commit-row .files { width: 100%; display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--mut); font-size: 12px }
 .commit { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg) }
 .commit-head {
   display: flex; flex-direction: column; gap: 3px; align-items: stretch; width: 100%;

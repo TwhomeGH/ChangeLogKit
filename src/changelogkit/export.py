@@ -56,6 +56,12 @@ def _group_anchor(group_id):
     return "doc-group-" + (slug or "other")
 
 
+def _commit_rel(repo, commit_hash):
+    """單筆 commit 頁的站根相對路徑（repo 名稱逐段 encode 成一個目錄）。"""
+    return "development/commits/%s/%s.html" % (
+        quote(str(repo), safe=""), quote(str(commit_hash), safe=""))
+
+
 def _diff_class(line):
     """移植 ``assets/dev.js`` 的 diffLineClass：決定單行樣式類別。"""
     if line.startswith("@@"):
@@ -193,26 +199,46 @@ def _render_documents(documents, groups, base="../"):
     return "\n".join(out)
 
 
-def _render_repos(repos):
-    """近期改動：每個提交一個可展開的 ``<details>``（diff 內嵌）。"""
+def _render_repo_list(repos):
+    """近期改動列表：只列 commit 與檔案；完整 diff 在各自的 commit 頁。"""
     parts = []
     for repo in repos:
-        commits = []
+        rows = []
         for commit in repo["commits"]:
-            change = index.diff(repo["name"], commit["hash"])
-            files = "".join('<span class="cfile">%s</span>' % _esc(f) for f in commit["files"])
-            body = _diff_html(change["diff"]) if not change["empty"] else '<p class="muted" data-i18n="static.no_diff">' + i18n.t("static.no_diff") + '</p>'
             when = (commit["date"] or "")[:16].replace("T", " ")
-            summary = ('<summary><span class="cbody"><span class="commit-top">'
-                       '<code class="hash">%s</code><span class="when">%s</span></span>'
-                       '<span class="subject">%s</span></span></summary>'
-                       % (_esc(commit["hash"]), _esc(when), _esc(commit["subject"])))
-            commits.append('<details class="commit">%s'
-                           '<div class="commit-files">%s</div>%s</details>' % (summary, files, body))
+            files = "".join('<span class="cfile">%s</span>' % _esc(f) for f in commit["files"])
+            href = "commits/%s/%s.html" % (
+                quote(str(repo["name"]), safe=""), quote(str(commit["hash"]), safe=""))
+            rows.append(
+                '<a class="commit-row" href="%s"><span class="commit-top">'
+                '<code class="hash">%s</code><span class="when">%s</span></span>'
+                '<span class="subject">%s</span><span class="files">%s</span></a>'
+                % (_esc(href), _esc(commit["hash"]), _esc(when), _esc(commit["subject"]), files))
         parts.append('<article class="card"><h2>%s</h2><div class="meta">HEAD：%s</div>'
-                     '<div class="commits">%s</div></article>'
-                     % (_esc(repo["name"]), _esc(repo["head"]), "".join(commits)))
+                     '<div class="commit-list">%s</div></article>'
+                     % (_esc(repo["name"]), _esc(repo["head"]), "".join(rows)))
     return "\n".join(parts)
+
+
+def _write_commits(out, repos, footer):
+    """為每筆 commit 產生獨立頁面（完整 diff，不塞進列表頁）。"""
+    for repo in repos:
+        for commit in repo["commits"]:
+            rel = _commit_rel(repo["name"], commit["hash"])
+            base = _site_base(rel)
+            change = index.diff(repo["name"], commit["hash"])
+            diff = (_diff_html(change["diff"]) if not change["empty"]
+                    else '<p class="muted" data-i18n="static.no_diff">'
+                         + i18n.t("static.no_diff") + '</p>')
+            files = "".join('<span class="cfile">%s</span>' % _esc(f) for f in commit["files"])
+            when = (commit["date"] or "")[:16].replace("T", " ")
+            target = out / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(assets.render(
+                "static_commit.html", **i18n.subs(), title=_esc(config.load().title),
+                hash=_esc(commit["hash"]), repo=_esc(repo["name"]),
+                subject=_esc(commit["subject"]), when=_esc(when), files=files,
+                diff=diff, footer=footer, base=base), encoding="utf-8")
 
 
 def _render_overview(data):
@@ -340,9 +366,16 @@ def export(out_dir, branch="main"):
         site_base=json.dumps("../"), doc_pages=doc_pages_json,
         blob_base=blob_base_json, doc_path=json.dumps("")), encoding="utf-8")
 
+    if slug and len(data["repos"]) == 1:
+        older_url = "https://github.com/%s/commits/%s" % (slug, quote(branch, safe="/"))
+        more = '<a href="%s">%s</a>' % (_esc(older_url), _esc(i18n.t("static.older_github")))
+    else:
+        more = '<a href="../">%s</a>' % _esc(i18n.t("static.older_history"))
     (out / "development" / "repos.html").write_text(assets.render(
         "static_repos.html", **i18n.subs(), title=_esc(cfg.title),
-        content=_render_repos(data["repos"]), footer=footer, base="../"), encoding="utf-8")
+        content=_render_repo_list(data["repos"]), footer=footer, base="../",
+        count=str(cfg.recent_commits), more=more), encoding="utf-8")
+    _write_commits(out, data["repos"], footer)
 
     _write_docs(out, data["documents"], footer, doc_pages_json, blob_base_json)
     community_html = community.html_block(community.load(), i18n.t("about.community_title"))
