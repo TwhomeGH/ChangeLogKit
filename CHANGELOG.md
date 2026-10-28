@@ -1,4 +1,22 @@
-# ChangeHistory
+# Changelog
+
+## 2026.10.29 changelogkit 0.11.1 發佈
+
+**類型**: 修正／維護 · **檔案**: `index.py`、`pyproject.toml`、`tools/check_version.py`、`.github/workflows/*`、`CHANGELOG.md`
+
+### 問題 - `.d.ts`／`.js` 重複卡片；缺少 lint 與發版版本檢查；工具 changelog 不在標準位置
+
+同一模組的型別宣告與實作會各出一張 API 卡；CI 沒有 lint／format 檢查，發版時也沒有 tag 與版本一致性檢查；工具自己的 changelog 放在 `Docs/ChangeHistory.md`，不符根目錄 `CHANGELOG.md` 的慣例。
+
+### 修改 - 去重、lint、版本檢查與 changelog 搬家
+
+- 同 repo／同目錄／同檔名基底的 `.d.ts` 與 `.js`／`.mjs`／`.cjs`，同名同種類只留 `.d.ts`。
+- 新增 `lint.yml`（ruff check／format check）、`tools/check_version.py`，publish 前檢查版本與 tag。
+- 工具自身 changelog 移至根目錄 `CHANGELOG.md`（`.changelog.toml` 指向它）；目標 repo 預設仍是 `Docs/ChangeHistory.md`。
+- 修正 markdownlint MD038／MD028／MD036／MD040；新增 `.markdownlint.json`（關閉 MD013）。
+- 以 ruff format 統一 Python 格式（行為不變）。
+
+---
 
 ## 2026.10.29 changelogkit 0.11.0 發佈
 
@@ -100,8 +118,8 @@
 
 ### 修改 - 新增 --problem／--cause／--change（可重複）
 
-- `--problem`／`--cause` 的第一行成為 `### 問題 - `／`### 根因 - ` 的摘要，其餘行是細節。
-- `--change` 可重複；第一筆當 `### 修改 - ` 摘要，其餘轉成條列；多行值會逐行拆開。
+- `--problem`／`--cause` 的第一行成為 `### 問題 - …`／`### 根因 - …` 的摘要，其餘行是細節。
+- `--change` 可重複；第一筆當 `### 修改 - …` 摘要，其餘轉成條列；多行值會逐行拆開。
 - 同步更新 `--help`、`Docs/usage.md`、README 與測試。
 
 ---
@@ -359,7 +377,7 @@ API 宣告卡片的註釋原本整段當 markdown 渲染；`@param {Object} opti
 
 ### 根因 - 建檔與組版未顧及 H1 與清單空行
 
-`insert_block` 直接把新區塊插在第一筆 `## ` 之前、`add` 建檔時也沒寫 H1；`build_block` 在 `**相關文件**:` 標籤行後直接接清單。
+`insert_block` 直接把新區塊插在第一筆 `##` 標題之前、`add` 建檔時也沒寫 H1；`build_block` 在 `**相關文件**:` 標籤行後直接接清單。
 
 ### 修改 - 寫入時確保 H1，清單前補空行
 
@@ -415,7 +433,7 @@ API 宣告卡片的註釋原本整段當 markdown 渲染；`@param {Object} opti
 
 ### 問題 - 符號註釋的程式碼區塊沒被渲染
 
-開發索引頁的 API 註釋（例如 JS 的 JSDoc 內含 ```typescript 範例）會以**純文字**呈現，連 ``` 標記都露出來。
+開發索引頁的 API 註釋（例如 JS 的 JSDoc 內含 ```typescript 範例）會以**純文字**呈現，連程式碼圍籬標記都露出來。
 
 ### 根因 - 動態 dev 頁用簡化的 mdDoc，且未載入樣式
 

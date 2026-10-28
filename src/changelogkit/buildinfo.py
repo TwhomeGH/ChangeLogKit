@@ -22,13 +22,18 @@ from . import __version__
 def _git_head(path):
     """回傳 ``<短hash>[+dirty]``；非 git 或失敗回空字串。"""
     try:
-        out = subprocess.run(["git", "-C", str(path), "rev-parse", "--short", "HEAD"],
-                             capture_output=True, text=True, timeout=5)
+        out = subprocess.run(
+            ["git", "-C", str(path), "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
         if out.returncode:
             return ""
         head = out.stdout.strip()
-        dirty = subprocess.run(["git", "-C", str(path), "status", "--porcelain"],
-                               capture_output=True, text=True, timeout=5).stdout.strip()
+        dirty = subprocess.run(
+            ["git", "-C", str(path), "status", "--porcelain"], capture_output=True, text=True, timeout=5
+        ).stdout.strip()
         return head + ("+dirty" if dirty else "")
     except Exception:
         return ""
@@ -42,7 +47,7 @@ def _from_direct_url():
         if not url.startswith("file:"):
             return ""
         path = unquote(urlparse(url).path)
-        if re.match(r"^/[A-Za-z]:", path):   # Windows：file:///C:/… → /C:/…
+        if re.match(r"^/[A-Za-z]:", path):  # Windows：file:///C:/… → /C:/…
             path = path[1:]
         return _git_head(Path(path))
     except Exception:
@@ -60,6 +65,7 @@ def commit():
         return checkout
     try:
         from . import _buildinfo
+
         stamped = getattr(_buildinfo, "COMMIT", "")
         if stamped:
             return stamped + ("+dirty" if getattr(_buildinfo, "DIRTY", False) else "")
@@ -78,8 +84,12 @@ def origin_slug():
     try:
         from . import config
 
-        url = subprocess.run(["git", "-C", str(config.load().root), "remote", "get-url", "origin"],
-                             capture_output=True, text=True, timeout=5).stdout.strip()
+        url = subprocess.run(
+            ["git", "-C", str(config.load().root), "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout.strip()
     except Exception:
         return None
     if "github.com" not in url:

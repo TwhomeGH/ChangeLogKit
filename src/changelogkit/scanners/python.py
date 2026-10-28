@@ -22,8 +22,9 @@ def scan(text, repo, name):
         if match:
             signature, following = collect_signature(lines, index)
             body = re.sub(r":\s*$", "", signature).strip()
-            symbols.append(make_symbol(_KIND[match.group(1)], match.group(2), body,
-                                       repo, name, index + 1, doc))
+            symbols.append(
+                make_symbol(_KIND[match.group(1)], match.group(2), body, repo, name, index + 1, doc)
+            )
             doc = []
             index = following
             continue

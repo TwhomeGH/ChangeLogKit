@@ -4,17 +4,19 @@ import re
 
 from .common import collect_block_comment, collect_signature, make_symbol
 
-_VIS = (r"(?:(?:public|private|protected|internal|open|abstract|final|inline|suspend|operator|"
-        r"infix|external|override|tailrec|const|lateinit|companion|expect|actual)\s+)*")
+_VIS = (
+    r"(?:(?:public|private|protected|internal|open|abstract|final|inline|suspend|operator|"
+    r"infix|external|override|tailrec|const|lateinit|companion|expect|actual)\s+)*"
+)
 _MOD_CLASS = r"(?:(?:enum|data|sealed|value|annotation|inner|open|abstract|final)\s+)*"
-_KIND_RE = re.compile(
-    r"^\s*" + _VIS + _MOD_CLASS +
-    r"(class|interface|object|typealias)\s+([A-Za-z_]\w*)")
+_KIND_RE = re.compile(r"^\s*" + _VIS + _MOD_CLASS + r"(class|interface|object|typealias)\s+([A-Za-z_]\w*)")
 _FUN_RE = re.compile(
     r"^\s*" + _VIS + r"(?:suspend\s+)?fun\s+(?:<[^>]+>\s*)?(?:[A-Za-z_][\w.<>?]*\.)?"
-    r"([A-Za-z_]\w*)\s*[(<]")
+    r"([A-Za-z_]\w*)\s*[(<]"
+)
 _PROP_RE = re.compile(
-    r"^\s*(?:public|private|protected|internal|const|lateinit)\s+(?:val|var)\s+([A-Za-z_]\w*)")
+    r"^\s*(?:public|private|protected|internal|const|lateinit)\s+(?:val|var)\s+([A-Za-z_]\w*)"
+)
 _ENUM_RE = re.compile(r"^\s*" + _VIS + r"enum\s+class\s+([A-Za-z_]\w*)")
 _KIND = {"class": "class", "interface": "interface", "object": "object", "typealias": "typealias"}
 

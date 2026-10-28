@@ -8,12 +8,15 @@
 changelogkit export _site --branch main
 ```
 
-```
+```text
 _site/
-  index.html              # 變更歷史（唯讀）
-  development/index.html  # 開發索引（API 宣告／文件／近期改動）
-  docs/<i>.html           # 每份 Markdown 的檢視頁
-  assets/…                # 網頁資產（相對路徑引用）
+  index.html                    # 變更歷史（唯讀）
+  development/index.html        # 文件＋功能
+  development/symbols.html      # API 宣告
+  development/repos.html        # 近期改動列表
+  development/commits/…         # 單筆 commit 的完整 diff
+  docs/<來源>/<路徑>.html       # 每份 Markdown 的檢視頁
+  assets/…                      # 網頁資產（相對路徑引用）
   .nojekyll
 ```
 

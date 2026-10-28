@@ -2,7 +2,7 @@
 
 把這個目錄當成一個獨立 repo 的縮影，示範 `changelogkit` 需要的檔案與設定：
 
-```
+```text
 repo/
   .changelog.toml                 # 設定（可省略，用預設值）
   Docs/ChangeHistory.md           # 變更歷史（必要）

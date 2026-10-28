@@ -16,7 +16,7 @@ changelogkit docs [--check] [--summary]        # 檢查文件分類（錯誤回 
 changelogkit docs-init                         # 印出可貼上的 docs TOML 範本
 ```
 
-`add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - ` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列。只給標題時插入空骨架。
+`add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - …` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列。只給標題時插入空骨架。
 
 未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。
 
@@ -51,6 +51,21 @@ python tools\dev.py -- docs --help
 ```
 
 Python 沒有 PowerShell 的 `Get-Help`；等價的是 `--help`、`python -m pydoc tools.dev`（顯示模組 docstring 與範例），或在 REPL 用 `help(tools.dev)`。`Docs/usage.md` 只寫流程與範例，精確旗標以 `--help` 為準。
+
+靜態檢查（CI 也會跑）：
+
+```powershell
+ruff check .
+ruff format --check .
+```
+
+工具在 `pyproject.toml` 的 `dev` extra；本機可直接 `pip install ruff`（CJK 路徑避免 `pip install -e`）。
+
+發版前檢查版本與 tag 一致（publish workflow 也會跑）：
+
+```powershell
+python tools\check_version.py --tag v0.11.1
+```
 
 ## 網頁 GUI
 
@@ -118,6 +133,8 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 | `exclude` | 無 | 排除的 glob（相對 root），例如 `**/dist/**`、`**/*.min.js` |
 
 > glob 語法：`**` 跨目錄、`*` 單層、`?` 單字元。索引預設只看版本控管（含未忽略）的檔案；`include` 用於**選擇性**納入被忽略者（例如只看幾個已安裝套件的型別定義），`exclude` 用來排除建置產物。
+>
+> API 卡片去重：同一個 repo、同目錄且同檔名基底的 `.d.ts` 與 `.js`／`.mjs`／`.cjs`，若同名同種類，只保留 `.d.ts`；不同目錄或不同種類（例如 interface／class）不會互刪。
 
 ## 文件分類（Documents 分頁）
 

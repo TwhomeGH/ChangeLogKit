@@ -21,8 +21,7 @@ STAMP = "src/changelogkit/_buildinfo.py"
 def _git(root, *args):
     """對 ``root`` 跑 git，成功回標準輸出去尾空白，失敗回空字串。"""
     try:
-        out = subprocess.run(["git", "-C", str(root), *args],
-                             capture_output=True, text=True, timeout=10)
+        out = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, timeout=10)
         return out.stdout.strip() if out.returncode == 0 else ""
     except Exception:
         return ""
@@ -63,7 +62,7 @@ class BuildInfoHook(BuildHookInterface):
             encoding="utf-8",
         )
         # 被 .gitignore 的檔案預設不會進 wheel，這裡明確帶上。
-        build_data.setdefault("force_include", {})[str(target)] = STAMP[len("src/"):]
+        build_data.setdefault("force_include", {})[str(target)] = STAMP[len("src/") :]
         self.app.display_info(
             "changelogkit buildinfo：%s%s @ %s" % (commit or "(非 git)", "+dirty" if dirty else "", built_at)
         )

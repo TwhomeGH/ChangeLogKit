@@ -31,12 +31,19 @@ def cmd_add(args):
     changes = []
     for chunk in getattr(args, "change", []):
         changes.extend(chunk.splitlines())
-    history.insert_block(history.build_block(
-        date_str, args.title, args.type, args.file,
-        problem=getattr(args, "problem", ""),
-        root_cause=getattr(args, "cause", ""),
-        changes=changes,
-        refs=getattr(args, "ref", []), time_str=time_str))
+    history.insert_block(
+        history.build_block(
+            date_str,
+            args.title,
+            args.type,
+            args.file,
+            problem=getattr(args, "problem", ""),
+            root_cause=getattr(args, "cause", ""),
+            changes=changes,
+            refs=getattr(args, "ref", []),
+            time_str=time_str,
+        )
+    )
     print(i18n.t("msg.inserted", date=date_str, time=time_str, title=args.title))
 
 
@@ -63,8 +70,15 @@ def cmd_backfill(args):
         else:
             print("? %s" % before)
     mode = "已寫入" if r["applied"] else "試跑（未寫入）"
-    print(i18n.t("msg.backfill_summary", total=r["total"], converted=r["converted"],
-                 skipped=r["skipped"], mode=mode))
+    print(
+        i18n.t(
+            "msg.backfill_summary",
+            total=r["total"],
+            converted=r["converted"],
+            skipped=r["skipped"],
+            mode=mode,
+        )
+    )
 
 
 def cmd_list(args):
@@ -135,9 +149,9 @@ def cmd_docs(args):
     print(i18n.t("msg.docs_summary", docs=len(records), groups=len(groups)))
     for group in groups:
         items = [record for record in records if record["group"] == group["id"]]
-        title = (group.get("title")
-                 or (i18n.t(group["titleKey"]) if group.get("titleKey")
-                     else i18n.t("docs.unclassified")))
+        title = group.get("title") or (
+            i18n.t(group["titleKey"]) if group.get("titleKey") else i18n.t("docs.unclassified")
+        )
         print("[%s] %s (%d)" % (group["id"], title, len(items)))
         if not args.summary:
             for record in items:
@@ -175,11 +189,21 @@ def cmd_symbols(args):
     hits = [s for s in symbols if _symbol_matches(s, query, args.lang, args.kind, args.repo)]
     if args.limit:
         hits = hits[: args.limit]
-    print(i18n.t("msg.symbols_summary", hits=len(hits), total=len(symbols),
-                 langs="、".join(data["languages"])) + "\n")
+    print(
+        i18n.t("msg.symbols_summary", hits=len(hits), total=len(symbols), langs="、".join(data["languages"]))
+        + "\n"
+    )
     for symbol in hits:
-        print("%-22s %-9s %-10s %s:%d" % (symbol.get("lang") or "-", symbol.get("kind") or "",
-                                          symbol["name"], symbol["file"], symbol["line"]))
+        print(
+            "%-22s %-9s %-10s %s:%d"
+            % (
+                symbol.get("lang") or "-",
+                symbol.get("kind") or "",
+                symbol["name"],
+                symbol["file"],
+                symbol["line"],
+            )
+        )
 
 
 def main(argv=None):

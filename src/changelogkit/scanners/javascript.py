@@ -11,20 +11,44 @@ from .common import collect_block_comment, collect_signature, make_symbol
 # 前置修飾：export／declare／default／abstract／async 皆可選。
 _FUNC_RE = re.compile(
     r"^(?:export\s+)?(?:declare\s+)?(?:default\s+)?(?:abstract\s+)?(?:async\s+)?"
-    r"(function|class|interface|type|enum|namespace|module)\s+([A-Za-z_$][\w$]*)")
+    r"(function|class|interface|type|enum|namespace|module)\s+([A-Za-z_$][\w$]*)"
+)
 # 只有 export 或 declare 開頭才算模組層級常數（避免把函式內的區域變數當 API）。
 _VAR_RE = re.compile(r"^(?:export\s+|declare\s+)+(?:const|let|var)\s+([A-Za-z_$][\w$]*)")
 # 類別成員方法：`name(args) {`（可帶 static／async／get／set／* 修飾），排除控制關鍵字。
-_MEMBER_RE = re.compile(
-    r"^(?:static\s+|async\s+|get\s+|set\s+|\*\s*)*([A-Za-z_$][\w$]*)\s*\([^;{}]*\)\s*\{")
+_MEMBER_RE = re.compile(r"^(?:static\s+|async\s+|get\s+|set\s+|\*\s*)*([A-Za-z_$][\w$]*)\s*\([^;{}]*\)\s*\{")
 # 型別宣告檔中的簽名成員（以 `;` 結尾、無實作）。
 _SIG_METHOD_RE = re.compile(
-    r"^(?:static\s+|async\s+|get\s+|set\s+|\*\s*|readonly\s+)*([A-Za-z_$][\w$]*)\s*\([^;{}]*\)\s*(?::\s*[^;={]+)?;")
+    r"^(?:static\s+|async\s+|get\s+|set\s+|\*\s*|readonly\s+)*([A-Za-z_$][\w$]*)\s*\([^;{}]*\)\s*(?::\s*[^;={]+)?;"
+)
 _SIG_PROP_RE = re.compile(r"^(?:static\s+|readonly\s+)*([A-Za-z_$][\w$]*)\s*\??\s*:\s*[^;={]+;")
-_MEMBER_SKIP = {"if", "for", "while", "switch", "catch", "do", "else", "return",
-                "function", "typeof", "new", "await", "yield", "super", "with", "try"}
-_KIND = {"function": "func", "class": "class", "interface": "interface",
-         "type": "typealias", "enum": "enum", "namespace": "namespace", "module": "namespace"}
+_MEMBER_SKIP = {
+    "if",
+    "for",
+    "while",
+    "switch",
+    "catch",
+    "do",
+    "else",
+    "return",
+    "function",
+    "typeof",
+    "new",
+    "await",
+    "yield",
+    "super",
+    "with",
+    "try",
+}
+_KIND = {
+    "function": "func",
+    "class": "class",
+    "interface": "interface",
+    "type": "typealias",
+    "enum": "enum",
+    "namespace": "namespace",
+    "module": "namespace",
+}
 
 
 def scan(text, repo, name):

@@ -9,9 +9,9 @@ _KIND_RE = re.compile(r"^\s*" + _MOD + r"(class|mixin|enum|extension|typedef)\s+
 _FUN_RE = re.compile(
     r"^\s*(?!(?:if|for|while|switch|return|else|do|case)\b)"
     r"(?:[\w<>,\[\]?.]+\s+)?"
-    r"([A-Za-z_]\w*)\s*\([^;{}]*\)\s*(?:async\*?|sync\*?)?\s*(?:\{|=>)")
-_KIND = {"class": "class", "mixin": "mixin", "enum": "enum",
-         "extension": "extension", "typedef": "typealias"}
+    r"([A-Za-z_]\w*)\s*\([^;{}]*\)\s*(?:async\*?|sync\*?)?\s*(?:\{|=>)"
+)
+_KIND = {"class": "class", "mixin": "mixin", "enum": "enum", "extension": "extension", "typedef": "typealias"}
 
 
 def scan(text, repo, name):
@@ -30,16 +30,18 @@ def scan(text, repo, name):
         kind_match = _KIND_RE.match(stripped)
         fun_match = None if kind_match else _FUN_RE.match(stripped)
         if kind_match:
-            symbols.append(make_symbol(_KIND[kind_match.group(1)], kind_match.group(2),
-                                       stripped, repo, name, index + 1, doc))
+            symbols.append(
+                make_symbol(
+                    _KIND[kind_match.group(1)], kind_match.group(2), stripped, repo, name, index + 1, doc
+                )
+            )
             doc = []
             index += 1
             continue
         if fun_match:
             signature, following = collect_signature(lines, index)
             body = signature.split("{", 1)[0].split("=>", 1)[0].strip()
-            symbols.append(make_symbol("func", fun_match.group(1), body,
-                                       repo, name, index + 1, doc))
+            symbols.append(make_symbol("func", fun_match.group(1), body, repo, name, index + 1, doc))
             doc = []
             index = following
             continue

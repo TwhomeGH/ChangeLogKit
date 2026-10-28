@@ -14,13 +14,14 @@ import json
 import os
 import re
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import parse_qs
 
 from . import assets, config, docs as docmeta, i18n
 from .globs import regex as _glob_re
 from .scanners import SUPPORTED_LANGUAGES, SUPPORTED_SUFFIXES, scan_symbols
 from .scanners.common import link
+
 
 def roots():
     """索引來源位置（由 .changelog.toml 的 sources 決定；不存在的路徑略過）。"""
@@ -49,8 +50,9 @@ def rel_path(path):
 
 def git(root, *args):
     """固定參數呼叫 Git；不透過 shell，失敗明確回報。"""
-    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True,
-                            encoding="utf-8", errors="replace", timeout=30)
+    result = subprocess.run(
+        ["git", "-C", str(root), *args], capture_output=True, encoding="utf-8", errors="replace", timeout=30
+    )
     if result.returncode:
         raise ValueError("無法讀取 Git 資訊：" + result.stderr[:200])
     return result.stdout
@@ -66,8 +68,9 @@ def files(root):
     suffixes = SUPPORTED_SUFFIXES + (".md",)
 
     def wanted(rel):
-        return (rel and Path(rel).suffix in suffixes
-                and not any(part.startswith(".") for part in Path(rel).parts))
+        return (
+            rel and Path(rel).suffix in suffixes and not any(part.startswith(".") for part in Path(rel).parts)
+        )
 
     paths = git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").split("\0")
     found = {p for p in paths if wanted(p)}
@@ -133,10 +136,10 @@ def validate():
 
 # ── 近期改動與差異 ────────────────────────────────────────────
 # 提交欄位以 ASCII 控制字元分隔，避免標題含空白／符號時解析歧義。
-_COMMIT_RS = "\x1e"   # 每筆提交的開頭（record separator）
-_COMMIT_US = "\x1f"   # hash／時間／標題之間（unit separator）
+_COMMIT_RS = "\x1e"  # 每筆提交的開頭（record separator）
+_COMMIT_US = "\x1f"  # hash／時間／標題之間（unit separator）
 _REV_RE = re.compile(r"^[0-9a-fA-F]{4,40}$")
-MAX_DIFF = 400_000    # 單次差異回應上限（字元）
+MAX_DIFF = 400_000  # 單次差異回應上限（字元）
 
 
 def _parse_commits(raw):
@@ -150,10 +153,14 @@ def _parse_commits(raw):
         parts = lines[0].split(_COMMIT_US)
         if len(parts) < 3:
             continue
-        commits.append({
-            "hash": parts[0], "date": parts[1], "subject": parts[2],
-            "files": [ln.strip() for ln in lines[1:] if ln.strip()],
-        })
+        commits.append(
+            {
+                "hash": parts[0],
+                "date": parts[1],
+                "subject": parts[2],
+                "files": [ln.strip() for ln in lines[1:] if ln.strip()],
+            }
+        )
     return commits
 
 
@@ -183,8 +190,7 @@ def diff(repo, rev=None, path=None, worktree=False):
         args += ["--", _safe_pathspec(path)]
     text = git(root, *args)
     truncated = len(text) > MAX_DIFF
-    return {"diff": text[:MAX_DIFF] if truncated else text,
-            "truncated": truncated, "empty": not text.strip()}
+    return {"diff": text[:MAX_DIFF] if truncated else text, "truncated": truncated, "empty": not text.strip()}
 
 
 def _locked_packages():
@@ -194,14 +200,27 @@ def _locked_packages():
     except (OSError, ValueError):
         return []
     pins = lock.get("pins") or lock.get("object", {}).get("pins", [])
-    return [{"identity": p.get("identity"), "revision": (p.get("state") or {}).get("revision")}
-            for p in pins]
+    return [{"identity": p.get("identity"), "revision": (p.get("state") or {}).get("revision")} for p in pins]
 
 
 # 可「容納成員」的型別種類（成員依縮排收進所屬型別）。
-_TYPE_KINDS = {"class", "struct", "interface", "enum", "protocol", "actor",
-               "trait", "object", "extension", "namespace", "module", "impl", "type",
-               "union", "record"}
+_TYPE_KINDS = {
+    "class",
+    "struct",
+    "interface",
+    "enum",
+    "protocol",
+    "actor",
+    "trait",
+    "object",
+    "extension",
+    "namespace",
+    "module",
+    "impl",
+    "type",
+    "union",
+    "record",
+}
 
 
 def _nest(symbols, lines):
@@ -233,6 +252,47 @@ def iter_symbols(symbols):
         yield from iter_symbols(sym.get("members", []))
 
 
+_IMPL_SUFFIXES = (".js", ".mjs", ".cjs")
+
+
+def _module_key(name):
+    """同目錄、同模組的 key：``foo.d.ts`` 與 ``foo.js`` 都回 ``("dir", "foo")``。"""
+    path = PurePosixPath(str(name))
+    base = path.name
+    if base.endswith(".d.ts"):
+        return str(path.parent), base[:-5]
+    for suffix in _IMPL_SUFFIXES:
+        if base.endswith(suffix):
+            return str(path.parent), base[: -len(suffix)]
+    return None
+
+
+def _dedupe_declarations(symbols):
+    """同模組同名同種類的 ``.d.ts``／``.js`` 卡片只留 ``.d.ts``。
+
+    ``.d.ts`` 有該符號才省略實作卡片；沒宣告到的實作仍保留。
+    """
+    declared = set()
+    for sym in symbols:
+        if str(sym.get("file", "")).endswith(".d.ts"):
+            module = _module_key(sym.get("file"))
+            if module:
+                declared.add((sym.get("repo"), module[0], module[1], sym.get("name"), sym.get("kind")))
+    if not declared:
+        return symbols
+    out = []
+    for sym in symbols:
+        if str(sym.get("file", "")).endswith(_IMPL_SUFFIXES):
+            module = _module_key(sym.get("file"))
+            if (
+                module
+                and (sym.get("repo"), module[0], module[1], sym.get("name"), sym.get("kind")) in declared
+            ):
+                continue
+        out.append(sym)
+    return out
+
+
 def _document_entry(repo, root, name):
     """讀取單一 Markdown 文件（給 snapshot 與 docs CLI 共用）；不可讀回 None。"""
     try:
@@ -260,17 +320,32 @@ def documents():
 def snapshot():
     """即時取得版本和近期提交；不把 Git 修改檔案推測成新增功能。"""
     recent = config.load().recent_commits
-    data = {"features": validate(), "repos": [], "symbols": [], "documents": [],
-            "languages": SUPPORTED_LANGUAGES, "recentCommits": recent}
+    data = {
+        "features": validate(),
+        "repos": [],
+        "symbols": [],
+        "documents": [],
+        "languages": SUPPORTED_LANGUAGES,
+        "recentCommits": recent,
+    }
     for repo, root in roots().items():
-        data["repos"].append({
-            "name": repo,
-            "head": git(root, "rev-parse", "HEAD").strip(),
-            "changes": git(root, "status", "--short"),
-            "commits": _parse_commits(git(
-                root, "log", "-%d" % recent, "--date=iso-strict",
-                "--format=%x1e%h%x1f%ad%x1f%s", "--name-only")),
-        })
+        data["repos"].append(
+            {
+                "name": repo,
+                "head": git(root, "rev-parse", "HEAD").strip(),
+                "changes": git(root, "status", "--short"),
+                "commits": _parse_commits(
+                    git(
+                        root,
+                        "log",
+                        "-%d" % recent,
+                        "--date=iso-strict",
+                        "--format=%x1e%h%x1f%ad%x1f%s",
+                        "--name-only",
+                    )
+                ),
+            }
+        )
         for name in files(root):
             if name.endswith(".md"):
                 entry = _document_entry(repo, root, name)
@@ -285,6 +360,8 @@ def snapshot():
             except (ValueError, OSError):
                 continue
             data["symbols"].extend(_nest(scan_symbols(text, repo, name), text.splitlines()))
+    # 同模組的 .d.ts 與 .js 宣告只留一份（偏好 .d.ts）。
+    data["symbols"] = _dedupe_declarations(data["symbols"])
     # 文件分類（群組／標題／備註）；設定問題以警告回傳，不中斷索引。
     data["documents"], data["docGroups"], data["docWarnings"] = docmeta.resolve(data["documents"])
     data["lockedPackages"] = _locked_packages()
@@ -307,18 +384,27 @@ def _file_page(repo, name, line):
     )
     return assets.render(
         "file.html",
-        title=html.escape(name), repo=html.escape(repo), path=html.escape(name),
-        line=str(line), content=content,
-        i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False), **i18n.subs())
+        title=html.escape(name),
+        repo=html.escape(repo),
+        path=html.escape(name),
+        line=str(line),
+        content=content,
+        i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+        **i18n.subs(),
+    )
 
 
 def route(path, query):
     """回傳 (HTTP 狀態, 內容, MIME)，由既有本機工具提供服務。"""
     try:
         if path == "/development":
-            return 200, assets.render("dev.html",
-                                      i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
-                                      **i18n.subs()), "text/html; charset=utf-8"
+            return (
+                200,
+                assets.render(
+                    "dev.html", i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False), **i18n.subs()
+                ),
+                "text/html; charset=utf-8",
+            )
         if path == "/development/data":
             return 200, json.dumps(snapshot(), ensure_ascii=False), "application/json; charset=utf-8"
         if path == "/development/file":
@@ -334,8 +420,11 @@ def route(path, query):
             rev = values.get("hash", [""])[0]
             name = values.get("path", [""])[0]
             worktree = values.get("worktree", ["0"])[0] in ("1", "true", "yes")
-            return 200, json.dumps(diff(repo, rev, name, worktree), ensure_ascii=False), \
-                "application/json; charset=utf-8"
+            return (
+                200,
+                json.dumps(diff(repo, rev, name, worktree), ensure_ascii=False),
+                "application/json; charset=utf-8",
+            )
     except (ValueError, OSError, subprocess.TimeoutExpired) as error:
         return 400, json.dumps({"error": str(error)}, ensure_ascii=False), "application/json; charset=utf-8"
     return 404, "找不到頁面", "text/plain; charset=utf-8"

@@ -34,6 +34,7 @@ def _system_locale():
             return value
     try:
         import locale as _locale
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             return _locale.getdefaultlocale()[0] or ""

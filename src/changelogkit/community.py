@@ -31,7 +31,7 @@ def _finish(title, body_lines):
     kept = []
     for line in body_lines:
         match = _ACTION.match(line)
-        if match and action is None:      # 第一個獨立成行的連結 = 行動按鈕
+        if match and action is None:  # 第一個獨立成行的連結 = 行動按鈕
             action = {"text": match.group(1).strip(), "href": match.group(2).strip()}
             continue
         kept.append(line)
@@ -82,17 +82,21 @@ def html_block(data, default_title="Community"):
     for card in data["cards"]:
         parts = ["<h3>%s</h3>" % html.escape(card["title"])]
         if card["body"]:
-            parts.append('<div class="rendered" data-md><template>%s</template></div>'
-                         % html.escape(card["body"]))
+            parts.append(
+                '<div class="rendered" data-md><template>%s</template></div>' % html.escape(card["body"])
+            )
         if card["action"]:
             link = "[%s](%s)" % (card["action"]["text"], card["action"]["href"])
-            parts.append('<div class="rendered action" data-md><template>%s</template></div>'
-                         % html.escape(link))
+            parts.append(
+                '<div class="rendered action" data-md><template>%s</template></div>' % html.escape(link)
+            )
         cards.append('<article class="card">%s</article>' % "".join(parts))
-    return ('<section class="community" id="community" aria-labelledby="community-title">'
-            '<h2 class="section-title" id="community-title">%s</h2>'
-            '<div class="cards">%s</div></section>'
-            % (html.escape(data["title"] or default_title), "".join(cards)))
+    return (
+        '<section class="community" id="community" aria-labelledby="community-title">'
+        '<h2 class="section-title" id="community-title">%s</h2>'
+        '<div class="cards">%s</div></section>'
+        % (html.escape(data["title"] or default_title), "".join(cards))
+    )
 
 
 _TEMPLATE = """# 社群與開發交流

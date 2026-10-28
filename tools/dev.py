@@ -78,7 +78,7 @@ def main(argv=None):
     raw = list(sys.argv[1:] if argv is None else argv)
     if "--" in raw:
         split = raw.index("--")
-        own, tail = raw[:split], raw[split + 1:]
+        own, tail = raw[:split], raw[split + 1 :]
     else:
         own, tail = raw, []
     args, extra = parser.parse_known_args(own)
@@ -94,8 +94,7 @@ def main(argv=None):
     # 診斷訊息走 stderr，避免污染 `docs-init > docs.toml` 之類的 stdout 管線。
     print("source : %s" % SOURCE, file=sys.stderr)
     print("target : %s" % target, file=sys.stderr)
-    print("config : %s" % (find_config(target) or "(default; no .changelog.toml found)"),
-          file=sys.stderr)
+    print("config : %s" % (find_config(target) or "(default; no .changelog.toml found)"), file=sys.stderr)
     print("command: %s" % _display(command), file=sys.stderr)
     if args.dry_run:
         return 0

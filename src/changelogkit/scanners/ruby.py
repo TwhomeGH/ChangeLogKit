@@ -24,20 +24,19 @@ def scan(text, repo, name):
         const_match = _CONST_RE.match(stripped)
         if class_match:
             kind = "module" if class_match.group(1) == "module" else "class"
-            symbols.append(make_symbol(kind, class_match.group(2), stripped,
-                                       repo, name, index + 1, doc))
+            symbols.append(make_symbol(kind, class_match.group(2), stripped, repo, name, index + 1, doc))
             doc = []
             index += 1
             continue
         if def_match:
-            symbols.append(make_symbol("func", def_match.group(1), stripped,
-                                       repo, name, index + 1, doc))
+            symbols.append(make_symbol("func", def_match.group(1), stripped, repo, name, index + 1, doc))
             doc = []
             index += 1
             continue
         if const_match:
-            symbols.append(make_symbol("property", const_match.group(1), stripped,
-                                       repo, name, index + 1, doc))
+            symbols.append(
+                make_symbol("property", const_match.group(1), stripped, repo, name, index + 1, doc)
+            )
             doc = []
             index += 1
             continue

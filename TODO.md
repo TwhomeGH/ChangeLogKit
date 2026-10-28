@@ -8,26 +8,16 @@
 
 ## 功能／品質
 
-- [ ] `.d.ts` 與 `.js` 的**卡片去重**（同一模組常有兩份：型別宣告 + 實作；可偏好 `.d.ts`）。跨檔案比對，較複雜。
 - [ ] 「已安裝套件」檢視（讀 `package.json` dependencies → 解析 `types`／`exports` 型別入口）——**暫不做**，改用 `.changelog.toml` 的 `include` 納入 `.d.ts`。
-
-## GitHub Actions
-
-- [ ] （可選）`lint.yml`：ruff / black 檢查。
-- [ ] （可選）發佈前檢查 `pyproject.toml` 版本與 git tag 一致。
 
 ## 遷移（之後再說）
 
 - [ ] 讓 ReplyKit 的 `Scripts/changelog/` 改用 `changelogkit`（各 repo 加 `.changelog.toml`；刪 vendored 副本或留薄殼）。
 - [ ] 讓 HaishinKit fork 的 `Tools/changelog/` 改用 `changelogkit`。
 
-## 文件
-
-- [ ] 補 `CHANGELOG.md` 記錄工具自身版本（目前以 `Docs/ChangeHistory.md` 代替）。
-
 ## 已完成（供對照）
 
-- [x] PyPI Trusted Publisher 設定與持續發佈（`publish.yml`，OIDC；目前 `0.10.0`）。
+- [x] PyPI Trusted Publisher 設定與持續發佈（`publish.yml`，OIDC；目前 `0.11.0`）。
 - [x] 建置時蓋章 `_buildinfo.py`（hatch build hook）：`--version` 可報來源 commit；原始碼 checkout 優先 git HEAD。
 - [x] 本機 GUI「關於」頁（版本／來源 commit／UI 語系）。
 - [x] GitHub Pages 唯讀靜態匯出與部署（`export` + `pages.yml`；Pages Source = GitHub Actions）。
@@ -49,3 +39,7 @@
 - [x] `symbols.html` 依檔案 `<details>` 折疊；展開時才上色／渲染註釋，附展開／收合全部。
 - [x] 多來源同名文件：文件頁改為 `docs/<來源>/<路徑>.html`，`doc_pages` 以 `來源:路徑` 為 key；`sources.path` 相對 repo 根目錄解析。
 - [x] 文件目錄收 h2–h4（h4 縮排）；動態與靜態共用。
+- [x] `.d.ts` 與同目錄同名 `.js`／`.mjs`／`.cjs` 的同名同種類卡片只留 `.d.ts`。
+- [x] `lint.yml`：ruff check＋format check；`pyproject.toml` 加 `dev` extra 與 ruff 設定。
+- [x] 發版前檢查 `pyproject.toml` 版本、`__init__` fallback 與 git tag 一致（`tools/check_version.py`；publish workflow 執行）。
+- [x] 工具自身 changelog 移至根目錄 `CHANGELOG.md`（單一來源；`.changelog.toml` 指向它）。

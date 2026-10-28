@@ -57,7 +57,7 @@ python -m venv .venv
 - 在 **cp950（繁體中文）語系的 Windows**，Python 的 `site.py` 以 **locale** 讀 `.pth` → `UnicodeDecodeError`。
 - 後果是**任何 `python`／`pip`／console script 都啟動不了**（`Fatal Python error: init_import_site`）。
 
-**解法（任一）**
+### 解法（任一）
 
 1. 刪掉那個 `.pth` 後改用**一般安裝**（`pip install "<ChangeLogTools>"`）或 **pipx**（都不產生 `.pth`）。
 2. 安裝前先 `set PYTHONUTF8=1`（讓 Python 以 UTF-8 讀 `.pth`）。

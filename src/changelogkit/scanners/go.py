@@ -32,20 +32,21 @@ def scan(text, repo, name):
         if func_match:
             signature, following = collect_signature(lines, index)
             body = signature.split("{", 1)[0].strip()
-            symbols.append(make_symbol("func", func_match.group(1), body,
-                                       repo, name, index + 1, doc))
+            symbols.append(make_symbol("func", func_match.group(1), body, repo, name, index + 1, doc))
             doc = []
             index = following
             continue
         if type_match:
-            symbols.append(make_symbol(_type_kind(type_match.group(2)), type_match.group(1),
-                                       stripped, repo, name, index + 1, doc))
+            symbols.append(
+                make_symbol(
+                    _type_kind(type_match.group(2)), type_match.group(1), stripped, repo, name, index + 1, doc
+                )
+            )
             doc = []
             index += 1
             continue
         if var_match:
-            symbols.append(make_symbol("property", var_match.group(1), stripped,
-                                       repo, name, index + 1, doc))
+            symbols.append(make_symbol("property", var_match.group(1), stripped, repo, name, index + 1, doc))
             doc = []
             index += 1
             continue

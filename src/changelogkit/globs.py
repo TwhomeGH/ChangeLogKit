@@ -13,9 +13,9 @@ def regex(pattern):
     if pattern not in _CACHE:
         out, i = "", 0
         while i < len(pattern):
-            if pattern[i:i + 2] == "**":
+            if pattern[i : i + 2] == "**":
                 i += 2
-                if pattern[i:i + 1] == "/":     # ``**/`` 可匹配零層目錄
+                if pattern[i : i + 1] == "/":  # ``**/`` 可匹配零層目錄
                     out += "(?:.*/)?"
                     i += 1
                 else:

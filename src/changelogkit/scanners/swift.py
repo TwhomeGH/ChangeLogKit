@@ -5,26 +5,39 @@ import re
 from .common import collect_signature, make_symbol
 
 _ACCESS = r"(?:public|private|internal|fileprivate|open)"
-_MODIFIERS = (r"(?:public|private|internal|fileprivate|open|final|static|class|"
-              r"nonisolated|override|mutating|convenience|required|dynamic|lazy|weak|unowned|indirect)")
+_MODIFIERS = (
+    r"(?:public|private|internal|fileprivate|open|final|static|class|"
+    r"nonisolated|override|mutating|convenience|required|dynamic|lazy|weak|unowned|indirect)"
+)
 
 # 函式／型別／擴充等一定會收錄。
 _DECL_RE = re.compile(
     r"^\s*(?:" + _MODIFIERS + r"\s+)*(?:" + _ACCESS + r"\s+)?"
-    r"(func|struct|class|enum|protocol|actor|extension|typealias|init|subscript)\b")
+    r"(func|struct|class|enum|protocol|actor|extension|typealias|init|subscript)\b"
+)
 # 屬性只在本行具存取修飾詞時收錄，避免把函式內的區域 var/let 當成 API。
 _PROP_RE = re.compile(
     r"^\s*(?:" + _MODIFIERS + r"\s+)*" + _ACCESS + r"\s*"
     r"(?:\([^)]*\)\s*)?"  # 例如 private(set)
-    r"(var|let)\b")
+    r"(var|let)\b"
+)
 _NAME_RE = re.compile(
     r"\b(?:func|struct|class|enum|protocol|actor|extension|typealias|var|let)\s+"
-    r"([A-Za-z_][A-Za-z0-9_.]*)")
+    r"([A-Za-z_][A-Za-z0-9_.]*)"
+)
 _KIND = {
-    "func": "func", "struct": "struct", "class": "class", "enum": "enum",
-    "protocol": "protocol", "actor": "actor", "extension": "extension",
-    "typealias": "typealias", "init": "init", "subscript": "subscript",
-    "var": "property", "let": "property",
+    "func": "func",
+    "struct": "struct",
+    "class": "class",
+    "enum": "enum",
+    "protocol": "protocol",
+    "actor": "actor",
+    "extension": "extension",
+    "typealias": "typealias",
+    "init": "init",
+    "subscript": "subscript",
+    "var": "property",
+    "let": "property",
 }
 
 
@@ -61,8 +74,11 @@ def scan(text, repo, name):
             body = signature.split("{", 1)[0].strip()
             if keyword in ("var", "let", "typealias"):
                 body = body.split("=", 1)[0].strip()
-            symbols.append(make_symbol(_KIND[keyword], _symbol_name(keyword, body) or body,
-                                       body, repo, name, index + 1, doc))
+            symbols.append(
+                make_symbol(
+                    _KIND[keyword], _symbol_name(keyword, body) or body, body, repo, name, index + 1, doc
+                )
+            )
             doc = []
             index = following
             continue

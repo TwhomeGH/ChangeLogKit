@@ -30,11 +30,13 @@ def _history():
     """目前的變更歷史檔路徑（由 .changelog.toml 或預設值決定）。"""
     return config.load().history
 
+
 # 標題行：## YYYY.MM.DD [HH:MM] 標題（時間可省略，舊資料相容）。
 DATE_RE = re.compile(r"^##\s+(\d{4})\.(\d{2})\.(\d{2})(?:\s+(\d{1,2}:\d{2}))?\s+(.*)$")
 
 
 # ─────────────────────────── 解析 ───────────────────────────
+
 
 def strip_comments(text):
     """移除 HTML 註解（``<!-- ... -->``），避免註解內的 ``## `` 被當成標題。"""
@@ -48,19 +50,23 @@ def parse_entries(text=None):
     """
     text = read_history() if text is None else text
     lines = strip_comments(text).splitlines()
-    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+    heads = [i for i, line in enumerate(lines) if line.startswith("## ")]
     entries = []
     for k, start in enumerate(heads):
         end = heads[k + 1] if k + 1 < len(heads) else len(lines)
         raw = "\n".join(lines[start:end]).rstrip()
         m = DATE_RE.match(lines[start].rstrip())
         if m:
-            entries.append({"date": "%s.%s.%s" % (m.group(1), m.group(2), m.group(3)),
-                            "time": m.group(4) or "",
-                            "title": m.group(5).strip(), "raw": raw})
+            entries.append(
+                {
+                    "date": "%s.%s.%s" % (m.group(1), m.group(2), m.group(3)),
+                    "time": m.group(4) or "",
+                    "title": m.group(5).strip(),
+                    "raw": raw,
+                }
+            )
         else:
-            entries.append({"date": None, "time": "",
-                            "title": lines[start][3:].strip(), "raw": raw})
+            entries.append({"date": None, "time": "", "title": lines[start][3:].strip(), "raw": raw})
     return entries
 
 
@@ -73,19 +79,20 @@ def read_history():
 def _heading_indices(lines):
     """真實（非註解內）的 ``'## '`` 標題行索引。"""
     out, in_comment = [], False
-    for i, l in enumerate(lines):
-        if "<!--" in l:
+    for i, line in enumerate(lines):
+        if "<!--" in line:
             in_comment = True
         if in_comment:
-            if "-->" in l:
+            if "-->" in line:
                 in_comment = False
             continue
-        if l.startswith("## "):
+        if line.startswith("## "):
             out.append(i)
     return out
 
 
 # ─────────────────────────── 組版 ───────────────────────────
+
 
 def _summary_body(text):
     """把多行文字拆成 (摘要, 其餘內文)；摘要取第一個非空行。
@@ -109,8 +116,7 @@ def _norm_refs(refs):
     return [str(r).strip() for r in refs if str(r).strip()]
 
 
-def build_block(date_str, title, type_, file_, problem="", root_cause="",
-                changes=None, refs="", time_str=""):
+def build_block(date_str, title, type_, file_, problem="", root_cause="", changes=None, refs="", time_str=""):
     """把表單欄位組成一段 markdown 紀錄區塊（不含尾端分隔線之外的空行正規化）。"""
     if isinstance(changes, str):
         changes = changes.splitlines()
@@ -201,7 +207,7 @@ def update_entry(i, raw):
     heads = _heading_indices(lines)
     start, end = _entry_range(heads, lines, i)
     repl = raw.rstrip().splitlines()
-    if i + 1 < len(heads):          # 後面還有下一筆 → 補回分隔空行
+    if i + 1 < len(heads):  # 後面還有下一筆 → 補回分隔空行
         repl.append("")
     _write(lines[:start] + repl + lines[end:])
 
@@ -213,23 +219,31 @@ def delete_entry(i):
     start, end = _entry_range(heads, lines, i)
     new = lines[:start] + lines[end:]
     out, blank = [], 0
-    for l in new:
-        blank = blank + 1 if l.strip() == "" else 0
+    for line in new:
+        blank = blank + 1 if line.strip() == "" else 0
         if blank <= 2:
-            out.append(l)
+            out.append(line)
     _write(out)
 
 
 # ─────────────────────────── Git 輔助 ───────────────────────────
 
+
 def git_changed_files():
     """目前工作區已修改（含未追蹤、未忽略）的檔案清單；失敗時回傳空清單。"""
     try:
-        r1 = subprocess.run(["git", "-C", str(config.load().root), "diff", "--name-only"],
-                            capture_output=True, text=True, timeout=5).stdout
-        r2 = subprocess.run(["git", "-C", str(config.load().root), "ls-files", "--others",
-                             "--exclude-standard"],
-                            capture_output=True, text=True, timeout=5).stdout
+        r1 = subprocess.run(
+            ["git", "-C", str(config.load().root), "diff", "--name-only"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
+        r2 = subprocess.run(
+            ["git", "-C", str(config.load().root), "ls-files", "--others", "--exclude-standard"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout
         files = [f.strip() for f in (r1 + "\n" + r2).splitlines() if f.strip()]
         return sorted(set(files))
     except Exception:
@@ -237,6 +251,7 @@ def git_changed_files():
 
 
 # ─────────────────────────── CLI 用的便利函式 ───────────────────────────
+
 
 def now_parts():
     """回傳 (預設日期字串, 預設時間字串)，格式 YYYY.MM.DD 與 HH:MM。"""

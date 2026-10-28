@@ -22,8 +22,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _page(self, name):
         """以 i18n 佔位與前端字典渲染 html 資產。"""
-        return assets.render(name, i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
-                             **i18n.subs())
+        return assets.render(name, i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False), **i18n.subs())
 
     def _send(self, code, body, ctype="application/json; charset=utf-8"):
         data = body.encode("utf-8") if isinstance(body, str) else body
@@ -46,28 +45,54 @@ class Handler(BaseHTTPRequestHandler):
         if u.path.startswith("/development"):
             return self._send(*index.route(u.path, u.query))
         if u.path.startswith("/assets/"):
-            return self._serve_asset(u.path[len("/assets/"):])
+            return self._serve_asset(u.path[len("/assets/") :])
         if u.path == "/":
             # 歷史頁的 markdown 連結以歷史檔所在目錄為基準改寫（前端注入 CK_HISTORY）。
-            meta = json.dumps({"repo": index.default_repo(),
-                               "path": index.rel_path(config.load().history) or ""},
-                              ensure_ascii=False)
-            return self._send(200, assets.render(
-                "index.html", i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
-                history_json=meta, **i18n.subs()), "text/html; charset=utf-8")
+            meta = json.dumps(
+                {"repo": index.default_repo(), "path": index.rel_path(config.load().history) or ""},
+                ensure_ascii=False,
+            )
+            return self._send(
+                200,
+                assets.render(
+                    "index.html",
+                    i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+                    history_json=meta,
+                    **i18n.subs(),
+                ),
+                "text/html; charset=utf-8",
+            )
         if u.path == "/about":
             # 社群區塊：未設定或無檔時為空字串（不顯示）；卡片說明的連結以該檔目錄為基準。
             block = community.html_block(community.load(), i18n.t("about.community_title"))
-            meta = json.dumps({"repo": index.default_repo(),
-                               "path": index.rel_path(config.load().community) or ""},
-                              ensure_ascii=False)
-            return self._send(200, assets.render(
-                "about.html", i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
-                community=block, community_json=meta, **i18n.subs()), "text/html; charset=utf-8")
+            meta = json.dumps(
+                {"repo": index.default_repo(), "path": index.rel_path(config.load().community) or ""},
+                ensure_ascii=False,
+            )
+            return self._send(
+                200,
+                assets.render(
+                    "about.html",
+                    i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+                    community=block,
+                    community_json=meta,
+                    **i18n.subs(),
+                ),
+                "text/html; charset=utf-8",
+            )
         if u.path == "/api/buildinfo":
-            return self._send(200, json.dumps(
-                {"version": buildinfo.version(), "commit": buildinfo.commit(),
-                 "locale": i18n.current(), "locales": i18n.available()}, ensure_ascii=False))
+            return self._send(
+                200,
+                json.dumps(
+                    {
+                        "version": buildinfo.version(),
+                        "commit": buildinfo.commit(),
+                        "locale": i18n.current(),
+                        "locales": i18n.available(),
+                    },
+                    ensure_ascii=False,
+                ),
+            )
         if u.path == "/favicon.ico":
             return self._send(204, b"")
         if u.path == "/api/entries":
@@ -103,12 +128,19 @@ class Handler(BaseHTTPRequestHandler):
             body = {}
         try:
             if u.path == "/api/add":
-                history.insert_block(history.build_block(
-                    body.get("date") or history.today_str(),
-                    body.get("title", "(無標題)"), body.get("type", "修復"),
-                    body.get("file", ""), body.get("problem", ""),
-                    body.get("root_cause", ""), body.get("changes", []), body.get("refs", ""),
-                    time_str=body.get("time", "")))
+                history.insert_block(
+                    history.build_block(
+                        body.get("date") or history.today_str(),
+                        body.get("title", "(無標題)"),
+                        body.get("type", "修復"),
+                        body.get("file", ""),
+                        body.get("problem", ""),
+                        body.get("root_cause", ""),
+                        body.get("changes", []),
+                        body.get("refs", ""),
+                        time_str=body.get("time", ""),
+                    )
+                )
                 return self._send(200, json.dumps({"ok": True}))
             if u.path == "/api/save":
                 history.update_entry(int(body["i"]), body["raw"])

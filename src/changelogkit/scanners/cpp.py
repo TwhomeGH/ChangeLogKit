@@ -9,22 +9,22 @@ import re
 
 from .common import collect_block_comment, make_symbol
 
-_TYPE_RE = re.compile(
-    r"^\s*(?:typedef\s+)?(class|struct|union|enum|namespace)\s+(?:class\s+)?([A-Za-z_]\w*)")
-_KIND = {"class": "class", "struct": "struct", "union": "union",
-         "enum": "enum", "namespace": "namespace"}
-_STOP = (r"(?!(?:if|for|while|switch|return|catch|else|do|case|sizeof|new|delete|"
-         r"typedef|using|#)\b)")
+_TYPE_RE = re.compile(r"^\s*(?:typedef\s+)?(class|struct|union|enum|namespace)\s+(?:class\s+)?([A-Za-z_]\w*)")
+_KIND = {"class": "class", "struct": "struct", "union": "union", "enum": "enum", "namespace": "namespace"}
+_STOP = (
+    r"(?!(?:if|for|while|switch|return|catch|else|do|case|sizeof|new|delete|"
+    r"typedef|using|#)\b)"
+)
 _FUNC_DEF_RE = re.compile(
-    r"^\s*" + _STOP +
-    r"(?:[A-Za-z_][\w:<>,.*&\s]*?\s)?"                     # 可選的回傳型別
+    r"^\s*" + _STOP + r"(?:[A-Za-z_][\w:<>,.*&\s]*?\s)?"  # 可選的回傳型別
     r"([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*\([^;{}]*\)\s*"  # 名稱（可含 ::）
-    r"(?:const\s*)?(?:noexcept\s*)?(?:override\s*)?(?:->[^{;]*)?\{")
+    r"(?:const\s*)?(?:noexcept\s*)?(?:override\s*)?(?:->[^{;]*)?\{"
+)
 _FUNC_DECL_RE = re.compile(
-    r"^\s*" + _STOP +
-    r"[A-Za-z_][\w:<>,.*&\s]*?\s"                          # 必要：回傳型別
+    r"^\s*" + _STOP + r"[A-Za-z_][\w:<>,.*&\s]*?\s"  # 必要：回傳型別
     r"([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*\([^;{}]*\)\s*"
-    r"(?:const\s*)?(?:noexcept\s*)?(?:override\s*)?;")
+    r"(?:const\s*)?(?:noexcept\s*)?(?:override\s*)?;"
+)
 
 
 def scan(text, repo, name):
@@ -41,17 +41,18 @@ def scan(text, repo, name):
             index += 1
             continue
         type_match = _TYPE_RE.match(stripped)
-        func_match = None if type_match else (
-            _FUNC_DEF_RE.match(stripped) or _FUNC_DECL_RE.match(stripped))
+        func_match = None if type_match else (_FUNC_DEF_RE.match(stripped) or _FUNC_DECL_RE.match(stripped))
         if type_match:
-            symbols.append(make_symbol(_KIND[type_match.group(1)], type_match.group(2),
-                                       stripped, repo, name, index + 1, doc))
+            symbols.append(
+                make_symbol(
+                    _KIND[type_match.group(1)], type_match.group(2), stripped, repo, name, index + 1, doc
+                )
+            )
             doc = []
             index += 1
             continue
         if func_match:
-            symbols.append(make_symbol("func", func_match.group(1), stripped,
-                                       repo, name, index + 1, doc))
+            symbols.append(make_symbol("func", func_match.group(1), stripped, repo, name, index + 1, doc))
             doc = []
             index += 1
             continue

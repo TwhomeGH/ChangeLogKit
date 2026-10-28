@@ -46,15 +46,25 @@ AUTO_GROUPS = {
     "design": {"titleKey": "docs.auto.design", "color": "rose", "order": 40},
 }
 AUTO_FOLDERS = {
-    "api": "dev", "apis": "dev", "development": "dev", "dev": "dev",
-    "guide": "guide", "guides": "guide", "manual": "guide", "usage": "guide",
-    "deploy": "ops", "deployment": "ops", "ops": "ops", "operations": "ops",
-    "design": "design", "adr": "design", "architecture": "design",
+    "api": "dev",
+    "apis": "dev",
+    "development": "dev",
+    "dev": "dev",
+    "guide": "guide",
+    "guides": "guide",
+    "manual": "guide",
+    "usage": "guide",
+    "deploy": "ops",
+    "deployment": "ops",
+    "ops": "ops",
+    "operations": "ops",
+    "design": "design",
+    "adr": "design",
+    "architecture": "design",
 }
 
 # 會讓 `docs --check` 回非 0 的設定錯誤；未命中的 pattern／entry 只是警告。
-ERROR_TYPES = {"overlap", "unknown_group", "duplicate_group", "group_without_id",
-               "bad_color", "bad_unlisted"}
+ERROR_TYPES = {"overlap", "unknown_group", "duplicate_group", "group_without_id", "bad_color", "bad_unlisted"}
 
 
 def normalize(path):
@@ -86,8 +96,7 @@ def _locale_map(value):
 def _localized(value, fallback=""):
     """取目前語系的值；缺目前語系時依序退到 en、第一個值、fallback。"""
     if isinstance(value, dict):
-        return (value.get(i18n.current()) or value.get("en")
-                or next(iter(value.values()), "") or fallback)
+        return value.get(i18n.current()) or value.get("en") or next(iter(value.values()), "") or fallback
     return value or fallback
 
 
@@ -204,8 +213,7 @@ def resolve(documents, cfg=None):
         elif len(hits) == 1:
             chosen = hits[0]
         elif len(hits) > 1:
-            warnings.append({"type": "overlap", "path": name,
-                             "groups": [meta["id"] for meta in hits]})
+            warnings.append({"type": "overlap", "path": name, "groups": [meta["id"] for meta in hits]})
             blocked = True
 
         # 設定的明確錯誤（未知群組／群組重疊）不猜；其餘才用資料夾自動分類。
@@ -225,35 +233,49 @@ def resolve(documents, cfg=None):
                 group_id = "folder:" + folder
                 chosen = by_id.get(group_id)
                 if chosen is None:
-                    chosen = {"id": group_id, "title": folder, "titles": {},
-                              "color": DEFAULT_COLOR, "note": "", "notes": {},
-                              "order": UNLISTED_ORDER}
+                    chosen = {
+                        "id": group_id,
+                        "title": folder,
+                        "titles": {},
+                        "color": DEFAULT_COLOR,
+                        "note": "",
+                        "notes": {},
+                        "order": UNLISTED_ORDER,
+                    }
                     by_id[group_id] = chosen
             else:
                 chosen = by_id.get(UNLISTED_ID)
                 if chosen is None:
-                    chosen = {"id": UNLISTED_ID, "title": "", "titles": {},
-                              "color": DEFAULT_COLOR, "note": "", "notes": {},
-                              "order": UNLISTED_ORDER}
+                    chosen = {
+                        "id": UNLISTED_ID,
+                        "title": "",
+                        "titles": {},
+                        "color": DEFAULT_COLOR,
+                        "note": "",
+                        "notes": {},
+                        "order": UNLISTED_ORDER,
+                    }
                     by_id[UNLISTED_ID] = chosen
 
         entry_title = _localized(entry.title) if entry is not None else ""
         entry_note = _localized(entry.note) if entry is not None else ""
-        records.append(dict(
-            doc,
-            title=entry_title or _default_title(name),
-            titles=_locale_map(entry.title) if entry is not None else {},
-            note=entry_note,
-            notes=_locale_map(entry.note) if entry is not None else {},
-            group=chosen["id"],
-            groupTitle=chosen["title"],
-            groupTitles=chosen.get("titles", {}),
-            groupTitleKey=chosen.get("titleKey", ""),
-            groupColor=chosen["color"],
-            groupNote=chosen["note"],
-            groupNotes=chosen.get("notes", {}),
-            groupOrder=chosen["order"],
-        ))
+        records.append(
+            dict(
+                doc,
+                title=entry_title or _default_title(name),
+                titles=_locale_map(entry.title) if entry is not None else {},
+                note=entry_note,
+                notes=_locale_map(entry.note) if entry is not None else {},
+                group=chosen["id"],
+                groupTitle=chosen["title"],
+                groupTitles=chosen.get("titles", {}),
+                groupTitleKey=chosen.get("titleKey", ""),
+                groupColor=chosen["color"],
+                groupNote=chosen["note"],
+                groupNotes=chosen.get("notes", {}),
+                groupOrder=chosen["order"],
+            )
+        )
 
     # 沒命中的設定：通常是檔案改名或 pattern 打錯，讓它們能被看到而不是默默失效。
     for _, group in configured:
@@ -269,8 +291,7 @@ def resolve(documents, cfg=None):
     extra = [meta for key, meta in by_id.items() if key not in configured_ids]
     extra.sort(key=lambda meta: meta["title"])
     groups = [meta for meta, _ in configured] + extra
-    groups.sort(key=lambda meta: (meta["order"],
-                                  meta["title"] if meta["id"].startswith("folder:") else ""))
+    groups.sort(key=lambda meta: (meta["order"], meta["title"] if meta["id"].startswith("folder:") else ""))
     index = {meta["id"]: i for i, meta in enumerate(groups)}
     records.sort(key=lambda record: index.get(record["group"], UNLISTED_ORDER))
     return records, groups, warnings
@@ -284,8 +305,7 @@ def warning_text(warning):
         return i18n.t(key).format(*args)
 
     if kind == "overlap":
-        return fmt("docs.warn_overlap", warning.get("path", ""),
-                   "、".join(warning.get("groups", [])))
+        return fmt("docs.warn_overlap", warning.get("path", ""), "、".join(warning.get("groups", [])))
     if kind == "unknown_group":
         return fmt("docs.warn_unknown_group", warning.get("group", ""), warning.get("path", ""))
     if kind == "bad_color":
@@ -297,8 +317,7 @@ def warning_text(warning):
     if kind == "bad_unlisted":
         return fmt("docs.warn_bad_unlisted", warning.get("value", ""))
     if kind == "unmatched_pattern":
-        return fmt("docs.warn_unmatched_pattern", warning.get("group", ""),
-                   warning.get("pattern", ""))
+        return fmt("docs.warn_unmatched_pattern", warning.get("group", ""), warning.get("pattern", ""))
     if kind == "unmatched_entry":
         return fmt("docs.warn_unmatched_entry", warning.get("path", ""))
     return str(kind)
@@ -316,15 +335,21 @@ def suggestion(documents):
                 category, depth = hit, i
         if category is None:
             continue
-        prefix = "/".join(parts[:depth + 1])
+        prefix = "/".join(parts[: depth + 1])
         found.setdefault(category, set()).add(prefix + "/**")
     result = []
     for category, spec in AUTO_GROUPS.items():
         patterns = sorted(found.get(category, ()))
         if patterns:
-            result.append({"id": category, "titleKey": spec["titleKey"],
-                           "color": spec["color"], "order": spec["order"],
-                           "patterns": patterns})
+            result.append(
+                {
+                    "id": category,
+                    "titleKey": spec["titleKey"],
+                    "color": spec["color"],
+                    "order": spec["order"],
+                    "patterns": patterns,
+                }
+            )
     return result
 
 

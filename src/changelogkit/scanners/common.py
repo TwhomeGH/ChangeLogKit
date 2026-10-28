@@ -24,9 +24,16 @@ def collect_signature(lines, start):
 
 def make_symbol(kind, symbol_name, signature, repo, fname, line, doc):
     """組出一個符號項目（各語言掃描器共用）。"""
-    return {"name": symbol_name or signature, "signature": signature, "kind": kind,
-            "repo": repo, "file": fname, "line": line,
-            "comment": "\n".join(doc).strip(), "url": link(repo, fname, line)}
+    return {
+        "name": symbol_name or signature,
+        "signature": signature,
+        "kind": kind,
+        "repo": repo,
+        "file": fname,
+        "line": line,
+        "comment": "\n".join(doc).strip(),
+        "url": link(repo, fname, line),
+    }
 
 
 def clean_block_doc(line):

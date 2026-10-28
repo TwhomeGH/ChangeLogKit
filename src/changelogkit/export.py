@@ -14,7 +14,6 @@ import html
 import json
 import re
 import shutil
-import subprocess
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
@@ -63,8 +62,7 @@ def _group_anchor(group_id):
 
 def _commit_rel(repo, commit_hash):
     """單筆 commit 頁的站根相對路徑（repo 名稱逐段 encode 成一個目錄）。"""
-    return "development/commits/%s/%s.html" % (
-        quote(str(repo), safe=""), quote(str(commit_hash), safe=""))
+    return "development/commits/%s/%s.html" % (quote(str(repo), safe=""), quote(str(commit_hash), safe=""))
 
 
 def _diff_class(line):
@@ -77,8 +75,19 @@ def _diff_class(line):
         return "d-add"
     if line.startswith("-"):
         return "d-del"
-    if line.startswith(("index ", "new file", "deleted file", "similarity", "rename ",
-                        "old mode", "new mode", "Binary files", "\\ No newline")):
+    if line.startswith(
+        (
+            "index ",
+            "new file",
+            "deleted file",
+            "similarity",
+            "rename ",
+            "old mode",
+            "new mode",
+            "Binary files",
+            "\\ No newline",
+        )
+    ):
         return "d-meta"
     if line.startswith(" "):
         return "d-ctx"
@@ -129,8 +138,10 @@ def _render_history(cfg):
         # 去掉標題行（卡片已有 h2）與結尾分隔線，避免重複標題與多餘 <hr>。
         body = "\n".join(entry["raw"].split("\n")[1:]).strip()
         body = re.sub(r"\n-{3,}\s*$", "", body).strip()
-        out.append('<article class="card"><h2>%s</h2><div class="meta">%s</div>%s</article>'
-                   % (_esc(entry["title"]), when, _md(body)))
+        out.append(
+            '<article class="card"><h2>%s</h2><div class="meta">%s</div>%s</article>'
+            % (_esc(entry["title"]), when, _md(body))
+        )
     return "\n".join(out), len(entries)
 
 
@@ -138,18 +149,31 @@ def _symbol_card(sym, blob_base, nested):
     """單一 API 宣告卡片；型別若有 ``members`` 則收進可展開的 details。"""
     link = _file_link(sym["file"], blob_base)
     signature = ('<pre class="sig">%s</pre>' % _esc(sym["signature"])) if sym.get("signature") else ""
-    comment = ('<div class="doc rendered" data-repo="%s" data-file="%s" data-raw="%s"></div>'
-               % (_esc(sym["repo"]), _esc(sym["file"]), _esc(sym["comment"]))) \
-        if sym.get("comment") else '<p class="muted">' + i18n.t("dev.no_comment") + '</p>'
-    head = ('<h2>%s</h2><div class="meta"><span class="kind">%s</span>%s · %s:%s</div>%s%s'
-            % (_esc(sym["name"]), _esc(sym.get("kind", "")), _esc(sym["repo"]),
-               link, sym["line"], signature, comment))
+    comment = (
+        (
+            '<div class="doc rendered" data-repo="%s" data-file="%s" data-raw="%s"></div>'
+            % (_esc(sym["repo"]), _esc(sym["file"]), _esc(sym["comment"]))
+        )
+        if sym.get("comment")
+        else '<p class="muted">' + i18n.t("dev.no_comment") + "</p>"
+    )
+    head = '<h2>%s</h2><div class="meta"><span class="kind">%s</span>%s · %s:%s</div>%s%s' % (
+        _esc(sym["name"]),
+        _esc(sym.get("kind", "")),
+        _esc(sym["repo"]),
+        link,
+        sym["line"],
+        signature,
+        comment,
+    )
     members = sym.get("members") or []
     block = ""
     if members:
-        block = ('<details class="members"><summary>%s (%d)</summary>%s</details>'
-                 % (_esc(i18n.t("dev.members")), len(members),
-                    "".join(_symbol_card(m, blob_base, True) for m in members)))
+        block = '<details class="members"><summary>%s (%d)</summary>%s</details>' % (
+            _esc(i18n.t("dev.members")),
+            len(members),
+            "".join(_symbol_card(m, blob_base, True) for m in members),
+        )
     return '<article class="card%s">%s%s</article>' % (" member" if nested else "", head, block)
 
 
@@ -165,10 +189,11 @@ def _render_symbols(symbols, blob_base):
     out = []
     for name in order:
         cards = "".join(_symbol_card(sym, blob_base, False) for sym in by_file[name])
-        out.append('<details class="symgroup"><summary><span class="sfile">%s</span>'
-                   '<span class="count">(%d)</span></summary>'
-                   '<div class="syms">%s</div></details>'
-                   % (_esc(name), len(by_file[name]), cards))
+        out.append(
+            '<details class="symgroup"><summary><span class="sfile">%s</span>'
+            '<span class="count">(%d)</span></summary>'
+            '<div class="syms">%s</div></details>' % (_esc(name), len(by_file[name]), cards)
+        )
     return "\n".join(out)
 
 
@@ -177,8 +202,10 @@ def _render_doc_warnings(warnings):
     if not warnings:
         return ""
     items = "".join("<li>%s</li>" % _esc(docmeta.warning_text(w)) for w in warnings)
-    return ('<div class="docwarn"><strong>%s</strong><ul>%s</ul></div>'
-            % (_esc(i18n.t("docs.warn_title")), items))
+    return '<div class="docwarn"><strong>%s</strong><ul>%s</ul></div>' % (
+        _esc(i18n.t("docs.warn_title")),
+        items,
+    )
 
 
 def _render_documents(documents, groups, base="../"):
@@ -191,26 +218,40 @@ def _render_documents(documents, groups, base="../"):
         items = by_group.get(group["id"]) or []
         if not items:
             continue
-        title = (group.get("title")
-                 or (i18n.t(group["titleKey"]) if group.get("titleKey")
-                     else i18n.t("docs.unclassified")))
+        title = group.get("title") or (
+            i18n.t(group["titleKey"]) if group.get("titleKey") else i18n.t("docs.unclassified")
+        )
         gnote = ('<span class="gnote">%s</span>' % _esc(group.get("note"))) if group.get("note") else ""
         out.append('<section class="doc-section" data-doc-group="%s">' % _esc(group["id"]))
-        out.append('<h2 id="%s" class="docgroup color-%s"><span class="dot"></span>'
-                   '<span class="gtitle">%s</span><span class="count">(%d)</span>%s</h2>'
-                   % (_esc(_group_anchor(group["id"])), _esc(group.get("color", "slate")),
-                      _esc(title), len(items), gnote))
+        out.append(
+            '<h2 id="%s" class="docgroup color-%s"><span class="dot"></span>'
+            '<span class="gtitle">%s</span><span class="count">(%d)</span>%s</h2>'
+            % (
+                _esc(_group_anchor(group["id"])),
+                _esc(group.get("color", "slate")),
+                _esc(title),
+                len(items),
+                gnote,
+            )
+        )
         for doc in items:
             text = doc["text"]
             preview = text[:260] + (" …" if len(text) > 260 else "")
             dnote = ('<div class="docnote">%s</div>' % _esc(doc["note"])) if doc.get("note") else ""
             href = base + _doc_url(doc.get("repo", ""), doc["name"])
-            out.append('<article class="card"><h2><a href="%s">%s</a></h2>'
-                       '<div class="meta">%s%s</div>%s<div class="preview">%s</div></article>'
-                       % (_esc(href), _esc(doc.get("title") or doc["name"]), _esc(doc["name"]),
-                          (" · " + _esc(doc["repo"])) if doc.get("repo") else "", dnote,
-                          _esc(preview)))
-        out.append('</section>')
+            out.append(
+                '<article class="card"><h2><a href="%s">%s</a></h2>'
+                '<div class="meta">%s%s</div>%s<div class="preview">%s</div></article>'
+                % (
+                    _esc(href),
+                    _esc(doc.get("title") or doc["name"]),
+                    _esc(doc["name"]),
+                    (" · " + _esc(doc["repo"])) if doc.get("repo") else "",
+                    dnote,
+                    _esc(preview),
+                )
+            )
+        out.append("</section>")
     return "\n".join(out)
 
 
@@ -223,15 +264,20 @@ def _render_repo_list(repos):
             when = (commit["date"] or "")[:16].replace("T", " ")
             files = "".join('<span class="cfile">%s</span>' % _esc(f) for f in commit["files"])
             href = "commits/%s/%s.html" % (
-                quote(str(repo["name"]), safe=""), quote(str(commit["hash"]), safe=""))
+                quote(str(repo["name"]), safe=""),
+                quote(str(commit["hash"]), safe=""),
+            )
             rows.append(
                 '<a class="commit-row" href="%s"><span class="commit-top">'
                 '<code class="hash">%s</code><span class="when">%s</span></span>'
                 '<span class="subject">%s</span><span class="files">%s</span></a>'
-                % (_esc(href), _esc(commit["hash"]), _esc(when), _esc(commit["subject"]), files))
-        parts.append('<article class="card"><h2>%s</h2><div class="meta">HEAD：%s</div>'
-                     '<div class="commit-list">%s</div></article>'
-                     % (_esc(repo["name"]), _esc(repo["head"]), "".join(rows)))
+                % (_esc(href), _esc(commit["hash"]), _esc(when), _esc(commit["subject"]), files)
+            )
+        parts.append(
+            '<article class="card"><h2>%s</h2><div class="meta">HEAD：%s</div>'
+            '<div class="commit-list">%s</div></article>'
+            % (_esc(repo["name"]), _esc(repo["head"]), "".join(rows))
+        )
     return "\n".join(parts)
 
 
@@ -242,40 +288,60 @@ def _write_commits(out, repos, footer):
             rel = _commit_rel(repo["name"], commit["hash"])
             base = _site_base(rel)
             change = index.diff(repo["name"], commit["hash"])
-            diff = (_diff_html(change["diff"]) if not change["empty"]
-                    else '<p class="muted" data-i18n="static.no_diff">'
-                         + i18n.t("static.no_diff") + '</p>')
+            diff = (
+                _diff_html(change["diff"])
+                if not change["empty"]
+                else '<p class="muted" data-i18n="static.no_diff">' + i18n.t("static.no_diff") + "</p>"
+            )
             files = "".join('<span class="cfile">%s</span>' % _esc(f) for f in commit["files"])
             when = (commit["date"] or "")[:16].replace("T", " ")
             target = out / rel
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(assets.render(
-                "static_commit.html", **i18n.subs(), title=_esc(config.load().title),
-                hash=_esc(commit["hash"]), repo=_esc(repo["name"]),
-                subject=_esc(commit["subject"]), when=_esc(when), files=files,
-                diff=diff, footer=footer, base=base), encoding="utf-8")
+            target.write_text(
+                assets.render(
+                    "static_commit.html",
+                    **i18n.subs(),
+                    title=_esc(config.load().title),
+                    hash=_esc(commit["hash"]),
+                    repo=_esc(repo["name"]),
+                    subject=_esc(commit["subject"]),
+                    when=_esc(when),
+                    files=files,
+                    diff=diff,
+                    footer=footer,
+                    base=base,
+                ),
+                encoding="utf-8",
+            )
 
 
 def _render_overview(data):
     """靜態開發索引首頁：文件優先，其次是功能；API／近期改動各自獨立一頁。"""
-    blocks = ['<h1 id="docs" data-i18n="tab.documents">%s</h1>' % _esc(i18n.t("tab.documents"))
-              + _render_doc_warnings(data.get("docWarnings") or [])
-              + _render_documents(data["documents"], data.get("docGroups") or [])]
+    blocks = [
+        '<h1 id="docs" data-i18n="tab.documents">%s</h1>' % _esc(i18n.t("tab.documents"))
+        + _render_doc_warnings(data.get("docWarnings") or [])
+        + _render_documents(data["documents"], data.get("docGroups") or [])
+    ]
     if data["features"]:
         cards = "".join(
             '<article class="card"><h2>%s</h2><div class="meta">%s</div><p>%s</p></article>'
             % (_esc(f.get("name")), _esc(f.get("id")), _esc(f.get("summary")))
-            for f in data["features"])
+            for f in data["features"]
+        )
         blocks.append('<h1 data-i18n="tab.features">%s</h1>' % _esc(i18n.t("tab.features")) + cards)
     return "\n".join(blocks), len(data["documents"]), len(data["features"])
 
 
 def _render_symbols_page(data, blob_base):
     """靜態 API 宣告頁；回傳 (HTML, symbols 計數)。"""
-    hint = ('<p class="muted"><span data-i18n="filter.supported">%s</span>%s</p>'
-            % (_esc(i18n.t("filter.supported")), _esc("、".join(data.get("languages", [])))))
-    return (hint + _render_symbols(data["symbols"], blob_base),
-            sum(1 for _ in index.iter_symbols(data["symbols"])))
+    hint = '<p class="muted"><span data-i18n="filter.supported">%s</span>%s</p>' % (
+        _esc(i18n.t("filter.supported")),
+        _esc("、".join(data.get("languages", []))),
+    )
+    return (
+        hint + _render_symbols(data["symbols"], blob_base),
+        sum(1 for _ in index.iter_symbols(data["symbols"])),
+    )
 
 
 def _write_docs(out, documents, footer, doc_pages_json, blob_base_json):
@@ -289,25 +355,42 @@ def _write_docs(out, documents, footer, doc_pages_json, blob_base_json):
         base = _site_base(rel)
         target = out / rel
         target.parent.mkdir(parents=True, exist_ok=True)
-        gtitle = (doc.get("groupTitle")
-                  or (i18n.t(doc["groupTitleKey"]) if doc.get("groupTitleKey")
-                      else i18n.t("docs.unclassified")))
+        gtitle = doc.get("groupTitle") or (
+            i18n.t(doc["groupTitleKey"]) if doc.get("groupTitleKey") else i18n.t("docs.unclassified")
+        )
         note = doc.get("note") or ""
-        note_html = ('<div class="rendered docnote" data-md><template>%s</template></div>'
-                     % _esc(note)) if note else ""
-        target.write_text(assets.render(
-            "static_doc.html", docname=_esc(doc.get("title") or doc["name"]),
-            title=_esc(config.load().title), content=_esc(doc["text"]), footer=footer,
-            **i18n.subs(), base=base, docpath=_esc(doc["name"]),
-            grouptitle=_esc(gtitle), groupcolor=_esc(doc.get("groupColor") or "slate"),
-            groupanchor=_esc(_group_anchor(doc.get("group", ""))), docnote=note_html,
-            site_base=json.dumps(base), doc_pages=doc_pages_json, blob_base=blob_base_json,
-            doc_path=json.dumps(doc["name"], ensure_ascii=False),
-            doc_repo=json.dumps(doc.get("repo", ""), ensure_ascii=False)), encoding="utf-8")
+        note_html = (
+            ('<div class="rendered docnote" data-md><template>%s</template></div>' % _esc(note))
+            if note
+            else ""
+        )
+        target.write_text(
+            assets.render(
+                "static_doc.html",
+                docname=_esc(doc.get("title") or doc["name"]),
+                title=_esc(config.load().title),
+                content=_esc(doc["text"]),
+                footer=footer,
+                **i18n.subs(),
+                base=base,
+                docpath=_esc(doc["name"]),
+                grouptitle=_esc(gtitle),
+                groupcolor=_esc(doc.get("groupColor") or "slate"),
+                groupanchor=_esc(_group_anchor(doc.get("group", ""))),
+                docnote=note_html,
+                site_base=json.dumps(base),
+                doc_pages=doc_pages_json,
+                blob_base=blob_base_json,
+                doc_path=json.dumps(doc["name"], ensure_ascii=False),
+                doc_repo=json.dumps(doc.get("repo", ""), ensure_ascii=False),
+            ),
+            encoding="utf-8",
+        )
 
 
-def _write_about(out, cfg, data, footer, slug, community_html, doc_pages_json, blob_base_json,
-                 community_path):
+def _write_about(
+    out, cfg, data, footer, slug, community_html, doc_pages_json, blob_base_json, community_path
+):
     """產生靜態「關於」頁 ``about/index.html``：changelogkit 版本、來源 commit、UI 語系、社群區塊。"""
     head = data["repos"][0]["head"] if data["repos"] else ""
     if head and slug:
@@ -316,20 +399,35 @@ def _write_about(out, cfg, data, footer, slug, community_html, doc_pages_json, b
         source = "%s@%s" % (_esc(cfg.root.name), head[:7])
     else:
         source = _esc(i18n.t("about.unknown"))
-    home = ('<a href="https://github.com/%s">github.com/%s</a>' % (slug, slug)) if slug else _esc(cfg.root.name)
+    home = (
+        ('<a href="https://github.com/%s">github.com/%s</a>' % (slug, slug)) if slug else _esc(cfg.root.name)
+    )
     # 語系列：可點擊切換的 chips（目前生效者由前端 CK_applyI18n 高亮）。
     locales = '<span class="lchips">%s</span>' % "".join(
         '<button type="button" class="lchip" data-locale="%s">%s</button>' % (_esc(name), _esc(name))
-        for name in i18n.available())
+        for name in i18n.available()
+    )
     about_dir = out / "about"
     about_dir.mkdir()
-    (about_dir / "index.html").write_text(assets.render(
-        "static_about.html", **i18n.subs(), title=_esc(cfg.title), footer=footer,
-        version=_esc(buildinfo.version()), source=source, locales=locales, home=home,
-        community=community_html, site_base=json.dumps("../"),
-        doc_pages=doc_pages_json, blob_base=blob_base_json,
-        doc_path=json.dumps(community_path, ensure_ascii=False),
-        doc_repo=json.dumps(index.default_repo(), ensure_ascii=False)), encoding="utf-8")
+    (about_dir / "index.html").write_text(
+        assets.render(
+            "static_about.html",
+            **i18n.subs(),
+            title=_esc(cfg.title),
+            footer=footer,
+            version=_esc(buildinfo.version()),
+            source=source,
+            locales=locales,
+            home=home,
+            community=community_html,
+            site_base=json.dumps("../"),
+            doc_pages=doc_pages_json,
+            blob_base=blob_base_json,
+            doc_path=json.dumps(community_path, ensure_ascii=False),
+            doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
+        ),
+        encoding="utf-8",
+    )
 
 
 def export(out_dir, branch="main"):
@@ -357,51 +455,106 @@ def export(out_dir, branch="main"):
     footer = i18n.t("static.built_by", src=where, time=datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     # 站內連結脈絡：文件相對路徑 → 穩定文件頁；其餘退回 GitHub blob。
-    doc_pages_json = json.dumps({
-        "%s:%s" % (doc.get("repo", ""), doc["name"]):
-            _doc_url(doc.get("repo", ""), doc["name"])
-        for doc in data["documents"]}, ensure_ascii=False)
+    doc_pages_json = json.dumps(
+        {
+            "%s:%s" % (doc.get("repo", ""), doc["name"]): _doc_url(doc.get("repo", ""), doc["name"])
+            for doc in data["documents"]
+        },
+        ensure_ascii=False,
+    )
     blob_base_json = json.dumps(blob_base, ensure_ascii=False)
     hist_rel = index.rel_path(cfg.history) or ""
 
     hist_content, count = _render_history(cfg)
-    (out / "index.html").write_text(assets.render(
-        "static_history.html", **i18n.subs(), title=_esc(cfg.title), content=hist_content,
-        count=str(count), footer=footer,
-        site_base=json.dumps(""), doc_pages=doc_pages_json, blob_base=blob_base_json,
-        doc_path=json.dumps(hist_rel, ensure_ascii=False),
-        doc_repo=json.dumps(index.default_repo(), ensure_ascii=False)), encoding="utf-8")
+    (out / "index.html").write_text(
+        assets.render(
+            "static_history.html",
+            **i18n.subs(),
+            title=_esc(cfg.title),
+            content=hist_content,
+            count=str(count),
+            footer=footer,
+            site_base=json.dumps(""),
+            doc_pages=doc_pages_json,
+            blob_base=blob_base_json,
+            doc_path=json.dumps(hist_rel, ensure_ascii=False),
+            doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
+        ),
+        encoding="utf-8",
+    )
 
     overview_content, documents, features = _render_overview(data)
-    (out / "development" / "index.html").write_text(assets.render(
-        "static_dev.html", **i18n.subs(), title=_esc(cfg.title), content=overview_content,
-        documents=str(documents), features=str(features), footer=footer, base="../",
-        site_base=json.dumps("../"), doc_pages=doc_pages_json,
-        blob_base=blob_base_json, doc_path=json.dumps(""),
-        doc_repo=json.dumps(index.default_repo(), ensure_ascii=False)), encoding="utf-8")
+    (out / "development" / "index.html").write_text(
+        assets.render(
+            "static_dev.html",
+            **i18n.subs(),
+            title=_esc(cfg.title),
+            content=overview_content,
+            documents=str(documents),
+            features=str(features),
+            footer=footer,
+            base="../",
+            site_base=json.dumps("../"),
+            doc_pages=doc_pages_json,
+            blob_base=blob_base_json,
+            doc_path=json.dumps(""),
+            doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
+        ),
+        encoding="utf-8",
+    )
 
     symbols_content, symbols = _render_symbols_page(data, blob_base)
-    (out / "development" / "symbols.html").write_text(assets.render(
-        "static_symbols.html", **i18n.subs(), title=_esc(cfg.title), content=symbols_content,
-        symbols=str(symbols), sources=str(len(data["repos"])), footer=footer, base="../",
-        site_base=json.dumps("../"), doc_pages=doc_pages_json,
-        blob_base=blob_base_json, doc_path=json.dumps("")), encoding="utf-8")
+    (out / "development" / "symbols.html").write_text(
+        assets.render(
+            "static_symbols.html",
+            **i18n.subs(),
+            title=_esc(cfg.title),
+            content=symbols_content,
+            symbols=str(symbols),
+            sources=str(len(data["repos"])),
+            footer=footer,
+            base="../",
+            site_base=json.dumps("../"),
+            doc_pages=doc_pages_json,
+            blob_base=blob_base_json,
+            doc_path=json.dumps(""),
+        ),
+        encoding="utf-8",
+    )
 
     if slug and len(data["repos"]) == 1:
         older_url = "https://github.com/%s/commits/%s" % (slug, quote(branch, safe="/"))
         more = '<a href="%s">%s</a>' % (_esc(older_url), _esc(i18n.t("static.older_github")))
     else:
         more = '<a href="../">%s</a>' % _esc(i18n.t("static.older_history"))
-    (out / "development" / "repos.html").write_text(assets.render(
-        "static_repos.html", **i18n.subs(), title=_esc(cfg.title),
-        content=_render_repo_list(data["repos"]), footer=footer, base="../",
-        count=str(cfg.recent_commits), more=more), encoding="utf-8")
+    (out / "development" / "repos.html").write_text(
+        assets.render(
+            "static_repos.html",
+            **i18n.subs(),
+            title=_esc(cfg.title),
+            content=_render_repo_list(data["repos"]),
+            footer=footer,
+            base="../",
+            count=str(cfg.recent_commits),
+            more=more,
+        ),
+        encoding="utf-8",
+    )
     _write_commits(out, data["repos"], footer)
 
     _write_docs(out, data["documents"], footer, doc_pages_json, blob_base_json)
     community_html = community.html_block(community.load(), i18n.t("about.community_title"))
-    _write_about(out, cfg, data, footer, slug, community_html, doc_pages_json, blob_base_json,
-                 index.rel_path(cfg.community) or "")
+    _write_about(
+        out,
+        cfg,
+        data,
+        footer,
+        slug,
+        community_html,
+        doc_pages_json,
+        blob_base_json,
+        index.rel_path(cfg.community) or "",
+    )
 
     (out / ".nojekyll").write_text("", encoding="utf-8")
     return out

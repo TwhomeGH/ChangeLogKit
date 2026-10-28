@@ -10,8 +10,14 @@ _FN_RE = re.compile(r"^\s*" + _PUB + _FN_MODS + r"fn\s+([A-Za-z_]\w*)")
 _KIND_RE = re.compile(r"^\s*" + _PUB + r"(struct|enum|trait|mod|type|union)\s+([A-Za-z_]\w*)")
 _IMPL_RE = re.compile(r"^\s*(?:unsafe\s+)?impl(?:<[^>]*>)?\s+([A-Za-z_]\w*)")
 _CONST_RE = re.compile(r"^\s*" + _PUB + r"(?:const|static)\s+([A-Za-z_]\w*)")
-_KIND = {"struct": "struct", "enum": "enum", "trait": "trait", "mod": "module",
-         "type": "typealias", "union": "union"}
+_KIND = {
+    "struct": "struct",
+    "enum": "enum",
+    "trait": "trait",
+    "mod": "module",
+    "type": "typealias",
+    "union": "union",
+}
 
 
 def scan(text, repo, name):
@@ -38,26 +44,28 @@ def scan(text, repo, name):
         if fn_match:
             signature, following = collect_signature(lines, index)
             body = signature.split("{", 1)[0].strip()
-            symbols.append(make_symbol("func", fn_match.group(1), body,
-                                       repo, name, index + 1, doc))
+            symbols.append(make_symbol("func", fn_match.group(1), body, repo, name, index + 1, doc))
             doc = []
             index = following
             continue
         if kind_match:
-            symbols.append(make_symbol(_KIND[kind_match.group(1)], kind_match.group(2),
-                                       stripped, repo, name, index + 1, doc))
+            symbols.append(
+                make_symbol(
+                    _KIND[kind_match.group(1)], kind_match.group(2), stripped, repo, name, index + 1, doc
+                )
+            )
             doc = []
             index += 1
             continue
         if impl_match:
-            symbols.append(make_symbol("impl", impl_match.group(1), stripped,
-                                       repo, name, index + 1, doc))
+            symbols.append(make_symbol("impl", impl_match.group(1), stripped, repo, name, index + 1, doc))
             doc = []
             index += 1
             continue
         if const_match:
-            symbols.append(make_symbol("property", const_match.group(1), stripped,
-                                       repo, name, index + 1, doc))
+            symbols.append(
+                make_symbol("property", const_match.group(1), stripped, repo, name, index + 1, doc)
+            )
             doc = []
             index += 1
             continue

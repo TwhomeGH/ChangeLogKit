@@ -63,20 +63,20 @@ class DocEntry:
 class Config:
     """一次執行所使用、已解析的設定。"""
 
-    root: Path                       # repo 根目錄（.changelog.toml 所在，或工作目錄）
-    title: str                       # 網頁標題
-    history: Path                    # ChangeHistory.md
-    features: Path | None            # 功能清單（可能不存在）
-    community: Path | None           # 「社群與開發交流」區塊的 markdown（可能不存在）
-    assets: Path | None              # 覆寫資產目錄（可選）
+    root: Path  # repo 根目錄（.changelog.toml 所在，或工作目錄）
+    title: str  # 網頁標題
+    history: Path  # ChangeHistory.md
+    features: Path | None  # 功能清單（可能不存在）
+    community: Path | None  # 「社群與開發交流」區塊的 markdown（可能不存在）
+    assets: Path | None  # 覆寫資產目錄（可選）
     sources: list = field(default_factory=list)  # 開發索引來源
-    include: tuple = ()      # 額外納入的 glob（相對 root；可涵蓋被 .gitignore 忽略者，如 node_modules）
-    exclude: tuple = ()      # 排除的 glob（相對 root）
-    doc_groups: list = field(default_factory=list)   # 文件群組
+    include: tuple = ()  # 額外納入的 glob（相對 root；可涵蓋被 .gitignore 忽略者，如 node_modules）
+    exclude: tuple = ()  # 排除的 glob（相對 root）
+    doc_groups: list = field(default_factory=list)  # 文件群組
     doc_entries: list = field(default_factory=list)  # 單檔覆寫
-    docs_unlisted: str = "other"                     # 未分類：other／folder／hidden
-    docs_auto: bool = True                           # 未命中設定時依資料夾自動分類
-    recent_commits: int = 20                         # 開發索引列出的 commit 數（1–200）
+    docs_unlisted: str = "other"  # 未分類：other／folder／hidden
+    docs_auto: bool = True  # 未命中設定時依資料夾自動分類
+    recent_commits: int = 20  # 開發索引列出的 commit 數（1–200）
 
 
 def _find_root(start):
@@ -113,9 +113,11 @@ def _text(value):
     if isinstance(value, str):
         return value.strip()
     if isinstance(value, dict):
-        return {str(key).strip(): str(text).strip()
-                for key, text in value.items()
-                if str(key).strip() and str(text).strip()}
+        return {
+            str(key).strip(): str(text).strip()
+            for key, text in value.items()
+            if str(key).strip() and str(text).strip()
+        }
     return ""
 
 
@@ -130,18 +132,20 @@ def _doc_groups(raw):
         except (TypeError, ValueError):
             order = 100
         paths = item.get("paths") or []
-        if isinstance(paths, str):          # 允許單一字串，不必寫成陣列
+        if isinstance(paths, str):  # 允許單一字串，不必寫成陣列
             paths = [paths]
         elif not isinstance(paths, (list, tuple)):
             paths = []
-        groups.append(DocGroup(
-            id=str(item.get("id") or "").strip(),
-            title=_text(item.get("title")),
-            color=str(item.get("color") or "slate").strip().lower(),
-            note=_text(item.get("note")),
-            order=order,
-            paths=tuple(str(p).strip() for p in paths if str(p).strip()),
-        ))
+        groups.append(
+            DocGroup(
+                id=str(item.get("id") or "").strip(),
+                title=_text(item.get("title")),
+                color=str(item.get("color") or "slate").strip().lower(),
+                note=_text(item.get("note")),
+                order=order,
+                paths=tuple(str(p).strip() for p in paths if str(p).strip()),
+            )
+        )
     return groups
 
 
@@ -154,12 +158,14 @@ def _doc_entries(raw):
         path = str(item.get("path") or "").strip()
         if not path:
             continue
-        entries.append(DocEntry(
-            path=path,
-            title=_text(item.get("title")),
-            note=_text(item.get("note")),
-            group=str(item.get("group") or "").strip(),
-        ))
+        entries.append(
+            DocEntry(
+                path=path,
+                title=_text(item.get("title")),
+                note=_text(item.get("note")),
+                group=str(item.get("group") or "").strip(),
+            )
+        )
     return entries
 
 
@@ -177,7 +183,7 @@ def _from_table(root, table):
     if not isinstance(docs_table, dict):
         docs_table = {}
     auto = docs_table.get("auto", True)
-    if not isinstance(auto, bool):       # TOML 的布林才是布林；字串不當成 true
+    if not isinstance(auto, bool):  # TOML 的布林才是布林；字串不當成 true
         auto = True
     try:
         recent = int(table.get("recent_commits", 20))

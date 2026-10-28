@@ -29,9 +29,12 @@ STAMP = "%s.%02d.%02d %02d:%02d"
 
 def _first_add(root, relpath, needle):
     """``needle`` 首次出現在該檔案的 commit 作者時間（epoch）；找不到回 None。"""
-    r = subprocess.run(["git", "-C", str(root), "log", "--reverse", "--format=%at",
-                        "-S", needle, "--", relpath], capture_output=True, text=True)
-    vals = [l.strip() for l in r.stdout.splitlines() if l.strip().isdigit()]
+    r = subprocess.run(
+        ["git", "-C", str(root), "log", "--reverse", "--format=%at", "-S", needle, "--", relpath],
+        capture_output=True,
+        text=True,
+    )
+    vals = [line.strip() for line in r.stdout.splitlines() if line.strip().isdigit()]
     return int(vals[0]) if vals else None
 
 
@@ -45,19 +48,19 @@ def _stamp_from_decl(text):
 
 def _strip_subs(lines):
     """去掉子標題的編號（``### 73a.``／``### 4.1`` → ``### 標題``）。"""
-    return [SUBNUM.sub(r"### \1", l) if SUBNUM.match(l) else l for l in lines]
+    return [SUBNUM.sub(r"### \1", line) if SUBNUM.match(line) else line for line in lines]
 
 
 def _sort_entries(lines):
     """依條目標題日期由新到舊重排（無日期者殿後）。前置內容維持在最上方。"""
-    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+    heads = [i for i, line in enumerate(lines) if line.startswith("## ")]
     if not heads:
         return lines
-    pre = lines[:heads[0]]
-    entries = [lines[heads[k]:(heads[k + 1] if k + 1 < len(heads) else len(lines))]
-               for k in range(len(heads))]
-    keyed = [(entries[k][0] if DATED.match(entries[k][0]) else "", entries[k])
-             for k in range(len(entries))]
+    pre = lines[: heads[0]]
+    entries = [
+        lines[heads[k] : (heads[k + 1] if k + 1 < len(heads) else len(lines))] for k in range(len(heads))
+    ]
+    keyed = [(entries[k][0] if DATED.match(entries[k][0]) else "", entries[k]) for k in range(len(entries))]
     dated = sorted([k for k in keyed if k[0]], key=lambda x: x[0], reverse=True)
     undated = [k for k in keyed if not k[0]]
     out = list(pre)
@@ -78,8 +81,8 @@ def backfill(apply=False, strip_number=False, sort=False):
     rel = os.path.relpath(path, cfg.root).replace("\\", "/")
     lines = path.read_text(encoding="utf-8").splitlines()
 
-    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
-    out = list(lines[:heads[0]]) if heads else list(lines)
+    heads = [i for i, line in enumerate(lines) if line.startswith("## ")]
+    out = list(lines[: heads[0]]) if heads else list(lines)
     items, total, converted, skipped, changed = [], 0, 0, 0, False
     for k, h in enumerate(heads):
         end = heads[k + 1] if k + 1 < len(heads) else len(lines)
@@ -140,5 +143,4 @@ def backfill(apply=False, strip_number=False, sort=False):
     if apply and (converted or changed):
         path.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
         applied = True
-    return {"total": total, "converted": converted, "skipped": skipped,
-            "applied": applied, "items": items}
+    return {"total": total, "converted": converted, "skipped": skipped, "applied": applied, "items": items}

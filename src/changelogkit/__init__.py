@@ -21,10 +21,10 @@ def _pyproject_version():
     兩種版面），只採用 ``project.name`` 為本套件者。
     """
     try:
-        import tomllib as _toml            # Python 3.11+ 標準庫
+        import tomllib as _toml  # Python 3.11+ 標準庫
     except ModuleNotFoundError:
         try:
-            import tomli as _toml          # Python 3.10（條件式相依）
+            import tomli as _toml  # Python 3.10（條件式相依）
         except ModuleNotFoundError:
             return None
     node = Path(__file__).resolve().parent
@@ -53,4 +53,4 @@ def _installed_version():
 
 # 版號來源優先序：原始碼 checkout 的 pyproject → 已安裝中介資料 → 字面值備援。
 # 優先原始碼，讓 `PYTHONPATH=src` 直接跑時「所見即所跑」，不被環境中殘留的舊安裝誤導。
-__version__ = _pyproject_version() or _installed_version() or "0.11.0"
+__version__ = _pyproject_version() or _installed_version() or "0.11.1"
