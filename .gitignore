@@ -14,3 +14,4 @@ src/changelogkit/_buildinfo.py
 
 # 排除playwright-mcp
 .playwright-mcp/*
+.cortexkit/
