@@ -51,6 +51,7 @@
 .doctoc a:hover, .doctoc a.active { color: var(--accent); background: var(--line2); border-left-color: var(--accent) }
 .doctoc a.active { font-weight: 600 }
 .doctoc .toc-h3 { padding-left: 26px; font-size: 12.5px }
+.doctoc .toc-h4 { padding-left: 40px; font-size: 12px }
 
 /* 手機：目錄抽屜＋浮動按鈕；原始碼模式不顯示。 */
 .tocbtn { display: none; position: fixed; right: 16px; bottom: 16px; z-index: 30; align-items: center; border-radius: 999px; padding: 8px 14px; box-shadow: var(--shadow) }

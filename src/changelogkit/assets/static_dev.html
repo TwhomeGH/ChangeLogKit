@@ -6,7 +6,7 @@
 <meta name="generator" content="changelogkit">
 <script src="{{base}}assets/theme.js"></script>
 <script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
-<script>window.CK_SITE_BASE = {{site_base}}; window.CK_DOC_PAGES = {{doc_pages}}; window.CK_BLOB_BASE = {{blob_base}}; window.CK_DOC_PATH = {{doc_path}};</script>
+<script>window.CK_SITE_BASE = {{site_base}}; window.CK_DOC_PAGES = {{doc_pages}}; window.CK_BLOB_BASE = {{blob_base}}; window.CK_DOC_PATH = {{doc_path}}; window.CK_DOC_REPO = {{doc_repo}};</script>
 <script src="{{base}}assets/i18n.js"></script>
 <script src="{{base}}assets/highlight.js"></script>
 <script src="{{base}}assets/markdown.js"></script>
@@ -25,13 +25,43 @@
 </header>
 <main>
   <p class="muted" data-i18n="static.overview_hint">{{t.static.overview_hint}}</p>
+  <div class="docsearch">
+    <input id="docsearch" type="search" placeholder="{{t.static.search_docs}}"
+           data-i18n-ph="static.search_docs" aria-label="{{t.static.search_docs}}"
+           data-i18n-aria="static.search_docs" autocomplete="off">
+  </div>
 {{content}}
+  <p id="docempty" class="empty" data-i18n="static.no_docs_match" hidden></p>
 </main>
 <script>
 for (const el of document.querySelectorAll("[data-md]")) {
   const tpl = el.querySelector("template");
   if (tpl) el.innerHTML = window.renderMarkdown(tpl.content.textContent,
     window.markdownStaticResolver(window.CK_DOC_PATH));
+}
+/* 文件搜尋：只過濾文件卡片，不動功能區；同步更新群組數量。 */
+const docSearch = document.getElementById("docsearch");
+if (docSearch) {
+  const sections = [...document.querySelectorAll(".doc-section")];
+  const applyDocSearch = () => {
+    const q = docSearch.value.trim().toLowerCase();
+    let total = 0;
+    for (const section of sections) {
+      let shown = 0;
+      for (const card of section.querySelectorAll("article.card")) {
+        const hit = !q || card.textContent.toLowerCase().includes(q);
+        card.hidden = !hit;
+        if (hit) shown++;
+      }
+      const count = section.querySelector(".docgroup .count");
+      if (count) count.textContent = "(" + shown + ")";
+      section.hidden = !!q && shown === 0;
+      total += shown;
+    }
+    const empty = document.getElementById("docempty");
+    if (empty) empty.hidden = !(q && total === 0);
+  };
+  docSearch.addEventListener("input", applyDocSearch);
 }
 const tt = document.getElementById("totop");
 if (tt) { tt.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -48,3 +78,4 @@ measure(); addEventListener("resize", measure);
 <button id="totop" hidden title="Top">↑</button>
 <footer class="built">{{footer}}</footer>
 </body></html>
+

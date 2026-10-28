@@ -2,14 +2,6 @@
 
 留待日後處理；完成後請刪掉對應條目。
 
-## 文件分類／靜態站（2C）
-
-- [ ] 每語系群組標題／備註：`[[tool.changelog.docs.groups]]` 的 `title`／`note` 支援 `{ "zh-TW" = "...", en = "..." }`；動態頁依 UI 語系、靜態頁依 `--locale` 解析。
-- [ ] 靜態站文件搜尋：首頁或文件頁加 client-side filter（標題／路徑／備註）；目前只有動態開發索引有搜尋與群組 chips。
-- [ ] `symbols.html` lazy：VideoServer 約 352 KB；依語言／資料夾 `<details>` 或分頁。
-- [ ] 多來源同名文件：`doc_pages` 與文件頁 URL 目前只用 repo 內相對路徑當 key；兩個 source 有同名文件會碰撞，需把 source 納入 key／路徑（連帶改 `markdownResolver`）。
-- [ ] 目錄層級：目前只收 h2–h3；若要 h4，加「更多」折疊。
-
 ## 已知問題（環境）
 
 - [ ] cp950 Windows 上，對**非 ASCII 路徑**的專案做 `pip install -e` 會寫出含中文的 `.pth`，害 Python 啟動失敗。已文件化 `PYTHONUTF8=1`／pipx，並提供 `tools/dev.py` 避開 editable install；長期可推廣 pipx。
@@ -52,3 +44,8 @@
 - [x] 靜態 `repos.html` 改為每筆 commit 一頁（`development/commits/<repo>/<hash>.html`），列表不再內嵌 diff。
 - [x] `dev.js` 功能檔案連結改用 `contexts.features.repo`，不再寫死 `repo=app`。
 - [x] 近期改動上限可用 `recent_commits` 設定（1–200）；靜態 repos 頁提供「更舊的提交 → GitHub／變更歷史」。
+- [x] 每語系群組標題／備註（groups／entries；動態依 UI 語系、靜態依 `--locale`）。
+- [x] 靜態首頁文件搜尋（標題／路徑／備註／摘要；過濾群組並更新數量）。
+- [x] `symbols.html` 依檔案 `<details>` 折疊；展開時才上色／渲染註釋，附展開／收合全部。
+- [x] 多來源同名文件：文件頁改為 `docs/<來源>/<路徑>.html`，`doc_pages` 以 `來源:路徑` 為 key；`sources.path` 相對 repo 根目錄解析。
+- [x] 文件目錄收 h2–h4（h4 縮排）；動態與靜態共用。

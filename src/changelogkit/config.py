@@ -36,12 +36,15 @@ class Source:
 
 @dataclass(frozen=True)
 class DocGroup:
-    """文件分類的一個群組（[tool.changelog.docs.groups]）。"""
+    """文件分類的一個群組（[tool.changelog.docs.groups]）。
+
+    ``title``／``note`` 可為字串或 ``{ "zh-TW" = "...", "en" = "..." }``。
+    """
 
     id: str
-    title: str = ""
+    title: str | dict = ""
     color: str = "slate"
-    note: str = ""
+    note: str | dict = ""
     order: int = 100
     paths: tuple = ()
 
@@ -51,8 +54,8 @@ class DocEntry:
     """單一文件的分類覆寫（[tool.changelog.docs.entries]）。"""
 
     path: str
-    title: str = ""
-    note: str = ""
+    title: str | dict = ""
+    note: str | dict = ""
     group: str = ""
 
 
@@ -101,7 +104,19 @@ def _default_config(root):
 
 def _resolve(root, value):
     """把設定中的相對路徑接到 root，並展開 ``${ENV}``。"""
-    return Path(os.path.expandvars(os.path.expanduser(str(value))))
+    path = Path(os.path.expandvars(os.path.expanduser(str(value))))
+    return path if path.is_absolute() else root / path
+
+
+def _text(value):
+    """字串或語系對照表；保留空字典，讓解析端決定 fallback。"""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        return {str(key).strip(): str(text).strip()
+                for key, text in value.items()
+                if str(key).strip() and str(text).strip()}
+    return ""
 
 
 def _doc_groups(raw):
@@ -121,9 +136,9 @@ def _doc_groups(raw):
             paths = []
         groups.append(DocGroup(
             id=str(item.get("id") or "").strip(),
-            title=str(item.get("title") or "").strip(),
+            title=_text(item.get("title")),
             color=str(item.get("color") or "slate").strip().lower(),
-            note=str(item.get("note") or "").strip(),
+            note=_text(item.get("note")),
             order=order,
             paths=tuple(str(p).strip() for p in paths if str(p).strip()),
         ))
@@ -141,8 +156,8 @@ def _doc_entries(raw):
             continue
         entries.append(DocEntry(
             path=path,
-            title=str(item.get("title") or "").strip(),
-            note=str(item.get("note") or "").strip(),
+            title=_text(item.get("title")),
+            note=_text(item.get("note")),
             group=str(item.get("group") or "").strip(),
         ))
     return entries

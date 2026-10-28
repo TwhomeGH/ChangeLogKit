@@ -161,10 +161,10 @@
   window.renderMarkdown = (text, resolveHref) =>
     render(text, typeof resolveHref === "function" ? resolveHref : IDENTITY, new Set());
 
-  /* 把容器內的 h2–h3 建成目錄（h1 是頁面標題，h4+ 太細）；少於兩項就隱藏。 */
+  /* 把容器內的 h2–h4 建成目錄（h1 是頁面標題，h5+ 太細）；少於兩項就隱藏。 */
   window.renderTOC = function (content, nav, panel) {
     if (!content || !nav) return false;
-    const heads = [...content.querySelectorAll("h2, h3")].filter((h) => h.id);
+    const heads = [...content.querySelectorAll("h2, h3, h4")].filter((h) => h.id);
     nav.textContent = "";
     if (heads.length < 2) {
       if (panel) panel.hidden = true;
@@ -241,7 +241,7 @@
      options.baseDir  直接指定基準目錄（覆寫由 docPath 推得者）。
      options.staticMap 靜態站：{ base, docs, blob }
        - base：相對站根的前綴（"" 或 "../"…）
-       - docs：{ 文件相對路徑 → 站內文件頁相對路徑 }（如 "docs/0.html"）
+       - docs：{ "來源:文件相對路徑" → 站內文件頁相對路徑 }
        - blob：GitHub blob 前綴；比對不到文件頁時改用
      動態：相對路徑 → /development/file?repo=…&path=…（與檔案檢視一致）。 */
   window.markdownResolver = function (repo, docPath, options) {
@@ -263,6 +263,10 @@
       const anchor = rest.length ? "#" + rest.join("#") : "";
       const map = opts.staticMap;
       if (map) {
+        const key = repo ? repo + ":" + name : name;
+        if (map.docs && Object.prototype.hasOwnProperty.call(map.docs, key)) {
+          return (map.base || "") + map.docs[key] + anchor;
+        }
         if (map.docs && Object.prototype.hasOwnProperty.call(map.docs, name)) {
           return (map.base || "") + map.docs[name] + anchor;
         }
@@ -273,9 +277,9 @@
     };
   };
 
-  /* 靜態站用的解析器；讀取匯出時注入的 window.CK_* 全域。 */
-  window.markdownStaticResolver = function (docPath) {
-    return window.markdownResolver("", docPath, {
+  /* 靜態站用的解析器；來源可由參數或 window.CK_DOC_REPO 指定。 */
+  window.markdownStaticResolver = function (docPath, docRepo) {
+    return window.markdownResolver(docRepo || window.CK_DOC_REPO || "", docPath, {
       staticMap: {
         base: window.CK_SITE_BASE || "",
         docs: window.CK_DOC_PAGES || {},

@@ -129,9 +129,19 @@ async function loadDiff(box, params) {
   }
 }
 
+/* 取目前 UI 語系的值：該語系 → en → 伺服器給的 fallback → 第一個值。 */
+function localeText(map, fallback) {
+  const loc = window.CK_getLocale ? window.CK_getLocale() : "";
+  if (map && map[loc]) return map[loc];
+  if (map && map.en) return map.en;
+  if (fallback) return fallback;
+  return map ? (Object.values(map)[0] || "") : "";
+}
+
 /* 文件群組標題（設定 title 優先，否則用 i18n 的預設分類名）。 */
 function groupLabel(group) {
-  return group.title || (group.titleKey ? CK_T(group.titleKey) : CK_T("docs.unclassified"));
+  return localeText(group.titles, group.title) ||
+    (group.titleKey ? CK_T(group.titleKey) : CK_T("docs.unclassified"));
 }
 
 /* 「API 宣告」頁的篩選列；「文件」頁只顯示群組 chips。 */
@@ -188,9 +198,10 @@ function symbolCard(r, nested) {
 
 /* 文件分組標題：色點＋群組名＋（目前篩選後的）數量＋備註。 */
 function docGroupHtml(r, count) {
-  const title = r.groupTitle ||
+  const title = localeText(r.groupTitles, r.groupTitle) ||
     (r.groupTitleKey ? CK_T(r.groupTitleKey) : CK_T("docs.unclassified"));
-  const note = r.groupNote ? `<span class="gnote">${mdInline(r.groupNote)}</span>` : "";
+  const noteText = localeText(r.groupNotes, r.groupNote);
+  const note = noteText ? `<span class="gnote">${mdInline(noteText)}</span>` : "";
   return `<h2 class="docgroup color-${esc(r.groupColor || "slate")}">` +
     `<span class="dot"></span><span class="gtitle">${esc(title)}</span>` +
     `<span class="count">(${count})</span>${note}</h2>`;
@@ -233,9 +244,11 @@ function rowHtml(r) {
   if (tab === "symbols") return symbolCard(r);
   if (tab === "documents") {
     const text = r.text || "";
-    return `<article class="card"><h2><a href="${esc(r.url)}">${esc(r.title || r.name)}</a></h2>` +
+    const title = localeText(r.titles, r.title || r.name);
+    const note = localeText(r.notes, r.note);
+    return `<article class="card"><h2><a href="${esc(r.url)}">${esc(title)}</a></h2>` +
       `<div class="meta">${esc(r.name)}${r.repo ? " · " + esc(r.repo) : ""}</div>` +
-      (r.note ? `<div class="docnote">${mdInline(r.note)}</div>` : "") +
+      (note ? `<div class="docnote">${mdInline(note)}</div>` : "") +
       `<div class="preview">${esc(text.slice(0, 260))}${text.length > 260 ? " …" : ""}</div></article>`;
   }
   const list = (r.commits || []).map((c) => commitCard(r.name, c)).join("");

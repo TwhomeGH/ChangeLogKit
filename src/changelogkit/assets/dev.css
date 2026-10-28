@@ -33,6 +33,11 @@ article.card h2 a:hover { color: var(--accent); text-decoration: underline }
 .doctag .lbl { font-family: ui-monospace, Consolas, "Courier New", monospace }
 .files a { display: inline-block; margin: 0 12px 6px 0 }
 .preview { font: 13px/1.6 ui-monospace, Consolas, "Courier New", monospace; color: var(--mut); white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 0 }
+/* 靜態首頁的文件搜尋；只過濾 .doc-section，不動功能區。 */
+.docsearch { margin: 10px 0 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.docsearch input[type="search"] { width: min(420px, 100%) }
+.doc-section[hidden] { display: none }
+
 /* 文件分組：色點＋標題＋數量＋備註；顏色為固定色票（明暗主題共用）。 */
 .docgroup { display: flex; align-items: baseline; gap: 8px; margin: 26px 0 10px; font-size: 16px; flex-wrap: wrap }
 .docgroup:first-child { margin-top: 8px }
@@ -59,6 +64,17 @@ pre.blob { background: var(--code); border: 1px solid var(--line); border-radius
 #filters .chip .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--doc-color); margin-right: 6px; vertical-align: middle }
 #filters .kindfilter { font-size: 13px; color: var(--mut) }
 #filters .kindfilter select { width: auto; margin-left: 6px }
+
+/* API 頁：檔案層級的 lazy 折疊；展開時才上色／渲染註釋。 */
+.symtools { display: flex; gap: 8px; margin: 8px 0 12px; flex-wrap: wrap }
+details.symgroup { border: 1px solid var(--line); border-radius: 10px; margin: 8px 0; background: var(--card); overflow: hidden }
+details.symgroup > summary { cursor: pointer; padding: 10px 14px; font-weight: 600; display: flex; align-items: baseline; gap: 8px }
+details.symgroup > summary:hover { background: var(--line2) }
+details.symgroup > summary .sfile { font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 13px; overflow-wrap: anywhere }
+details.symgroup > summary .count { color: var(--mut); font-size: 12px; font-weight: 400 }
+details.symgroup[open] > summary { border-bottom: 1px solid var(--line2) }
+details.symgroup .syms { padding: 10px 12px 12px }
+details.symgroup .syms .card { margin: 8px 0 }
 
 /* 符號簽名列：等寬、可換行、深淺色一致。 */
 .sig {

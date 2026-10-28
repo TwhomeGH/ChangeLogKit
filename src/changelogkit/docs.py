@@ -78,6 +78,19 @@ def _entry_for(name, entries):
     return None
 
 
+def _locale_map(value):
+    """把語系對照表正規化；字串（單一語言）回空字典。"""
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _localized(value, fallback=""):
+    """取目前語系的值；缺目前語系時依序退到 en、第一個值、fallback。"""
+    if isinstance(value, dict):
+        return (value.get(i18n.current()) or value.get("en")
+                or next(iter(value.values()), "") or fallback)
+    return value or fallback
+
+
 def _default_title(name):
     """沒有 entry.title 時的顯示標題：``README.md`` 用資料夾名，其餘用檔名去副檔名。"""
     path = PurePosixPath(name)
@@ -92,13 +105,15 @@ def _folder(name):
 
 
 def _group_meta(group):
-    """設定群組 → 輸出用的 dict（顏色已正規化）。"""
+    """設定群組 → 輸出用的 dict（顏色已正規化；title／note 附各語系對照）。"""
     return {
         "id": group.id,
-        "title": group.title or group.id,
+        "title": _localized(group.title, group.id),
+        "titles": _locale_map(group.title),
         "titleKey": "",
         "color": group.color if group.color in PALETTE else DEFAULT_COLOR,
-        "note": group.note,
+        "note": _localized(group.note),
+        "notes": _locale_map(group.note),
         "order": group.order,
     }
 
@@ -109,9 +124,11 @@ def _auto_meta(category):
     return {
         "id": "auto:" + category,
         "title": "",
+        "titles": {},
         "titleKey": spec["titleKey"],
         "color": spec["color"],
         "note": "",
+        "notes": {},
         "order": spec["order"],
     }
 
@@ -208,25 +225,33 @@ def resolve(documents, cfg=None):
                 group_id = "folder:" + folder
                 chosen = by_id.get(group_id)
                 if chosen is None:
-                    chosen = {"id": group_id, "title": folder, "color": DEFAULT_COLOR,
-                              "note": "", "order": UNLISTED_ORDER}
+                    chosen = {"id": group_id, "title": folder, "titles": {},
+                              "color": DEFAULT_COLOR, "note": "", "notes": {},
+                              "order": UNLISTED_ORDER}
                     by_id[group_id] = chosen
             else:
                 chosen = by_id.get(UNLISTED_ID)
                 if chosen is None:
-                    chosen = {"id": UNLISTED_ID, "title": "", "color": DEFAULT_COLOR,
-                              "note": "", "order": UNLISTED_ORDER}
+                    chosen = {"id": UNLISTED_ID, "title": "", "titles": {},
+                              "color": DEFAULT_COLOR, "note": "", "notes": {},
+                              "order": UNLISTED_ORDER}
                     by_id[UNLISTED_ID] = chosen
 
+        entry_title = _localized(entry.title) if entry is not None else ""
+        entry_note = _localized(entry.note) if entry is not None else ""
         records.append(dict(
             doc,
-            title=(entry.title if entry is not None else "") or _default_title(name),
-            note=entry.note if entry is not None else "",
+            title=entry_title or _default_title(name),
+            titles=_locale_map(entry.title) if entry is not None else {},
+            note=entry_note,
+            notes=_locale_map(entry.note) if entry is not None else {},
             group=chosen["id"],
             groupTitle=chosen["title"],
+            groupTitles=chosen.get("titles", {}),
             groupTitleKey=chosen.get("titleKey", ""),
             groupColor=chosen["color"],
             groupNote=chosen["note"],
+            groupNotes=chosen.get("notes", {}),
             groupOrder=chosen["order"],
         ))
 

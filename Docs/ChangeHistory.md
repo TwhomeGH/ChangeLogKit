@@ -1,5 +1,24 @@
 # ChangeHistory
 
+## 2026.10.29 changelogkit 0.11.0 發佈
+
+**類型**: 功能 · **檔案**: `docs.py`、`config.py`、`export.py`、`assets/markdown.js`、`assets/static_*.html`
+
+### 問題 - 多來源同名文件會互撞；分類標題只有單語系；靜態站缺少搜尋與 API 折疊
+
+兩個 source 若有相同的 `Docs/x.md`，靜態文件頁與 `doc_pages` 會互相覆蓋；群組 title／note 只有單一字串；靜態站沒有文件搜尋，API 頁一次渲染所有宣告。
+
+### 修改 - 來源感知文件 URL、每語系標題、靜態搜尋、API 折疊
+
+- 文件頁改為 `docs/<來源>/<路徑>.html`；`CK_DOC_PAGES` 以 `來源:路徑` 為 key，`markdownResolver` 依 `CK_DOC_REPO` 查詢；`sources.path` 正確相對 repo 根目錄解析。
+- `groups`／`entries` 的 `title`／`note` 支援語系對照表；動態依 UI 語系、靜態依 `--locale`，缺值退 `en` → 第一個值。
+- 靜態開發首頁加文件搜尋（標題／路徑／備註／摘要），同步隱藏空群組與更新數量。
+- `symbols.html` 依檔案 `<details>` 折疊；展開時才上色／渲染註釋，附展開／收合全部。
+- 文件 TOC 擴充到 h2–h4（h4 縮排）。
+- **Breaking**：舊的 `docs/Docs/...` 文件 URL 失效，改用 `docs/<來源>/Docs/...`。
+
+---
+
 ## 2026.10.29 changelogkit 0.10.1 發佈
 
 **類型**: 修正／功能 · **檔案**: `export.py`、`assets/static_commit.html`、`assets/dev.js`、`config.py`、`index.py`

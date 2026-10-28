@@ -30,19 +30,24 @@ def _esc(text):
     return html.escape(str(text if text is not None else ""))
 
 
-def _doc_rel(name):
-    """文件在站內的相對檔案路徑（穩定、與排序無關）：``docs/<path>.html``。"""
+def _doc_stem(name):
+    """文件路徑去掉 ``./``、開頭斜線與 ``.md``。"""
     clean = str(name).replace("\\", "/")
     while clean.startswith("./"):
         clean = clean[2:]
     clean = clean.strip("/")
-    stem = clean[:-3] if clean.lower().endswith(".md") else clean
-    return "docs/" + stem + ".html"
+    return clean[:-3] if clean.lower().endswith(".md") else clean
 
 
-def _doc_url(name):
-    """文件頁的 URL（站根相對；逐段 percent-encode）。"""
-    return "/".join(quote(part, safe="") for part in _doc_rel(name).split("/"))
+def _doc_rel(repo, name):
+    """文件在站內的相對檔案路徑：``docs/<source>/<path>.html``（避免同名碰撞）。"""
+    return "docs/" + str(repo).replace("\\", "/") + "/" + _doc_stem(name) + ".html"
+
+
+def _doc_url(repo, name):
+    """文件頁 URL（站根相對；source 與路徑逐段 percent-encode）。"""
+    stem = "/".join(quote(part, safe="") for part in _doc_stem(name).split("/"))
+    return "docs/" + quote(str(repo), safe="") + "/" + stem + ".html"
 
 
 def _site_base(rel):
@@ -149,13 +154,21 @@ def _symbol_card(sym, blob_base, nested):
 
 
 def _render_symbols(symbols, blob_base):
-    """API 宣告卡片；依檔案分組，於檔案切換處插入 sticky 小標題。"""
-    out, last = [], None
+    """API 宣告卡片：依檔案收進 ``<details>``；展開時才上色／渲染註釋。"""
+    by_file, order = {}, []
     for sym in symbols:
-        if sym.get("file") != last:
-            last = sym.get("file")
-            out.append('<h3 class="group">%s</h3>' % _esc(last))
-        out.append(_symbol_card(sym, blob_base, False))
+        name = sym.get("file") or ""
+        if name not in by_file:
+            by_file[name] = []
+            order.append(name)
+        by_file[name].append(sym)
+    out = []
+    for name in order:
+        cards = "".join(_symbol_card(sym, blob_base, False) for sym in by_file[name])
+        out.append('<details class="symgroup"><summary><span class="sfile">%s</span>'
+                   '<span class="count">(%d)</span></summary>'
+                   '<div class="syms">%s</div></details>'
+                   % (_esc(name), len(by_file[name]), cards))
     return "\n".join(out)
 
 
@@ -182,6 +195,7 @@ def _render_documents(documents, groups, base="../"):
                  or (i18n.t(group["titleKey"]) if group.get("titleKey")
                      else i18n.t("docs.unclassified")))
         gnote = ('<span class="gnote">%s</span>' % _esc(group.get("note"))) if group.get("note") else ""
+        out.append('<section class="doc-section" data-doc-group="%s">' % _esc(group["id"]))
         out.append('<h2 id="%s" class="docgroup color-%s"><span class="dot"></span>'
                    '<span class="gtitle">%s</span><span class="count">(%d)</span>%s</h2>'
                    % (_esc(_group_anchor(group["id"])), _esc(group.get("color", "slate")),
@@ -190,12 +204,13 @@ def _render_documents(documents, groups, base="../"):
             text = doc["text"]
             preview = text[:260] + (" …" if len(text) > 260 else "")
             dnote = ('<div class="docnote">%s</div>' % _esc(doc["note"])) if doc.get("note") else ""
-            href = base + _doc_url(doc["name"])
+            href = base + _doc_url(doc.get("repo", ""), doc["name"])
             out.append('<article class="card"><h2><a href="%s">%s</a></h2>'
                        '<div class="meta">%s%s</div>%s<div class="preview">%s</div></article>'
                        % (_esc(href), _esc(doc.get("title") or doc["name"]), _esc(doc["name"]),
                           (" · " + _esc(doc["repo"])) if doc.get("repo") else "", dnote,
                           _esc(preview)))
+        out.append('</section>')
     return "\n".join(out)
 
 
@@ -270,7 +285,7 @@ def _write_docs(out, documents, footer, doc_pages_json, blob_base_json):
     指回正確的站內頁（或 GitHub blob）。
     """
     for doc in documents:
-        rel = _doc_rel(doc["name"])
+        rel = _doc_rel(doc.get("repo", ""), doc["name"])
         base = _site_base(rel)
         target = out / rel
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -287,7 +302,8 @@ def _write_docs(out, documents, footer, doc_pages_json, blob_base_json):
             grouptitle=_esc(gtitle), groupcolor=_esc(doc.get("groupColor") or "slate"),
             groupanchor=_esc(_group_anchor(doc.get("group", ""))), docnote=note_html,
             site_base=json.dumps(base), doc_pages=doc_pages_json, blob_base=blob_base_json,
-            doc_path=json.dumps(doc["name"], ensure_ascii=False)), encoding="utf-8")
+            doc_path=json.dumps(doc["name"], ensure_ascii=False),
+            doc_repo=json.dumps(doc.get("repo", ""), ensure_ascii=False)), encoding="utf-8")
 
 
 def _write_about(out, cfg, data, footer, slug, community_html, doc_pages_json, blob_base_json,
@@ -312,7 +328,8 @@ def _write_about(out, cfg, data, footer, slug, community_html, doc_pages_json, b
         version=_esc(buildinfo.version()), source=source, locales=locales, home=home,
         community=community_html, site_base=json.dumps("../"),
         doc_pages=doc_pages_json, blob_base=blob_base_json,
-        doc_path=json.dumps(community_path, ensure_ascii=False)), encoding="utf-8")
+        doc_path=json.dumps(community_path, ensure_ascii=False),
+        doc_repo=json.dumps(index.default_repo(), ensure_ascii=False)), encoding="utf-8")
 
 
 def export(out_dir, branch="main"):
@@ -340,8 +357,10 @@ def export(out_dir, branch="main"):
     footer = i18n.t("static.built_by", src=where, time=datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     # 站內連結脈絡：文件相對路徑 → 穩定文件頁；其餘退回 GitHub blob。
-    doc_pages_json = json.dumps({doc["name"]: _doc_url(doc["name"])
-                                 for doc in data["documents"]}, ensure_ascii=False)
+    doc_pages_json = json.dumps({
+        "%s:%s" % (doc.get("repo", ""), doc["name"]):
+            _doc_url(doc.get("repo", ""), doc["name"])
+        for doc in data["documents"]}, ensure_ascii=False)
     blob_base_json = json.dumps(blob_base, ensure_ascii=False)
     hist_rel = index.rel_path(cfg.history) or ""
 
@@ -350,14 +369,16 @@ def export(out_dir, branch="main"):
         "static_history.html", **i18n.subs(), title=_esc(cfg.title), content=hist_content,
         count=str(count), footer=footer,
         site_base=json.dumps(""), doc_pages=doc_pages_json, blob_base=blob_base_json,
-        doc_path=json.dumps(hist_rel, ensure_ascii=False)), encoding="utf-8")
+        doc_path=json.dumps(hist_rel, ensure_ascii=False),
+        doc_repo=json.dumps(index.default_repo(), ensure_ascii=False)), encoding="utf-8")
 
     overview_content, documents, features = _render_overview(data)
     (out / "development" / "index.html").write_text(assets.render(
         "static_dev.html", **i18n.subs(), title=_esc(cfg.title), content=overview_content,
         documents=str(documents), features=str(features), footer=footer, base="../",
         site_base=json.dumps("../"), doc_pages=doc_pages_json,
-        blob_base=blob_base_json, doc_path=json.dumps("")), encoding="utf-8")
+        blob_base=blob_base_json, doc_path=json.dumps(""),
+        doc_repo=json.dumps(index.default_repo(), ensure_ascii=False)), encoding="utf-8")
 
     symbols_content, symbols = _render_symbols_page(data, blob_base)
     (out / "development" / "symbols.html").write_text(assets.render(

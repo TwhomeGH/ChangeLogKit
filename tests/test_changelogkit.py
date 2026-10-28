@@ -23,7 +23,7 @@ _DEV_SPEC = importlib.util.spec_from_file_location(
 dev_tool = importlib.util.module_from_spec(_DEV_SPEC)
 _DEV_SPEC.loader.exec_module(dev_tool)
 
-from changelogkit import assets, backfill, cli, community, config, docs, export, history, index  # noqa: E402
+from changelogkit import assets, backfill, cli, community, config, docs, export, history, i18n, index  # noqa: E402
 
 SAMPLE = """# 變更歷史
 
@@ -102,6 +102,15 @@ class ConfigTests(unittest.TestCase):
     def test_doc_group_accepts_single_path_string(self):
         groups = config._doc_groups([{"id": "x", "paths": "Docs/**"}])
         self.assertEqual(groups[0].paths, ("Docs/**",))
+
+    def test_doc_group_accepts_localized_title(self):
+        groups = config._doc_groups([{
+            "id": "x",
+            "title": {"zh-TW": "開發", "en": "Dev"},
+            "note": {"en": "Notes"},
+        }])
+        self.assertEqual(groups[0].title["en"], "Dev")
+        self.assertEqual(groups[0].note["en"], "Notes")
 
     def test_parses_docs_section(self):
         with TempRepo() as repo:
@@ -227,6 +236,28 @@ class DocsTests(unittest.TestCase):
         result, _, _ = docs.resolve([{"name": "Docs/guide/design/x.md"}], self.cfg())
         self.assertEqual(result[0]["group"], "auto:design")
 
+    def test_localized_group_and_entry(self):
+        previous = i18n.current()
+        try:
+            i18n.set_language("en")
+            cfg = self.cfg(
+                groups=[config.DocGroup(
+                    "dev", {"zh-TW": "開發者指南", "en": "Developer guide"}, "blue",
+                    {"zh-TW": "說明", "en": "Notes"}, 10, ("Docs/api/**",))],
+                entries=[config.DocEntry(
+                    "Docs/api/README.md",
+                    {"zh-TW": "API 總覽", "en": "API overview"},
+                    {"zh-TW": "先看這份", "en": "Start here"})])
+            result, _, _ = docs.resolve([{"name": "Docs/api/README.md"}], cfg)
+            self.assertEqual(result[0]["title"], "API overview")
+            self.assertEqual(result[0]["note"], "Start here")
+            self.assertEqual(result[0]["titles"]["zh-TW"], "API 總覽")
+            self.assertEqual(result[0]["groupTitle"], "Developer guide")
+            self.assertEqual(result[0]["groupTitles"]["zh-TW"], "開發者指南")
+            self.assertEqual(result[0]["groupNote"], "Notes")
+        finally:
+            i18n.set_language(previous)
+
     def test_unmatched_pattern_warning(self):
         cfg = self.cfg(groups=[config.DocGroup("a", "A", "blue", "", 10, ("Docs/none/**",))])
         _, _, warnings = docs.resolve([{"name": "Docs/x.md"}], cfg)
@@ -304,8 +335,12 @@ class DocsTests(unittest.TestCase):
 
 class ExportTests(unittest.TestCase):
     def test_doc_url_is_stable_and_encoded(self):
-        self.assertEqual(export._doc_url("Docs/api/README.md"), "docs/Docs/api/README.html")
-        self.assertEqual(export._doc_url("Docs/my doc.md"), "docs/Docs/my%20doc.html")
+        self.assertEqual(export._doc_url("app", "Docs/api/README.md"),
+                         "docs/app/Docs/api/README.html")
+        self.assertEqual(export._doc_url("app", "Docs/my doc.md"),
+                         "docs/app/Docs/my%20doc.html")
+        self.assertNotEqual(export._doc_url("app", "Docs/x.md"),
+                            export._doc_url("lib", "Docs/x.md"))
 
     def test_static_pages_use_stable_urls_and_split_repos(self):
         with TempRepo() as repo:
@@ -315,16 +350,18 @@ class ExportTests(unittest.TestCase):
             out = repo.root / "_site"
             export.export(out)
 
-            self.assertTrue((out / "docs" / "Docs" / "api" / "README.html").is_file())
+            self.assertTrue((out / "docs" / "app" / "Docs" / "api" / "README.html").is_file())
             self.assertFalse((out / "docs" / "0.html").exists())
 
             dev = (out / "development" / "index.html").read_text(encoding="utf-8")
-            self.assertIn("../docs/Docs/api/README.html", dev)
+            self.assertIn("../docs/app/Docs/api/README.html", dev)
             self.assertNotIn('class="commit"', dev)
             self.assertNotIn('class="sig"', dev)
 
             symbols_page = (out / "development" / "symbols.html").read_text(encoding="utf-8")
             self.assertIn('class="sig"', symbols_page)
+            self.assertIn('class="symgroup"', symbols_page)
+            self.assertIn('id="expandall"', symbols_page)
 
             repos = (out / "development" / "repos.html").read_text(encoding="utf-8")
             self.assertIn('class="commit-row"', repos)
@@ -337,12 +374,45 @@ class ExportTests(unittest.TestCase):
             self.assertIn('class="dline', commit_html)
             self.assertIn("init", commit_html)
 
-            doc = (out / "docs" / "Docs" / "api" / "README.html").read_text(encoding="utf-8")
-            self.assertIn("../../../assets/theme.css", doc)
-            self.assertIn("../../../development/", doc)
+            doc = (out / "docs" / "app" / "Docs" / "api" / "README.html").read_text(encoding="utf-8")
+            self.assertIn("../../../../assets/theme.css", doc)
+            self.assertIn("../../../../development/", doc)
             self.assertIn('class="docbadge color-blue"', doc)
             self.assertIn("doc-group-auto-dev", doc)
             self.assertIn('id="doctoc"', doc)
+            self.assertIn("app:Docs/api/README.md", doc)
+
+
+class MultiSourceExportTests(unittest.TestCase):
+    def test_same_doc_name_gets_source_specific_pages(self):
+        with TempRepo() as repo:
+            for name in ("a", "b"):
+                (repo.root / name / "Docs").mkdir(parents=True)
+                (repo.root / name / "Docs" / "x.md").write_text("# %s\n" % name,
+                                                                 encoding="utf-8")
+            (repo.root / "a" / "Docs" / "ChangeHistory.md").write_text("# History\n",
+                                                                       encoding="utf-8")
+            (repo.root / ".changelog.toml").write_text(
+                '[tool.changelog]\ntitle = "multi"\nhistory = "a/Docs/ChangeHistory.md"\n\n'
+                '[[tool.changelog.sources]]\nname = "app"\npath = "a"\n\n'
+                '[[tool.changelog.sources]]\nname = "lib"\npath = "b"\n',
+                encoding="utf-8")
+            config.reset()
+            config.load(repo.root)
+            out = repo.root / "_site"
+            export.export(out)
+
+            self.assertTrue((out / "docs" / "app" / "Docs" / "x.html").is_file())
+            self.assertTrue((out / "docs" / "lib" / "Docs" / "x.html").is_file())
+            dev = (out / "development" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("../docs/app/Docs/x.html", dev)
+            self.assertIn("../docs/lib/Docs/x.html", dev)
+            app = (out / "docs" / "app" / "Docs" / "x.html").read_text(encoding="utf-8")
+            lib = (out / "docs" / "lib" / "Docs" / "x.html").read_text(encoding="utf-8")
+            self.assertIn('CK_DOC_REPO = "app"', app)
+            self.assertIn('CK_DOC_REPO = "lib"', lib)
+            self.assertIn("app:Docs/x.md", app)
+            self.assertIn("lib:Docs/x.md", lib)
 
 
 class HistoryTests(unittest.TestCase):

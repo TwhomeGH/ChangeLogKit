@@ -25,19 +25,40 @@
 </header>
 <main>
   <p class="muted" data-i18n="static.symbols_hint">{{t.static.symbols_hint}}</p>
+  <div class="symtools">
+    <button type="button" id="expandall" data-i18n="static.expand_all">{{t.static.expand_all}}</button>
+    <button type="button" id="collapseall" data-i18n="static.collapse_all">{{t.static.collapse_all}}</button>
+  </div>
 {{content}}
 </main>
 <script>
-/* API 宣告卡片內的簽名區塊以 highlight.js 就地語法上色。 */
-for (const el of document.querySelectorAll("pre.sig")) {
-  el.innerHTML = window.HL.block(el.textContent);
+/* 只在上色／展開時處理，避免 751 個宣告一次全部渲染。 */
+function hydrate(scope) {
+  for (const el of scope.querySelectorAll("pre.sig:not([data-hydrated])")) {
+    el.innerHTML = window.HL.block(el.textContent);
+    el.dataset.hydrated = "1";
+  }
+  for (const el of scope.querySelectorAll(".doc[data-raw]:not([data-hydrated])")) {
+    el.innerHTML = window.renderDoc(el.getAttribute("data-raw"),
+      window.markdownStaticResolver(el.getAttribute("data-file") || "",
+        el.getAttribute("data-repo") || ""));
+    el.dataset.hydrated = "1";
+  }
 }
-/* 符號註釋以 markdown／JSDoc 規則就地渲染（原始註釋置於 data-raw）。
-   連結以該符號所屬檔案的路徑為基準改寫（命中文件頁否則 GitHub blob）。 */
-for (const el of document.querySelectorAll(".doc[data-raw]")) {
-  el.innerHTML = window.renderDoc(el.getAttribute("data-raw"),
-    window.markdownStaticResolver(el.getAttribute("data-file") || ""));
-}
+const symgroups = [...document.querySelectorAll("details.symgroup")];
+symgroups.forEach((group) => group.addEventListener("toggle", () => {
+  if (group.open) hydrate(group);
+}));
+symgroups.filter((group) => group.open).forEach(hydrate);
+const expandAll = document.getElementById("expandall");
+if (expandAll) expandAll.addEventListener("click", () => {
+  symgroups.forEach((group) => { group.open = true; });
+  hydrate(document);
+});
+const collapseAll = document.getElementById("collapseall");
+if (collapseAll) collapseAll.addEventListener("click", () => {
+  symgroups.forEach((group) => { group.open = false; });
+});
 const tt = document.getElementById("totop");
 if (tt) { tt.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
   addEventListener("scroll", () => { tt.hidden = window.scrollY < 400; }); }
