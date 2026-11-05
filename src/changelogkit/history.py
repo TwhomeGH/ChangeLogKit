@@ -116,7 +116,18 @@ def _norm_refs(refs):
     return [str(r).strip() for r in refs if str(r).strip()]
 
 
-def build_block(date_str, title, type_, file_, problem="", root_cause="", changes=None, refs="", time_str=""):
+def build_block(
+    date_str,
+    title,
+    type_,
+    file_,
+    problem="",
+    root_cause="",
+    changes=None,
+    refs="",
+    time_str="",
+    change_detail="",
+):
     """把表單欄位組成一段 markdown 紀錄區塊（不含尾端分隔線之外的空行正規化）。"""
     if isinstance(changes, str):
         changes = changes.splitlines()
@@ -139,14 +150,19 @@ def build_block(date_str, title, type_, file_, problem="", root_cause="", change
         if body:
             lines += ["", body]
         lines.append("")
-    # 修改：第一項當標題摘要，其餘為條列。
+    # 修改：第一項當標題摘要，其餘為條列；細節另成一段。
+    detail = str(change_detail or "").strip()
     if changes:
         summary, rest = changes[0], changes[1:]
         lines.append("### 修改 - %s" % summary)
+        if detail:
+            lines += ["", detail]
         if rest:
             lines.append("")
             lines += ["- %s" % c for c in rest]
         lines.append("")
+    elif detail:
+        lines += ["### 修改", "", detail, ""]
     if refs:
         if len(refs) == 1:
             lines.append("**相關文件**: %s" % refs[0])

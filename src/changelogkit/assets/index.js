@@ -146,7 +146,7 @@ $("#add").onclick = async () => {
   const now = new Date(), p = (n) => String(n).padStart(2, "0");
   $("#f-date").value = `${now.getFullYear()}.${p(now.getMonth() + 1)}.${p(now.getDate())}`;
   $("#f-time").value = `${p(now.getHours())}:${p(now.getMinutes())}`;
-  ["f-title", "f-file", "f-problem", "f-cause", "f-changes"].forEach((id) => ($("#" + id).value = ""));
+  ["f-title", "f-file", "f-problem", "f-cause", "f-change-summary", "f-change-detail", "f-other-changes"].forEach((id) => ($("#" + id).value = ""));
   clearRefs();
   const files = await (await fetch("/api/gitdiff")).json();
   $("#gitfiles").innerHTML = files.map((f) => `<option value="${f}">`).join("");
@@ -158,12 +158,22 @@ $("#cancel").onclick = () => ($("#modal").hidden = true);
 $("#submit").onclick = async () => {
   const title = $("#f-title").value.trim();
   if (!title) { $("#form-err").textContent = CK_T("form.err_title"); $("#f-title").focus(); return; }
+  const summary = $("#f-change-summary").value.trim();
+  const detail = $("#f-change-detail").value.trim();
+  const others = $("#f-other-changes").value.split("\n")
+    .map((s) => s.replace(/^\s*[-*]\s*/, "").trim()).filter(Boolean);
+  if (!summary && (detail || others.length)) {
+    $("#form-err").textContent = CK_T("form.err_summary");
+    $("#f-change-summary").focus();
+    return;
+  }
   $("#form-err").textContent = "";
   const body = {
     title, date: $("#f-date").value.trim(), time: $("#f-time").value.trim(), type: $("#f-type").value,
     file: $("#f-file").value.trim(),
     problem: $("#f-problem").value.trim(), root_cause: $("#f-cause").value.trim(),
-    changes: $("#f-changes").value.split("\n").map((s) => s.replace(/^\s*[-*]\s*/, "").trim()).filter(Boolean),
+    changes: [summary, ...others].filter(Boolean),
+    change_detail: detail,
     refs: collectRefs(),
   };
   await fetch("/api/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

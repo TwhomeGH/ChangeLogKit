@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.06 changelogkit 0.12.3 發佈
+
+**類型**: 改善 · **檔案**: `assets/index.html`、`assets/index.js`、`history.py`、`cli.py`、`server.py`
+
+### 問題 - Web 新增紀錄的「修改」多行語意不清，細節會被當成獨立條列
+
+### 修改 - 修改摘要／修改細節／其他修改三欄
+
+- Web 表單拆成「修改摘要」（單行）、「修改細節」（段落，保留換行）、「其他修改」（每行一項）。
+- 只填細節或其他修改、未填摘要時提示，不送出。
+- CLI 新增 `--change-detail`，可在修改摘要下補多行說明。
+- `history.build_block` 支援 `change_detail`；輸出順序為摘要 → 細節 → 其他修改條列。
+
+---
+
 ## 2026.11.06 changelogkit 0.12.2 發佈
 
 **類型**: 改善 · **檔案**: `docs.py`

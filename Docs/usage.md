@@ -7,6 +7,7 @@ changelogkit                       # 等同 serve：啟動本機網頁 GUI
 changelogkit serve [--port 8710] [--no-browser]
 changelogkit add "標題" [--type 修復] [--file a/b.swift] \
     [--problem "問題摘要"] [--cause "根因摘要"] [--change "修改摘要"（可重複）] \
+    [--change-detail "修改細節（可多行）"] \
     [--date YYYY.MM.DD] [--time HH:MM] [--ref "[說明](development/notes.md)"（可重複）]
 changelogkit list [--grep X] [--since YYYY.MM.DD] [--file X] [--type X] [--limit N]
 changelogkit show <編號|關鍵字>
@@ -16,7 +17,7 @@ changelogkit docs [--check] [--summary]        # 檢查文件分類（錯誤回 
 changelogkit docs-init                         # 印出可貼上的 docs TOML 範本
 ```
 
-`add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - …` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列。只給標題時插入空骨架。
+`add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - …` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列；`--change-detail` 在修改摘要下補一段多行說明。Web 表單分「修改摘要」（單行）、「修改細節」（段落）、「其他修改」（每行一項）。只給標題時插入空骨架。
 
 未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。
 

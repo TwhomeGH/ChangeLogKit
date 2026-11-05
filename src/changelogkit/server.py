@@ -168,6 +168,7 @@ class Handler(BaseHTTPRequestHandler):
                         body.get("changes", []),
                         body.get("refs", ""),
                         time_str=body.get("time", ""),
+                        change_detail=body.get("change_detail", ""),
                     )
                 )
                 return self._send(200, json.dumps({"ok": True}))

@@ -574,6 +574,20 @@ class HistoryTests(unittest.TestCase):
             history.insert_block(history.build_block("2026.02.01", "新紀錄", "功能", "b.swift"))
             self.assertEqual(history.parse_entries()[0]["title"], "新紀錄")
 
+    def test_build_block_change_detail(self):
+        block = history.build_block(
+            "2026.02.01",
+            "細節測試",
+            "修復",
+            "a.swift",
+            changes=["摘要", "其他項目"],
+            change_detail="細節一\n細節二",
+        )
+        self.assertIn("### 修改 - 摘要", block)
+        self.assertIn("細節一\n細節二", block)
+        self.assertIn("- 其他項目", block)
+        self.assertLess(block.index("細節一"), block.index("- 其他項目"))
+
     def test_add_cli_body(self):
         with TempRepo():
             cli.main(
@@ -590,11 +604,14 @@ class HistoryTests(unittest.TestCase):
                     "核心改動",
                     "--change",
                     "其他改動",
+                    "--change-detail",
+                    "細節一\n細節二",
                 ]
             )
             raw = history.parse_entries()[0]["raw"]
             self.assertIn("### 問題 - 症狀摘要", raw)
             self.assertIn("細節", raw)
+            self.assertIn("細節一\n細節二", raw)
             self.assertIn("### 根因 - 根因摘要", raw)
             self.assertIn("### 修改 - 核心改動", raw)
             self.assertIn("- 其他改動", raw)

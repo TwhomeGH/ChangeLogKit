@@ -24,7 +24,8 @@ def cmd_add(args):
     """插入新紀錄；日期／時間留空時帶入現在時刻。
 
     標題是唯一的位置參數；內文用 ``--problem``／``--cause``／``--change``
-    （可重複）提供，第一行會成為該節的摘要，其餘行是細節。
+    （可重複）提供，第一行會成為該節的摘要，其餘行是細節；
+    ``--change-detail`` 可在修改摘要下補一段多行說明。
     """
     date_str = args.date or history.now_parts()[0]
     time_str = args.time or history.now_parts()[1]
@@ -42,6 +43,7 @@ def cmd_add(args):
             changes=changes,
             refs=getattr(args, "ref", []),
             time_str=time_str,
+            change_detail=getattr(args, "change_detail", ""),
         )
     )
     print(i18n.t("msg.inserted", date=date_str, time=time_str, title=args.title))
@@ -226,6 +228,7 @@ def main(argv=None):
     a.add_argument("--problem", default="", help=i18n.t("cli.add.problem"))
     a.add_argument("--cause", default="", help=i18n.t("cli.add.cause"))
     a.add_argument("--change", action="append", default=[], help=i18n.t("cli.add.change"))
+    a.add_argument("--change-detail", default="", help=i18n.t("cli.add.change_detail"))
     a.add_argument("--date", default="", help=i18n.t("cli.add.date"))
     a.add_argument("--time", default="", help=i18n.t("cli.add.time"))
     a.add_argument("--ref", action="append", default=[], help=i18n.t("cli.add.ref"))
