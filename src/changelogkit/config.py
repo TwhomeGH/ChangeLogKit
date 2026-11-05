@@ -77,6 +77,7 @@ class Config:
     docs_unlisted: str = "other"  # 未分類：other／folder／hidden
     docs_auto: bool = True  # 未命中設定時依資料夾自動分類
     recent_commits: int = 20  # 開發索引列出的 commit 數（1–200）
+    project: str = ""  # 分頁標題的專案名（預設 repo 目錄名）
 
 
 def _find_root(start):
@@ -93,6 +94,7 @@ def _default_config(root):
     return Config(
         root=root,
         title=root.name,
+        project=root.name,
         history=root / DEFAULT_HISTORY,
         features=root / DEFAULT_FEATURES,
         community=root / DEFAULT_COMMUNITY,
@@ -193,6 +195,7 @@ def _from_table(root, table):
     return Config(
         root=root,
         title=table.get("title") or root.name,
+        project=str(table.get("project") or "").strip() or root.name,
         history=history,
         features=features,
         community=community,

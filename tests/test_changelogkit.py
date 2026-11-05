@@ -95,10 +95,18 @@ class ConfigTests(unittest.TestCase):
         with TempRepo() as repo:
             cfg = config.load()
             self.assertEqual(cfg.title, "測試專案")
+            self.assertEqual(cfg.project, repo.root.name)
             self.assertEqual(cfg.root, repo.root.resolve())
             self.assertEqual(cfg.history, repo.root / "Docs/ChangeHistory.md")
             self.assertEqual(cfg.community, repo.root / "Docs/community.md")
             self.assertEqual([s.name for s in cfg.sources], ["app"])
+
+    def test_project_override(self):
+        with TempRepo() as repo:
+            (repo.root / ".changelog.toml").write_text(TOML + '\nproject = "My App"\n', encoding="utf-8")
+            config.reset()
+            cfg = config.load(repo.root)
+            self.assertEqual(cfg.project, "My App")
 
     def test_doc_group_accepts_single_path_string(self):
         groups = config._doc_groups([{"id": "x", "paths": "Docs/**"}])
@@ -422,6 +430,7 @@ class ExportTests(unittest.TestCase):
 
             dev = (out / "development" / "index.html").read_text(encoding="utf-8")
             self.assertIn("../docs/app/Docs/api/README.html", dev)
+            self.assertIn("<title>%s · " % repo.root.name, dev)
             self.assertNotIn('class="commit"', dev)
             self.assertNotIn('class="sig"', dev)
 

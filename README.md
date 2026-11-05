@@ -83,7 +83,8 @@ changelogkit show 3
 
 ```toml
 [tool.changelog]
-title    = "ReplyKit 變更歷史"                    # 網頁標題
+title    = "ReplyKit 變更歷史"                    # 網頁主標題
+project  = "ReplyKit"                            # 選填：分頁標題的專案名（預設＝repo 目錄名）
 history  = "Docs/ChangeHistory.md"               # 變更歷史 markdown
 features = "Docs/development/features.json"      # 選填：功能清單
 assets   = "Scripts/changelog-overrides"         # 選填：覆寫預設網頁資產

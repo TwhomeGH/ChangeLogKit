@@ -102,7 +102,8 @@ python tools\check_version.py --tag v0.11.1
 
 ```toml
 [tool.changelog]
-title    = "My Project 變更歷史"                # 網頁標題（預設＝repo 目錄名）
+title    = "My Project 變更歷史"                # 網頁主標題（預設＝repo 目錄名）
+project  = "My Project"                        # 選填：分頁標題的專案名（預設＝repo 目錄名）
 history  = "Docs/ChangeHistory.md"             # 變更歷史 markdown
 features = "Docs/development/features.json"    # 選填：功能清單
 community = "Docs/community.md"                # 選填：關於頁的「社群與開發交流」區塊
@@ -122,7 +123,8 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 
 | 欄位 | 預設 | 說明 |
 | --- | --- | --- |
-| `title` | repo 目錄名 | 頁面標題 |
+| `title` | repo 目錄名 | 頁面主標題 |
+| `project` | repo 目錄名 | 分頁標題的專案名（`<專案> · <頁面>`） |
 | `history` | `Docs/ChangeHistory.md` | 變更歷史檔（必要） |
 | `features` | `Docs/development/features.json` | 功能清單（不存在則功能分頁留空） |
 | `community` | `Docs/community.md` | 「關於」頁的社群區塊（不存在則不顯示） |

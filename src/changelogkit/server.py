@@ -8,6 +8,7 @@
 * ``/api/*``               GUI 用的 JSON API
 """
 
+import html
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
@@ -58,6 +59,7 @@ class Handler(BaseHTTPRequestHandler):
                     "index.html",
                     i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
                     history_json=meta,
+                    project=html.escape(config.load().project),
                     **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",
@@ -76,6 +78,7 @@ class Handler(BaseHTTPRequestHandler):
                     i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
                     community=block,
                     community_json=meta,
+                    project=html.escape(config.load().project),
                     **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",

@@ -89,6 +89,12 @@
     document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
       el.placeholder = window.CK_T(el.getAttribute("data-i18n-ph"));
     });
+    /* 分頁標題：專案名固定，段落名跟著 UI 語系。 */
+    document.querySelectorAll("[data-i18n-doc]").forEach((el) => {
+      const project = el.getAttribute("data-project") || "";
+      const section = window.CK_T(el.getAttribute("data-i18n-doc"));
+      document.title = project ? `${project} · ${section}` : section;
+    });
     const btn = document.getElementById("locale");
     if (btn) { btn.textContent = "🌐 " + label(active) + " ▾"; btn.title = names.join(" / "); }
     markMenu();

@@ -389,6 +389,7 @@ def _file_page(repo, name, line):
         path=html.escape(name),
         line=str(line),
         content=content,
+        project=html.escape(config.load().project),
         i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
         **i18n.subs(),
     )
@@ -401,7 +402,10 @@ def route(path, query):
             return (
                 200,
                 assets.render(
-                    "dev.html", i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False), **i18n.subs()
+                    "dev.html",
+                    i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+                    project=html.escape(config.load().project),
+                    **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",
             )

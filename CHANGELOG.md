@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.05 changelogkit 0.11.2 發佈
+
+**類型**: 功能 · **檔案**: `config.py`、`assets/i18n.js`、`assets/*.html`、`export.py`
+
+### 問題 - 同時開多個 repo 時，瀏覽器分頁只看得到「變更歷史」／「開發索引」
+
+### 修改 - 分頁標題加上專案名
+
+- `.changelog.toml` 新增選填 `project`（預設 repo 目錄名）；分頁標題統一為 `專案 · 頁面`。
+- 動態頁（歷史／開發／關於／檔案）與靜態頁（首頁、`symbols`、`repos`、`about`、文件、commit）都套用。
+- 切換 UI 語系時只換頁面名稱，專案名保留。
+- changelogkit 自身設定 `project = "changelogkit"`。
+
+---
+
 ## 2026.10.29 changelogkit 0.11.1 發佈
 
 **類型**: 修正／維護 · **檔案**: `index.py`、`pyproject.toml`、`tools/check_version.py`、`.github/workflows/*`、`CHANGELOG.md`
