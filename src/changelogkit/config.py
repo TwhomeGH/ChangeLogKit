@@ -78,6 +78,7 @@ class Config:
     docs_auto: bool = True  # 未命中設定時依資料夾自動分類
     recent_commits: int = 20  # 開發索引列出的 commit 數（1–200）
     project: str = ""  # 分頁標題的專案名（預設 repo 目錄名）
+    todo: Path | None = None  # 選填：待辦 markdown（存在才顯示入口）
 
 
 def _find_root(start):
@@ -95,6 +96,7 @@ def _default_config(root):
         root=root,
         title=root.name,
         project=root.name,
+        todo=None,
         history=root / DEFAULT_HISTORY,
         features=root / DEFAULT_FEATURES,
         community=root / DEFAULT_COMMUNITY,
@@ -196,6 +198,7 @@ def _from_table(root, table):
         root=root,
         title=table.get("title") or root.name,
         project=str(table.get("project") or "").strip() or root.name,
+        todo=(_resolve(root, str(table["todo"]).strip()) if str(table.get("todo") or "").strip() else None),
         history=history,
         features=features,
         community=community,

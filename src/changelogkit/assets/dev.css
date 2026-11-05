@@ -174,3 +174,29 @@ h3.group {
   box-shadow: var(--shadow);
 }
 #totop:hover { color: var(--accent); border-color: var(--accent) }
+
+/* 待辦頁：進度、篩選與唯讀任務清單。 */
+.todo-main { max-width: 900px; margin: 0 auto; padding: 18px 16px 64px }
+.todo-head { margin-top: 0 }
+.todo-progress { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden }
+.todo-progress span { display: block; height: 100%; background: var(--accent) }
+.todo-meta { margin-top: 8px; color: var(--mut); font-size: 13px }
+.todo-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 }
+.todo-tools input[type="search"] { width: min(320px, 100%) }
+.todo-section { margin: 16px 0 }
+.todo-section h2 { font-size: 16px; margin: 0 0 6px }
+.todo-section .count { color: var(--mut); font-size: 13px; font-weight: 400 }
+.todo-section ul { list-style: none; margin: 0; padding: 0 }
+.todo-item { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid var(--line2) }
+.todo-item:last-child { border-bottom: 0 }
+.todo-item .tick { flex: 0 0 18px; width: 18px; height: 18px; border: 1px solid var(--line); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; color: var(--accent-fg); margin-top: 2px }
+.todo-item.done .tick { background: var(--accent); border-color: var(--accent) }
+.todo-item.done .label { color: var(--mut); text-decoration: line-through }
+.todo-item .label { overflow-wrap: anywhere }
+.todo-item.depth-1 { margin-left: 18px }
+.todo-item.depth-2 { margin-left: 36px }
+.todo-item.depth-3 { margin-left: 54px }
+.todo-item.depth-4 { margin-left: 72px }
+.todo-item.depth-5 { margin-left: 90px }
+/* hidden 屬性要勝過 .todo-item 的 display:flex，否則篩選只改屬性、畫面不變。 */
+.todo-item[hidden], .todo-section[hidden], #todo-empty[hidden] { display: none }

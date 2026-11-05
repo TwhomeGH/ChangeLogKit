@@ -60,6 +60,7 @@
   "msg.community_exists": "Community file already exists (kept): {path}",
 
   "nav.history": "Changelog",
+  "nav.todo": "TODO",
   "nav.dev": "Dev index",
   "nav.about": "About",
   "nav.docs": "Documents",
@@ -107,6 +108,14 @@
   "form.err_title": "Title is required",
 
   "dev.title": "Dev index",
+  "todo.title": "TODO",
+  "todo.all": "All",
+  "todo.open": "Open",
+  "todo.done": "Done",
+  "todo.search": "Search todos…",
+  "todo.source": "View source",
+  "todo.empty": "No matching todos.",
+  "todo.untitled": "Other",
   "dev.hint": "Feature status comes from the catalog; API is source scanning, not DocC. Search covers both and documents.",
   "dev.search": "Search audio, RTMP, function names...",
   "dev.repo_all": "All sources",

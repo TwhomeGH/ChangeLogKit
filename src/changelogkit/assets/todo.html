@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="{{lang_html}}"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-doc="todo.title" data-project="{{project}}">{{project}} · {{t.todo.title}}</title>
+<script src="/assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script src="/assets/i18n.js"></script>
+<script src="/assets/highlight.js"></script>
+<script src="/assets/markdown.js"></script>
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/dev.css">
+</head><body>
+<header class="appbar">
+  <h1 data-i18n="todo.title">{{t.todo.title}}</h1>
+  <a href="/" data-i18n="nav.history">{{t.nav.history}}</a>
+  <a href="/development" data-i18n="nav.dev">{{t.nav.dev}}</a>
+  <a href="/about" data-i18n="nav.about">{{t.nav.about}}</a>
+  <span class="spacer"></span>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
+</header>
+<main class="todo-main">
+  <section class="card todo-head">
+    <div class="todo-progress" aria-hidden="true"><span style="width: {{pct}}%"></span></div>
+    <div class="todo-meta">
+      <span data-i18n="todo.done">{{t.todo.done}}</span> {{done}} / {{total}}
+      · <a href="{{source_url}}" data-i18n="todo.source">{{t.todo.source}}</a>
+    </div>
+  </section>
+  <div class="todo-tools">
+    <input id="todo-search" type="search" placeholder="{{t.todo.search}}"
+           data-i18n-ph="todo.search" aria-label="{{t.todo.search}}" data-i18n-aria="todo.search">
+    <button type="button" class="chip on" data-filter="all"><span data-i18n="todo.all">{{t.todo.all}}</span> ({{total}})</button>
+    <button type="button" class="chip" data-filter="open"><span data-i18n="todo.open">{{t.todo.open}}</span> ({{open_count}})</button>
+    <button type="button" class="chip" data-filter="done"><span data-i18n="todo.done">{{t.todo.done}}</span> ({{done}})</button>
+  </div>
+{{content}}
+  <p id="todo-empty" class="empty" data-i18n="todo.empty" hidden></p>
+</main>
+<script>
+for (const el of document.querySelectorAll(".todo-item .label[data-raw]")) {
+  el.innerHTML = window.renderInline(el.getAttribute("data-raw"));
+}
+const todoItems = [...document.querySelectorAll(".todo-item")];
+const todoSections = [...document.querySelectorAll(".todo-section")];
+const todoSearch = document.getElementById("todo-search");
+const todoEmpty = document.getElementById("todo-empty");
+let todoFilter = "all";
+const todoButtons = [...document.querySelectorAll("[data-filter]")];
+function applyTodoFilter() {
+  const q = todoSearch.value.trim().toLowerCase();
+  let visible = 0;
+  for (const item of todoItems) {
+    const done = item.dataset.done === "true";
+    const hit = (todoFilter === "all" || (todoFilter === "open" ? !done : done))
+      && (!q || item.textContent.toLowerCase().includes(q));
+    item.hidden = !hit;
+    if (hit) visible++;
+  }
+  for (const section of todoSections) {
+    section.hidden = ![...section.querySelectorAll(".todo-item")].some((item) => !item.hidden);
+  }
+  todoEmpty.hidden = visible !== 0;
+}
+todoButtons.forEach((button) => button.addEventListener("click", () => {
+  todoFilter = button.dataset.filter;
+  todoButtons.forEach((other) => other.classList.toggle("on", other === button));
+  applyTodoFilter();
+}));
+todoSearch.addEventListener("input", applyTodoFilter);
+applyTodoFilter();
+</script>
+</body></html>

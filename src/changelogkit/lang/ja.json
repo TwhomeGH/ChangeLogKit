@@ -60,6 +60,7 @@
   "msg.community_exists": "コミュニティファイルは既存のため保持しました：{path}",
 
   "nav.history": "変更履歴",
+  "nav.todo": "TODO",
   "nav.dev": "開発インデックス",
   "nav.about": "このツールについて",
   "nav.docs": "ドキュメント",
@@ -107,6 +108,14 @@
   "form.err_title": "タイトルを入力してください",
 
   "dev.title": "開発インデックス",
+  "todo.title": "TODO",
+  "todo.all": "すべて",
+  "todo.open": "未完了",
+  "todo.done": "完了",
+  "todo.search": "TODO を検索…",
+  "todo.source": "元ファイルを表示",
+  "todo.empty": "一致する TODO はありません。",
+  "todo.untitled": "その他",
   "dev.hint": "機能の状態はカタログで管理。API はソースの宣言位置（DocC ではない）。検索はシンボルとドキュメントを対象にします。",
   "dev.search": "音声、RTMP、関数名を検索…",
   "dev.repo_all": "すべてのソース",

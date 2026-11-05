@@ -24,7 +24,7 @@ _DEV_SPEC = importlib.util.spec_from_file_location(
 dev_tool = importlib.util.module_from_spec(_DEV_SPEC)
 _DEV_SPEC.loader.exec_module(dev_tool)
 
-from changelogkit import assets, backfill, cli, community, config, docs, export, history, i18n, index  # noqa: E402
+from changelogkit import assets, backfill, cli, community, config, docs, export, history, i18n, index, todo  # noqa: E402
 
 SAMPLE = """# 變更歷史
 
@@ -101,6 +101,14 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(cfg.community, repo.root / "Docs/community.md")
             self.assertEqual([s.name for s in cfg.sources], ["app"])
 
+    def test_todo_path(self):
+        with TempRepo() as repo:
+            self.assertIsNone(config.load().todo)
+            (repo.root / ".changelog.toml").write_text(TOML + '\ntodo = "TODO.md"\n', encoding="utf-8")
+            config.reset()
+            cfg = config.load(repo.root)
+            self.assertEqual(cfg.todo, repo.root / "TODO.md")
+
     def test_project_override(self):
         with TempRepo() as repo:
             (repo.root / ".changelog.toml").write_text(TOML + '\nproject = "My App"\n', encoding="utf-8")
@@ -174,6 +182,25 @@ class DevToolTests(unittest.TestCase):
             nested = repo.root / "Docs" / "development"
             nested.mkdir()
             self.assertEqual(dev_tool.find_config(nested), repo.root / ".changelog.toml")
+
+
+class TodoTests(unittest.TestCase):
+    def test_parse_and_render(self):
+        text = "# T\n\n## A\n- [ ] one\n  - [x] two\n```\n- [ ] ignored\n```\n## B\n- [X] three\n"
+        data = todo.parse_text(text)
+        self.assertEqual(data["total"], 3)
+        self.assertEqual(data["done"], 2)
+        self.assertEqual(data["open"], 1)
+        self.assertEqual([section["title"] for section in data["sections"]], ["A", "B"])
+        out = todo.render(data)
+        self.assertIn("todo-item done", out)
+        self.assertIn("(1/1)", out)
+        self.assertNotIn("ignored", out)
+
+    def test_missing_file_is_empty(self):
+        data = todo.parse("does-not-exist.md")
+        self.assertEqual(data["total"], 0)
+        self.assertEqual(todo.render(data), "")
 
 
 class VersionCheckTests(unittest.TestCase):
@@ -416,6 +443,24 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(export._doc_url("app", "Docs/api/README.md"), "docs/app/Docs/api/README.html")
         self.assertEqual(export._doc_url("app", "Docs/my doc.md"), "docs/app/Docs/my%20doc.html")
         self.assertNotEqual(export._doc_url("app", "Docs/x.md"), export._doc_url("lib", "Docs/x.md"))
+
+    def test_static_todo_page(self):
+        with TempRepo() as repo:
+            (repo.root / "TODO.md").write_text("# TODO\n\n## A\n- [ ] one\n- [x] two\n", encoding="utf-8")
+            (repo.root / ".changelog.toml").write_text(TOML + '\ntodo = "TODO.md"\n', encoding="utf-8")
+            config.reset()
+            config.load(repo.root)
+            out = repo.root / "_site"
+            export.export(out)
+
+            page = (out / "development" / "todo.html").read_text(encoding="utf-8")
+            self.assertIn("(1/2)", page)
+            self.assertIn("todo-item done", page)
+            self.assertIn("../development/todo.html", page)
+            self.assertIn("../docs/app/TODO.html", page)
+            self.assertTrue((out / "docs" / "app" / "TODO.html").is_file())
+            dev = (out / "development" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("../development/todo.html", dev)
 
     def test_static_pages_use_stable_urls_and_split_repos(self):
         with TempRepo() as repo:

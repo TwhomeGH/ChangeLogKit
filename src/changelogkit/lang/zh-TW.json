@@ -60,6 +60,7 @@
   "msg.community_exists": "社群檔已存在（保留未覆蓋）：{path}",
 
   "nav.history": "變更歷史",
+  "nav.todo": "待辦",
   "nav.dev": "開發索引",
   "nav.about": "關於",
   "nav.docs": "文件",
@@ -107,6 +108,14 @@
   "form.err_title": "請填標題",
 
   "dev.title": "開發索引",
+  "todo.title": "待辦",
+  "todo.all": "全部",
+  "todo.open": "未完成",
+  "todo.done": "已完成",
+  "todo.search": "搜尋待辦…",
+  "todo.source": "查看原始檔",
+  "todo.empty": "沒有符合的待辦。",
+  "todo.untitled": "其他",
   "dev.hint": "功能接入狀態由清單維護；API 是原始碼宣告定位，尚非 DocC。搜尋涵蓋符號與文件內容。",
   "dev.search": "搜尋音訊、RTMP、函數名稱…",
   "dev.repo_all": "全部來源",

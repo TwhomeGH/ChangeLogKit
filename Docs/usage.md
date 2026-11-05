@@ -89,6 +89,7 @@ python tools\check_version.py --tag v0.11.1
 | `development/symbols.html` | API 宣告（依檔案折疊；展開時才上色） |
 | `development/repos.html` | 近期改動列表（hash／標題／檔案） |
 | `development/commits/<repo>/<hash>.html` | 單筆 commit 的完整 diff（按需載入） |
+| `development/todo.html` | 待辦清單（有設定 `todo` 且有項目時才產生） |
 | `docs/<來源>/<原路徑>.html` | 每份文件的穩定頁面（例：`docs/app/Docs/api/README.html`） |
 | `about/index.html` | 關於 |
 
@@ -105,6 +106,7 @@ python tools\check_version.py --tag v0.11.1
 title    = "My Project 變更歷史"                # 網頁主標題（預設＝repo 目錄名）
 project  = "My Project"                        # 選填：分頁標題的專案名（預設＝repo 目錄名）
 history  = "Docs/ChangeHistory.md"             # 變更歷史 markdown
+todo     = "TODO.md"                           # 選填：待辦 markdown（顯示「待辦」入口）
 features = "Docs/development/features.json"    # 選填：功能清單
 community = "Docs/community.md"                # 選填：關於頁的「社群與開發交流」區塊
 assets   = "Scripts/changelog-overrides"       # 選填：覆寫預設網頁資產
@@ -126,6 +128,7 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 | `title` | repo 目錄名 | 頁面主標題 |
 | `project` | repo 目錄名 | 分頁標題的專案名（`<專案> · <頁面>`） |
 | `history` | `Docs/ChangeHistory.md` | 變更歷史檔（必要） |
+| `todo` | 無 | 待辦 markdown（設定且存在才顯示「待辦」入口） |
 | `features` | `Docs/development/features.json` | 功能清單（不存在則功能分頁留空） |
 | `community` | `Docs/community.md` | 「關於」頁的社群區塊（不存在則不顯示） |
 | `assets` | 無 | 覆寫資產目錄 |
@@ -137,6 +140,17 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 > glob 語法：`**` 跨目錄、`*` 單層、`?` 單字元。索引預設只看版本控管（含未忽略）的檔案；`include` 用於**選擇性**納入被忽略者（例如只看幾個已安裝套件的型別定義），`exclude` 用來排除建置產物。
 >
 > API 卡片去重：同一個 repo、同目錄且同檔名基底的 `.d.ts` 與 `.js`／`.mjs`／`.cjs`，若同名同種類，只保留 `.d.ts`；不同目錄或不同種類（例如 interface／class）不會互刪。
+
+## 待辦（TODO）
+
+在 `.changelog.toml` 指定：
+
+```toml
+[tool.changelog]
+todo = "TODO.md"
+```
+
+設定且檔案存在時，導覽列會出現「待辦」入口。頁面解析 `- [ ]`／`- [x]`（含縮排），忽略程式碼區塊；提供完成進度、全部／未完成／已完成篩選、搜尋，並可連回原始檔。靜態站對應 `development/todo.html`。
 
 ## 文件分類（Documents 分頁）
 

@@ -161,6 +161,11 @@
   window.renderMarkdown = (text, resolveHref) =>
     render(text, typeof resolveHref === "function" ? resolveHref : IDENTITY, new Set());
 
+  /* 單行／行內 markdown（待辦項目用）；不做區塊包裝。 */
+  window.renderInline = (text, resolveHref) =>
+    inline(String(text == null ? "" : text),
+           typeof resolveHref === "function" ? resolveHref : IDENTITY);
+
   /* 把容器內的 h2–h4 建成目錄（h1 是頁面標題，h5+ 太細）；少於兩項就隱藏。 */
   window.renderTOC = function (content, nav, panel) {
     if (!content || !nav) return false;

@@ -11,9 +11,9 @@
 import html
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
-from . import assets, buildinfo, community, config, history, i18n, index
+from . import assets, buildinfo, community, config, history, i18n, index, todo
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -60,7 +60,32 @@ class Handler(BaseHTTPRequestHandler):
                     i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
                     history_json=meta,
                     project=html.escape(config.load().project),
+                    todo_link=index.todo_link(),
                     **i18n.subs(),
+                ),
+                "text/html; charset=utf-8",
+            )
+        if u.path == "/todo":
+            cfg = config.load()
+            if not cfg.todo or not cfg.todo.is_file():
+                return self._send(404, b"Not found", "text/plain; charset=utf-8")
+            data = todo.parse(cfg.todo)
+            rel = index.rel_path(cfg.todo) or cfg.todo.name
+            source = "/development/file?" + urlencode({"repo": index.default_repo(), "path": rel})
+            pct = round(data["done"] / data["total"] * 100) if data["total"] else 0
+            return self._send(
+                200,
+                assets.render(
+                    "todo.html",
+                    **i18n.subs(),
+                    i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+                    project=html.escape(cfg.project),
+                    content=todo.render(data),
+                    total=str(data["total"]),
+                    done=str(data["done"]),
+                    open_count=str(data["open"]),
+                    pct=str(pct),
+                    source_url=html.escape(source),
                 ),
                 "text/html; charset=utf-8",
             )
@@ -79,6 +104,7 @@ class Handler(BaseHTTPRequestHandler):
                     community=block,
                     community_json=meta,
                     project=html.escape(config.load().project),
+                    todo_link=index.todo_link(),
                     **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",

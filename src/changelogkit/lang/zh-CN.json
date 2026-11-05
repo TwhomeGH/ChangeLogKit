@@ -60,6 +60,7 @@
   "msg.community_exists": "社群文件已存在（保留未覆盖）：{path}",
 
   "nav.history": "变更历史",
+  "nav.todo": "待办",
   "nav.dev": "开发索引",
   "nav.about": "关于",
   "nav.docs": "文档",
@@ -107,6 +108,14 @@
   "form.err_title": "请填标题",
 
   "dev.title": "开发索引",
+  "todo.title": "待办",
+  "todo.all": "全部",
+  "todo.open": "未完成",
+  "todo.done": "已完成",
+  "todo.search": "搜索待办…",
+  "todo.source": "查看源文件",
+  "todo.empty": "没有符合条件的待办。",
+  "todo.untitled": "其他",
   "dev.hint": "功能接入状态由清单维护；API 是源代码声明定位，尚非 DocC。搜索涵盖符号与文档内容。",
   "dev.search": "搜索音频、RTMP、函数名称…",
   "dev.repo_all": "全部来源",

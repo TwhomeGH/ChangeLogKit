@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026.11.06 changelogkit 0.12.0 發佈
+
+**類型**: 功能 · **檔案**: `todo.py`、`config.py`、`assets/todo.html`、`assets/static_todo.html`、`server.py`、`export.py`
+
+### 問題 - 待辦只存在 `TODO.md`，沒有入口與進度檢視
+
+### 修改 - 可設定的待辦頁
+
+- `.changelog.toml` 新增選填 `todo = "TODO.md"`；設定且檔案存在時，導覽列顯示「待辦」。
+- 動態 `/todo` 與靜態 `development/todo.html`：解析 `- [ ]`／`- [x]`（忽略程式碼區塊），顯示進度、全部／未完成／已完成、搜尋、原始檔連結；任務文字支援行內 Markdown。
+- 修正篩選：`.todo-item` 的 `display: flex` 會蓋過 `hidden`，以 `[hidden]` 規則修正。
+
+---
+
 ## 2026.11.05 changelogkit 0.11.2 發佈
 
 **類型**: 功能 · **檔案**: `config.py`、`assets/i18n.js`、`assets/*.html`、`export.py`

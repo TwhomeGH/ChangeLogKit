@@ -19,6 +19,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from . import assets, buildinfo, community, config, docs as docmeta, history, i18n, index
+from . import todo as todo_meta
 
 # 需要複製到輸出 assets/ 的檔案（其餘為 server 動態用，不需要）。
 STATIC_ASSETS = ("theme.css", "theme.js", "i18n.js", "dev.css", "file.css", "highlight.js", "markdown.js")
@@ -281,7 +282,7 @@ def _render_repo_list(repos):
     return "\n".join(parts)
 
 
-def _write_commits(out, repos, footer):
+def _write_commits(out, repos, footer, todo_link=None):
     """為每筆 commit 產生獨立頁面（完整 diff，不塞進列表頁）。"""
     for repo in repos:
         for commit in repo["commits"]:
@@ -311,6 +312,7 @@ def _write_commits(out, repos, footer):
                     diff=diff,
                     footer=footer,
                     base=base,
+                    todo_link=(todo_link(base) if todo_link else ""),
                 ),
                 encoding="utf-8",
             )
@@ -345,7 +347,7 @@ def _render_symbols_page(data, blob_base):
     )
 
 
-def _write_docs(out, documents, footer, doc_pages_json, blob_base_json):
+def _write_docs(out, documents, footer, doc_pages_json, blob_base_json, todo_link=None):
     """為每份 Markdown 文件產生穩定的靜態頁 ``docs/<path>.html``。
 
     巢狀路徑要依深度改寫 ``base``／``site_base``，文件內的相對連結才會
@@ -385,13 +387,23 @@ def _write_docs(out, documents, footer, doc_pages_json, blob_base_json):
                 blob_base=blob_base_json,
                 doc_path=json.dumps(doc["name"], ensure_ascii=False),
                 doc_repo=json.dumps(doc.get("repo", ""), ensure_ascii=False),
+                todo_link=(todo_link(base) if todo_link else ""),
             ),
             encoding="utf-8",
         )
 
 
 def _write_about(
-    out, cfg, data, footer, slug, community_html, doc_pages_json, blob_base_json, community_path
+    out,
+    cfg,
+    data,
+    footer,
+    slug,
+    community_html,
+    doc_pages_json,
+    blob_base_json,
+    community_path,
+    todo_link_html="",
 ):
     """產生靜態「關於」頁 ``about/index.html``：changelogkit 版本、來源 commit、UI 語系、社群區塊。"""
     head = data["repos"][0]["head"] if data["repos"] else ""
@@ -428,6 +440,7 @@ def _write_about(
             blob_base=blob_base_json,
             doc_path=json.dumps(community_path, ensure_ascii=False),
             doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
+            todo_link=todo_link_html,
         ),
         encoding="utf-8",
     )
@@ -467,6 +480,23 @@ def export(out_dir, branch="main"):
     )
     blob_base_json = json.dumps(blob_base, ensure_ascii=False)
     hist_rel = index.rel_path(cfg.history) or ""
+    todo_data = (
+        todo_meta.parse(cfg.todo)
+        if cfg.todo and cfg.todo.is_file()
+        else {"sections": [], "total": 0, "done": 0, "open": 0}
+    )
+    if not todo_meta.has_tasks(todo_data):
+        todo_data = {"sections": [], "total": 0, "done": 0, "open": 0}
+    todo_enabled = bool(todo_data["total"])
+
+    def todo_link(base):
+        """靜態頁導覽的待辦連結；沒有待辦時空字串。"""
+        if not todo_enabled:
+            return ""
+        return '<a href="%sdevelopment/todo.html" data-i18n="nav.todo">%s</a>' % (
+            base,
+            _esc(i18n.t("nav.todo")),
+        )
 
     hist_content, count = _render_history(cfg)
     (out / "index.html").write_text(
@@ -483,6 +513,7 @@ def export(out_dir, branch="main"):
             blob_base=blob_base_json,
             doc_path=json.dumps(hist_rel, ensure_ascii=False),
             doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
+            todo_link=todo_link(""),
         ),
         encoding="utf-8",
     )
@@ -504,6 +535,7 @@ def export(out_dir, branch="main"):
             blob_base=blob_base_json,
             doc_path=json.dumps(""),
             doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
+            todo_link=todo_link("../"),
         ),
         encoding="utf-8",
     )
@@ -524,6 +556,7 @@ def export(out_dir, branch="main"):
             doc_pages=doc_pages_json,
             blob_base=blob_base_json,
             doc_path=json.dumps(""),
+            todo_link=todo_link("../"),
         ),
         encoding="utf-8",
     )
@@ -544,12 +577,33 @@ def export(out_dir, branch="main"):
             base="../",
             count=str(cfg.recent_commits),
             more=more,
+            todo_link=todo_link("../"),
         ),
         encoding="utf-8",
     )
-    _write_commits(out, data["repos"], footer)
+    _write_commits(out, data["repos"], footer, todo_link)
+    if todo_enabled:
+        todo_rel = index.rel_path(cfg.todo) or cfg.todo.name
+        pct = round(todo_data["done"] / todo_data["total"] * 100) if todo_data["total"] else 0
+        (out / "development" / "todo.html").write_text(
+            assets.render(
+                "static_todo.html",
+                **i18n.subs(),
+                title=_esc(cfg.title),
+                project=_esc(cfg.project),
+                content=todo_meta.render(todo_data),
+                total=str(todo_data["total"]),
+                done=str(todo_data["done"]),
+                open_count=str(todo_data["open"]),
+                pct=str(pct),
+                source_url=_esc("../" + _doc_url(index.default_repo(), todo_rel)),
+                footer=footer,
+                base="../",
+            ),
+            encoding="utf-8",
+        )
 
-    _write_docs(out, data["documents"], footer, doc_pages_json, blob_base_json)
+    _write_docs(out, data["documents"], footer, doc_pages_json, blob_base_json, todo_link)
     community_html = community.html_block(community.load(), i18n.t("about.community_title"))
     _write_about(
         out,
@@ -561,6 +615,7 @@ def export(out_dir, branch="main"):
         doc_pages_json,
         blob_base_json,
         index.rel_path(cfg.community) or "",
+        todo_link("../"),
     )
 
     (out / ".nojekyll").write_text("", encoding="utf-8")

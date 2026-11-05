@@ -17,7 +17,7 @@ import subprocess
 from pathlib import Path, PurePosixPath
 from urllib.parse import parse_qs
 
-from . import assets, config, docs as docmeta, i18n
+from . import assets, config, docs as docmeta, i18n, todo as todo_meta
 from .globs import regex as _glob_re
 from .scanners import SUPPORTED_LANGUAGES, SUPPORTED_SUFFIXES, scan_symbols
 from .scanners.common import link
@@ -374,6 +374,16 @@ def snapshot():
     return data
 
 
+def todo_link():
+    """有設定 TODO 且有項目時，回傳導覽列連結；否則空字串。"""
+    cfg = config.load()
+    if not cfg.todo or not cfg.todo.is_file():
+        return ""
+    if not todo_meta.has_tasks(todo_meta.parse(cfg.todo)):
+        return ""
+    return '<a href="/todo" data-i18n="nav.todo">%s</a>' % html.escape(i18n.t("nav.todo"))
+
+
 def _file_page(repo, name, line):
     """組出檔案檢視頁（含行號、目標行與語法上色用的 .code 容器）。"""
     source = safe_file(repo, name).read_text(encoding="utf-8", errors="replace")
@@ -390,6 +400,7 @@ def _file_page(repo, name, line):
         line=str(line),
         content=content,
         project=html.escape(config.load().project),
+        todo_link=todo_link(),
         i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
         **i18n.subs(),
     )
@@ -405,6 +416,7 @@ def route(path, query):
                     "dev.html",
                     i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
                     project=html.escape(config.load().project),
+                    todo_link=todo_link(),
                     **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",
