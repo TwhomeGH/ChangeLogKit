@@ -106,7 +106,7 @@ python tools\check_version.py --tag v0.11.1
 title    = "My Project 變更歷史"                # 網頁主標題（預設＝repo 目錄名）
 project  = "My Project"                        # 選填：分頁標題的專案名（預設＝repo 目錄名）
 history  = "Docs/ChangeHistory.md"             # 變更歷史 markdown
-todo     = "TODO.md"                           # 選填：待辦 markdown（顯示「待辦」入口）
+todo     = "TODO.md"                           # 選填；預設自動偵測 TODO.md
 features = "Docs/development/features.json"    # 選填：功能清單
 community = "Docs/community.md"                # 選填：關於頁的「社群與開發交流」區塊
 assets   = "Scripts/changelog-overrides"       # 選填：覆寫預設網頁資產
@@ -128,7 +128,7 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 | `title` | repo 目錄名 | 頁面主標題 |
 | `project` | repo 目錄名 | 分頁標題的專案名（`<專案> · <頁面>`） |
 | `history` | `Docs/ChangeHistory.md` | 變更歷史檔（必要） |
-| `todo` | 無 | 待辦 markdown（設定且存在才顯示「待辦」入口） |
+| `todo` | 自動偵測 `TODO.md`（root／`Docs`） | 待辦 markdown；指定路徑可覆寫，`false` 可關閉 |
 | `features` | `Docs/development/features.json` | 功能清單（不存在則功能分頁留空） |
 | `community` | `Docs/community.md` | 「關於」頁的社群區塊（不存在則不顯示） |
 | `assets` | 無 | 覆寫資產目錄 |
@@ -143,14 +143,15 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 
 ## 待辦（TODO）
 
-在 `.changelog.toml` 指定：
+預設會自動找 repo 根目錄的 `TODO.md`（大小寫不拘），其次 `Docs/TODO.md`／`docs/TODO.md`；找到就顯示「待辦」入口，不需要設定。要指定其他路徑或關閉：
 
 ```toml
 [tool.changelog]
-todo = "TODO.md"
+todo = "Docs/TODO.md"   # 指定；找不到就不顯示
+# todo = false          # 有 TODO.md 但不想顯示時
 ```
 
-設定且檔案存在時，導覽列會出現「待辦」入口。頁面解析 `- [ ]`／`- [x]`（含縮排），忽略程式碼區塊；提供完成進度、全部／未完成／已完成篩選、搜尋，並可連回原始檔。靜態站對應 `development/todo.html`。
+頁面解析 `- [ ]`／`- [x]`（含縮排），忽略程式碼區塊；提供完成進度、全部／未完成／已完成篩選、搜尋，並可連回原始檔。靜態站對應 `development/todo.html`。
 
 ## 文件分類（Documents 分頁）
 

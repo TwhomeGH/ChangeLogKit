@@ -96,7 +96,7 @@ def _default_config(root):
         root=root,
         title=root.name,
         project=root.name,
-        todo=None,
+        todo=_auto_todo(root),
         history=root / DEFAULT_HISTORY,
         features=root / DEFAULT_FEATURES,
         community=root / DEFAULT_COMMUNITY,
@@ -110,6 +110,26 @@ def _resolve(root, value):
     """把設定中的相對路徑接到 root，並展開 ``${ENV}``。"""
     path = Path(os.path.expandvars(os.path.expanduser(str(value))))
     return path if path.is_absolute() else root / path
+
+
+def _find_named(directory, name):
+    """在單一目錄找檔名（大小寫不拘）；找不到回 None。"""
+    try:
+        for entry in directory.iterdir():
+            if entry.is_file() and entry.name.lower() == name.lower():
+                return entry
+    except OSError:
+        pass
+    return None
+
+
+def _auto_todo(root):
+    """沒有設定時自動找 ``TODO.md``：repo 根目錄 → ``Docs`` → ``docs``。"""
+    for directory in (root, root / "Docs", root / "docs"):
+        found = _find_named(directory, "todo.md")
+        if found:
+            return found
+    return None
 
 
 def _text(value):
@@ -194,11 +214,18 @@ def _from_table(root, table):
     except (TypeError, ValueError):
         recent = 20
     recent = max(1, min(recent, 200))
+    todo_value = table.get("todo", None)
+    if todo_value is False:
+        todo = None
+    elif isinstance(todo_value, str) and todo_value.strip():
+        todo = _resolve(root, todo_value.strip())
+    else:
+        todo = _auto_todo(root)
     return Config(
         root=root,
         title=table.get("title") or root.name,
         project=str(table.get("project") or "").strip() or root.name,
-        todo=(_resolve(root, str(table["todo"]).strip()) if str(table.get("todo") or "").strip() else None),
+        todo=todo,
         history=history,
         features=features,
         community=community,

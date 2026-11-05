@@ -104,10 +104,25 @@ class ConfigTests(unittest.TestCase):
     def test_todo_path(self):
         with TempRepo() as repo:
             self.assertIsNone(config.load().todo)
+
+            (repo.root / "TODO.md").write_text("# TODO\n", encoding="utf-8")
+            config.reset()
+            self.assertEqual(config.load(repo.root).todo, repo.root / "TODO.md")
+
+            (repo.root / "TODO.md").unlink()
+            (repo.root / "Docs" / "TODO.md").write_text("# TODO\n", encoding="utf-8")
+            config.reset()
+            self.assertEqual(config.load(repo.root).todo, repo.root / "Docs" / "TODO.md")
+            (repo.root / "Docs" / "TODO.md").unlink()
+
+            (repo.root / "todo.md").write_text("# TODO\n", encoding="utf-8")
+            (repo.root / ".changelog.toml").write_text(TOML + "\ntodo = false\n", encoding="utf-8")
+            config.reset()
+            self.assertIsNone(config.load(repo.root).todo)
+
             (repo.root / ".changelog.toml").write_text(TOML + '\ntodo = "TODO.md"\n', encoding="utf-8")
             config.reset()
-            cfg = config.load(repo.root)
-            self.assertEqual(cfg.todo, repo.root / "TODO.md")
+            self.assertEqual(config.load(repo.root).todo, repo.root / "TODO.md")
 
     def test_project_override(self):
         with TempRepo() as repo:
@@ -447,7 +462,6 @@ class ExportTests(unittest.TestCase):
     def test_static_todo_page(self):
         with TempRepo() as repo:
             (repo.root / "TODO.md").write_text("# TODO\n\n## A\n- [ ] one\n- [x] two\n", encoding="utf-8")
-            (repo.root / ".changelog.toml").write_text(TOML + '\ntodo = "TODO.md"\n', encoding="utf-8")
             config.reset()
             config.load(repo.root)
             out = repo.root / "_site"

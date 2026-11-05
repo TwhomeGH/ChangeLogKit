@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026.11.06 changelogkit 0.12.1 發佈
+
+**類型**: 改善 · **檔案**: `config.py`、`Docs/usage.md`、`README.md`
+
+### 問題 - 每個要顯示待辦的 repo 都得手動加 `todo = "TODO.md"`
+
+### 修改 - TODO 自動偵測
+
+- 未設定 `todo` 時自動找根目錄 `TODO.md`（大小寫不拘）→ `Docs/TODO.md` → `docs/TODO.md`。
+- `todo = "..."` 可覆寫；`todo = false` 可關閉。
+- changelogkit 自己的設定移除多餘的 `todo`。
+
+---
+
 ## 2026.11.06 changelogkit 0.12.0 發佈
 
 **類型**: 功能 · **檔案**: `todo.py`、`config.py`、`assets/todo.html`、`assets/static_todo.html`、`server.py`、`export.py`

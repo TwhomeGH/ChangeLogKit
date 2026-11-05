@@ -3,7 +3,6 @@
 title    = "changelogkit 變更歷史"
 project  = "changelogkit"
 history  = "CHANGELOG.md"
-todo     = "TODO.md"
 features = "Docs/development/features.json"   # 目前不存在 → 開發索引的「功能」分頁會留空
 
 [[tool.changelog.docs.groups]]
