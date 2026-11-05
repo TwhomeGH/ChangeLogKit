@@ -33,6 +33,25 @@ from . import config, i18n
 from .globs import matches
 
 PALETTE = ("blue", "green", "amber", "violet", "rose", "cyan", "slate")
+# 常見名稱 → 固定色票；避免既有設定因 naming 不同而被警告／退回 slate。
+COLOR_ALIASES = {
+    "orange": "amber",
+    "gray": "slate",
+    "grey": "slate",
+    "purple": "violet",
+    "red": "rose",
+    "teal": "cyan",
+    "yellow": "amber",
+}
+
+
+def normalize_color(value):
+    """回傳色票名稱；未知名稱回 None。"""
+    name = str(value or "").strip().lower()
+    name = COLOR_ALIASES.get(name, name)
+    return name if name in PALETTE else None
+
+
 DEFAULT_COLOR = "slate"
 UNLISTED_ID = "other"
 UNLISTED_ORDER = 9999
@@ -120,7 +139,7 @@ def _group_meta(group):
         "title": _localized(group.title, group.id),
         "titles": _locale_map(group.title),
         "titleKey": "",
-        "color": group.color if group.color in PALETTE else DEFAULT_COLOR,
+        "color": normalize_color(group.color) or DEFAULT_COLOR,
         "note": _localized(group.note),
         "notes": _locale_map(group.note),
         "order": group.order,
@@ -160,7 +179,7 @@ def _resolve_groups(cfg, warnings):
         if group.id in seen:
             warnings.append({"type": "duplicate_group", "group": group.id})
             continue
-        if group.color not in PALETTE:
+        if normalize_color(group.color) is None:
             warnings.append({"type": "bad_color", "group": group.id, "color": group.color})
         seen.add(group.id)
         groups.append((_group_meta(group), group))

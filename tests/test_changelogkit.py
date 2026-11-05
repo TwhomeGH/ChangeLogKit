@@ -299,6 +299,18 @@ class DocsTests(unittest.TestCase):
         self.assertEqual(result[0]["groupColor"], "slate")
         self.assertTrue(any(w["type"] == "bad_color" for w in warnings))
 
+    def test_color_aliases(self):
+        cfg = self.cfg(
+            groups=[
+                config.DocGroup("a", "A", "orange", "", 10, ("Docs/api/**",)),
+                config.DocGroup("b", "B", "gray", "", 20, ("Docs/other/**",)),
+            ]
+        )
+        result, groups, warnings = docs.resolve([{"name": "Docs/api/x.md"}], cfg)
+        self.assertEqual(result[0]["groupColor"], "amber")
+        self.assertEqual([group["color"] for group in groups], ["amber", "slate"])
+        self.assertFalse(any(w["type"] == "bad_color" for w in warnings))
+
     def test_hidden_unlisted(self):
         result, _, _ = docs.resolve([{"name": "Docs/x.md"}], self.cfg(unlisted="hidden"))
         self.assertEqual(result, [])

@@ -166,6 +166,7 @@ auto     = true               # 未命中設定時，依資料夾名稱自動分
 id = "dev"                    # 必填、唯一
 title = "開發者指南"
 color = "blue"                # blue／green／amber／violet／rose／cyan／slate
+                              # 別名：orange→amber、gray/grey→slate、purple→violet、red→rose、teal→cyan、yellow→amber
 note = "開發流程、測試、資料模型與 API"
 order = 10                    # 數字越小越前面（預設 100）
 paths = ["Docs/development/**", "Docs/api/**"]

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026.11.06 changelogkit 0.12.2 發佈
+
+**類型**: 改善 · **檔案**: `docs.py`
+
+### 問題 - 既有設定使用 `orange`／`gray` 等常見名稱會被警告並退回 slate
+
+### 修改 - 顏色別名
+
+- `orange`→`amber`、`gray`／`grey`→`slate`、`purple`→`violet`、`red`→`rose`、`teal`→`cyan`、`yellow`→`amber`。
+- 仍然是固定色票；任意 hex／rgb 尚未開放。
+
+---
+
 ## 2026.11.06 changelogkit 0.12.1 發佈
 
 **類型**: 改善 · **檔案**: `config.py`、`Docs/usage.md`、`README.md`
