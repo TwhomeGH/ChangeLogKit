@@ -1,4 +1,4 @@
-"""命令列介面：serve / add / list / show / languages / locales / symbols / export / backfill-dates / community-init。
+"""命令列介面：serve / add / list / show / languages / locales / symbols / export / backfill-dates / sort / community-init。
 
 網頁 GUI 為主要介面；CLI 供腳本化使用。字串經 :mod:`i18n`（預設跟隨系統、
 判定為非中文時回退 ``en``；可用 ``--locale`` 覆寫）。
@@ -7,7 +7,7 @@
 import argparse
 import sys
 
-from . import backfill, buildinfo, community, export as static_export, history, i18n, server
+from . import backfill, buildinfo, community, config, export as static_export, history, i18n, server
 
 
 def _prescan_locale(argv):
@@ -81,6 +81,25 @@ def cmd_backfill(args):
             mode=mode,
         )
     )
+
+
+def cmd_sort(args):
+    """依標題日期／時間排序；預設只預覽，``--apply`` 才寫回。"""
+    cfg = config.load()
+    path = cfg.history
+    if not path.exists():
+        print(i18n.t("msg.sort_no_history", path=str(path)))
+        return
+    lines = path.read_text(encoding="utf-8").splitlines()
+    ordered = backfill.sort_lines(lines)
+    if ordered == lines:
+        print(i18n.t("msg.sort_same"))
+        return
+    count = len(backfill._entry_heads(ordered))
+    print(i18n.t("msg.sort_changed", count=count))
+    if args.apply:
+        path.write_text("\n".join(ordered).rstrip() + "\n", encoding="utf-8")
+        print(i18n.t("msg.sort_applied", path=str(path)))
 
 
 def cmd_list(args):
@@ -268,6 +287,9 @@ def main(argv=None):
     bf.add_argument("--strip-number", action="store_true", help=i18n.t("cli.backfill.strip_number"))
     bf.add_argument("--sort", action="store_true", help=i18n.t("cli.backfill.sort"))
 
+    srt = sub.add_parser("sort", help=i18n.t("cli.sort.help"))
+    srt.add_argument("--apply", action="store_true", help=i18n.t("cli.sort.apply"))
+
     sub.add_parser("community-init", help=i18n.t("cli.community.help"))
 
     args = p.parse_args(argv)
@@ -294,6 +316,8 @@ def main(argv=None):
         print(i18n.t("msg.exported", path=str(out)))
     elif args.cmd == "backfill-dates":
         cmd_backfill(args)
+    elif args.cmd == "sort":
+        cmd_sort(args)
     elif args.cmd == "community-init":
         path, created = community.write_template()
         print(i18n.t("msg.community_created" if created else "msg.community_exists", path=str(path)))

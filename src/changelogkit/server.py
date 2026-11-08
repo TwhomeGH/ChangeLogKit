@@ -85,9 +85,36 @@ class Handler(BaseHTTPRequestHandler):
                     done=str(data["done"]),
                     open_count=str(data["open"]),
                     pct=str(pct),
+                    version=todo.version(cfg.todo),
                     source_url=html.escape(source),
                 ),
                 "text/html; charset=utf-8",
+            )
+        if u.path == "/api/todo":
+            cfg = config.load()
+            if not cfg.todo or not cfg.todo.is_file():
+                return self._send(
+                    200,
+                    json.dumps({"configured": False}, ensure_ascii=False),
+                    "application/json; charset=utf-8",
+                )
+            data = todo.parse(cfg.todo)
+            pct = round(data["done"] / data["total"] * 100) if data["total"] else 0
+            return self._send(
+                200,
+                json.dumps(
+                    {
+                        "configured": True,
+                        "version": todo.version(cfg.todo),
+                        "html": todo.render(data),
+                        "total": data["total"],
+                        "done": data["done"],
+                        "open": data["open"],
+                        "pct": pct,
+                    },
+                    ensure_ascii=False,
+                ),
+                "application/json; charset=utf-8",
             )
         if u.path == "/about":
             # 社群區塊：未設定或無檔時為空字串（不顯示）；卡片說明的連結以該檔目錄為基準。

@@ -574,6 +574,78 @@ class HistoryTests(unittest.TestCase):
             history.insert_block(history.build_block("2026.02.01", "新紀錄", "功能", "b.swift"))
             self.assertEqual(history.parse_entries()[0]["title"], "新紀錄")
 
+    def test_sort_lines_orders_by_time(self):
+        lines = [
+            "# History",
+            "",
+            "## 2026.11.08 05:28 A",
+            "",
+            "## 2026.11.08 16:50 B",
+            "",
+            "## 2026.11.06 12:00 C",
+            "",
+            "## 2026.11.08 14:22 D",
+            "",
+        ]
+        ordered = backfill.sort_lines(lines)
+        headings = [line for line in ordered if line.startswith("## ")]
+        self.assertEqual(
+            headings,
+            [
+                "## 2026.11.08 16:50 B",
+                "## 2026.11.08 14:22 D",
+                "## 2026.11.08 05:28 A",
+                "## 2026.11.06 12:00 C",
+            ],
+        )
+
+    def test_sort_ignores_commented_and_fenced_headings(self):
+        lines = [
+            "# History",
+            "",
+            "## 2026.11.08 05:00 A",
+            "A",
+            "<!--",
+            "## YYYY.MM.DD HH:MM example",
+            "-->",
+            "```md",
+            "## not a heading",
+            "```",
+            "## 2026.11.08 16:00 B",
+            "B",
+        ]
+        ordered = backfill.sort_lines(lines)
+        heads = [ordered[i] for i in backfill._entry_heads(ordered)]
+        self.assertEqual(heads, ["## 2026.11.08 16:00 B", "## 2026.11.08 05:00 A"])
+        self.assertIn("## YYYY.MM.DD HH:MM example", ordered)
+        self.assertIn("## not a heading", ordered)
+
+    def test_backfill_sort_apply_writes_order(self):
+        with TempRepo() as repo:
+            path = repo.root / "Docs" / "ChangeHistory.md"
+            path.write_text(
+                "# History\n\n## 2026.11.08 05:28 A\n\nA\n\n---\n\n## 2026.11.08 16:50 B\n\nB\n\n---\n",
+                encoding="utf-8",
+            )
+            backfill.backfill(apply=True, sort=True)
+            headings = [
+                line for line in path.read_text(encoding="utf-8").splitlines() if line.startswith("## ")
+            ]
+            self.assertEqual(headings, ["## 2026.11.08 16:50 B", "## 2026.11.08 05:28 A"])
+
+    def test_sort_cli(self):
+        with TempRepo() as repo:
+            path = repo.root / "Docs" / "ChangeHistory.md"
+            path.write_text(
+                "# History\n\n## 2026.11.08 05:28 A\n\nA\n\n---\n\n## 2026.11.08 16:50 B\n\nB\n\n---\n",
+                encoding="utf-8",
+            )
+            cli.main(["sort", "--apply"])
+            headings = [
+                line for line in path.read_text(encoding="utf-8").splitlines() if line.startswith("## ")
+            ]
+            self.assertEqual(headings, ["## 2026.11.08 16:50 B", "## 2026.11.08 05:28 A"])
+
     def test_build_block_change_detail(self):
         block = history.build_block(
             "2026.02.01",

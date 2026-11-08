@@ -12,6 +12,7 @@ changelogkit add "標題" [--type 修復] [--file a/b.swift] \
 changelogkit list [--grep X] [--since YYYY.MM.DD] [--file X] [--type X] [--limit N]
 changelogkit show <編號|關鍵字>
 changelogkit export [OUT] [--branch main]      # 匯出唯讀靜態站（預設 _site）
+changelogkit sort [--apply]                    # 依標題日期／時間排序（預設只預覽）
 changelogkit community-init                    # 產生「社群與開發交流」範本（Docs/community.md）
 changelogkit docs [--check] [--summary]        # 檢查文件分類（錯誤回 1）
 changelogkit docs-init                         # 印出可貼上的 docs TOML 範本
@@ -142,6 +143,16 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 >
 > API 卡片去重：同一個 repo、同目錄且同檔名基底的 `.d.ts` 與 `.js`／`.mjs`／`.cjs`，若同名同種類，只保留 `.d.ts`；不同目錄或不同種類（例如 interface／class）不會互刪。
 
+## 排序與回填日期
+
+```powershell
+changelogkit sort                 # 檢查順序（不寫入）
+changelogkit sort --apply         # 依標題日期／時間由新到舊寫回
+changelogkit backfill-dates --sort --apply   # 回填缺少日期，同時排序
+```
+
+`sort` 依 `## YYYY.MM.DD [HH:MM]` 排序，沒有時間視為 `00:00`，沒有日期的條目排在最後；預設只預覽。
+
 ## 待辦（TODO）
 
 預設會自動找 repo 根目錄的 `TODO.md`（大小寫不拘），其次 `Docs/TODO.md`／`docs/TODO.md`；找到就顯示「待辦」入口，不需要設定。要指定其他路徑或關閉：
@@ -152,7 +163,7 @@ todo = "Docs/TODO.md"   # 指定；找不到就不顯示
 # todo = false          # 有 TODO.md 但不想顯示時
 ```
 
-頁面解析 `- [ ]`／`- [x]`（含縮排），忽略程式碼區塊；提供完成進度、全部／未完成／已完成篩選、搜尋，並可連回原始檔。靜態站對應 `development/todo.html`。
+頁面解析 `- [ ]`／`- [x]`（含縮排），忽略程式碼區塊；提供完成進度、全部／未完成／已完成篩選、搜尋，並可連回原始檔。`serve` 的 `/todo` 每 5 秒檢查內容 digest，有變更會更新清單並提示新增／完成筆數；右上角也可手動重新整理。靜態站 `development/todo.html` 是匯出當下的快照，不會自動更新。
 
 ## 文件分類（Documents 分頁）
 

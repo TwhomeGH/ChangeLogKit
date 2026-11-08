@@ -1,5 +1,6 @@
 """TODO.md 的 checkbox 解析與唯讀 HTML 呈現。"""
 
+import hashlib
 import html
 import re
 from pathlib import Path
@@ -8,6 +9,11 @@ from . import i18n
 
 _HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 _CHECKBOX = re.compile(r"^(\s*)[-*+]\s+\[([ xX])\]\s+(.*)$")
+
+
+def version(path):
+    """檔案內容 digest，供前端判斷是否需要更新。"""
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def parse(path):

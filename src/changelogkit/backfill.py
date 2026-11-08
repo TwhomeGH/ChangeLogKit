@@ -20,6 +20,7 @@ from datetime import datetime
 from . import config
 
 DATED = re.compile(r"^## \d{4}\.\d{2}\.\d{2}(?:\s+\d{2}:\d{2})?\s+")
+SORT_KEY = re.compile(r"^## (\d{4}\.\d{2}\.\d{2})(?:\s+(\d{2}:\d{2}))?(?:\s+|$)")
 NUM = re.compile(r"^(\d+)\.\s+(.*)$")
 SUBNUM = re.compile(r"^### \d+[a-z]?(?:\.\d+)*\.?\s+(.*)$")
 DECL = re.compile(r"^\*\*時間\*\*[：:]\s*(.+)")
@@ -51,16 +52,45 @@ def _strip_subs(lines):
     return [SUBNUM.sub(r"### \1", line) if SUBNUM.match(line) else line for line in lines]
 
 
-def _sort_entries(lines):
-    """依條目標題日期由新到舊重排（無日期者殿後）。前置內容維持在最上方。"""
-    heads = [i for i, line in enumerate(lines) if line.startswith("## ")]
+def _entry_heads(lines):
+    """真正的 ``## `` 標題索引；忽略 HTML 註解與程式碼區塊內的同型字串。"""
+    heads, fence, in_comment = [], False, False
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith(("```", "~~~")):
+            fence = not fence
+            continue
+        if fence:
+            continue
+        if "<!--" in line:
+            in_comment = True
+        if in_comment:
+            if "-->" in line:
+                in_comment = False
+            continue
+        if line.startswith("## "):
+            heads.append(index)
+    return heads
+
+
+def _sort_key(line):
+    """``(日期, 時間)`` 字串；沒時間視為 00:00，沒有日期回空字串。"""
+    match = SORT_KEY.match(line)
+    if not match:
+        return ""
+    return "%s %s" % (match.group(1), match.group(2) or "00:00")
+
+
+def sort_lines(lines):
+    """依條目標題日期／時間由新到舊重排（無日期者殿後）。前置內容維持最上方。"""
+    heads = _entry_heads(lines)
     if not heads:
         return lines
     pre = lines[: heads[0]]
     entries = [
         lines[heads[k] : (heads[k + 1] if k + 1 < len(heads) else len(lines))] for k in range(len(heads))
     ]
-    keyed = [(entries[k][0] if DATED.match(entries[k][0]) else "", entries[k]) for k in range(len(entries))]
+    keyed = [(_sort_key(entries[k][0]), entries[k]) for k in range(len(entries))]
     dated = sorted([k for k in keyed if k[0]], key=lambda x: x[0], reverse=True)
     undated = [k for k in keyed if not k[0]]
     out = list(pre)
@@ -81,7 +111,7 @@ def backfill(apply=False, strip_number=False, sort=False):
     rel = os.path.relpath(path, cfg.root).replace("\\", "/")
     lines = path.read_text(encoding="utf-8").splitlines()
 
-    heads = [i for i, line in enumerate(lines) if line.startswith("## ")]
+    heads = _entry_heads(lines)
     out = list(lines[: heads[0]]) if heads else list(lines)
     items, total, converted, skipped, changed = [], 0, 0, 0, False
     for k, h in enumerate(heads):
@@ -138,7 +168,10 @@ def backfill(apply=False, strip_number=False, sort=False):
         out += rest
 
     if sort:
-        out = _sort_entries(out)
+        sorted_out = sort_lines(out)
+        if sorted_out != out:
+            changed = True
+        out = sorted_out
     applied = False
     if apply and (converted or changed):
         path.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")

@@ -200,3 +200,7 @@ h3.group {
 .todo-item.depth-5 { margin-left: 90px }
 /* hidden 屬性要勝過 .todo-item 的 display:flex，否則篩選只改屬性、畫面不變。 */
 .todo-item[hidden], .todo-section[hidden], #todo-empty[hidden] { display: none }
+
+/* 待辦更新提示（右下／底部置中，不打斷操作）。 */
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--accent); color: var(--accent-fg); padding: 10px 16px; border-radius: 999px; box-shadow: var(--shadow); z-index: 30; font-size: 13px; max-width: min(90vw, 520px); text-align: center }
+.toast[hidden] { display: none }

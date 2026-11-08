@@ -17,58 +17,132 @@
   <a href="/development" data-i18n="nav.dev">{{t.nav.dev}}</a>
   <a href="/about" data-i18n="nav.about">{{t.nav.about}}</a>
   <span class="spacer"></span>
+  <button id="todo-refresh" aria-label="{{t.todo.refresh}}" data-i18n-aria="todo.refresh" title="{{t.todo.refresh}}" data-i18n-title="todo.refresh">↻</button>
   <button id="locale" type="button">🌐</button>
   <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
 </header>
-<main class="todo-main">
+<main class="todo-main" data-version="{{version}}" data-open="{{open_count}}" data-total="{{total}}" data-done="{{done}}">
   <section class="card todo-head">
-    <div class="todo-progress" aria-hidden="true"><span style="width: {{pct}}%"></span></div>
+    <div class="todo-progress" aria-hidden="true"><span id="todo-progress-bar" style="width: {{pct}}%"></span></div>
     <div class="todo-meta">
-      <span data-i18n="todo.done">{{t.todo.done}}</span> {{done}} / {{total}}
+      <span data-i18n="todo.done">{{t.todo.done}}</span> <span id="todo-done-count">{{done}}</span> / <span id="todo-total-count">{{total}}</span>
       · <a href="{{source_url}}" data-i18n="todo.source">{{t.todo.source}}</a>
     </div>
   </section>
   <div class="todo-tools">
     <input id="todo-search" type="search" placeholder="{{t.todo.search}}"
            data-i18n-ph="todo.search" aria-label="{{t.todo.search}}" data-i18n-aria="todo.search">
-    <button type="button" class="chip on" data-filter="all"><span data-i18n="todo.all">{{t.todo.all}}</span> ({{total}})</button>
-    <button type="button" class="chip" data-filter="open"><span data-i18n="todo.open">{{t.todo.open}}</span> ({{open_count}})</button>
-    <button type="button" class="chip" data-filter="done"><span data-i18n="todo.done">{{t.todo.done}}</span> ({{done}})</button>
+    <button type="button" class="chip on" data-filter="all"><span data-i18n="todo.all">{{t.todo.all}}</span> (<span id="count-all">{{total}}</span>)</button>
+    <button type="button" class="chip" data-filter="open"><span data-i18n="todo.open">{{t.todo.open}}</span> (<span id="count-open">{{open_count}}</span>)</button>
+    <button type="button" class="chip" data-filter="done"><span data-i18n="todo.done">{{t.todo.done}}</span> (<span id="count-done">{{done}}</span>)</button>
   </div>
-{{content}}
+  <div id="todo-content">{{content}}</div>
   <p id="todo-empty" class="empty" data-i18n="todo.empty" hidden></p>
 </main>
+<div id="todo-toast" class="toast" role="status" hidden></div>
 <script>
-for (const el of document.querySelectorAll(".todo-item .label[data-raw]")) {
-  el.innerHTML = window.renderInline(el.getAttribute("data-raw"));
-}
-const todoItems = [...document.querySelectorAll(".todo-item")];
-const todoSections = [...document.querySelectorAll(".todo-section")];
+const todoMain = document.querySelector(".todo-main");
+const todoContent = document.getElementById("todo-content");
 const todoSearch = document.getElementById("todo-search");
 const todoEmpty = document.getElementById("todo-empty");
-let todoFilter = "all";
+const todoToast = document.getElementById("todo-toast");
 const todoButtons = [...document.querySelectorAll("[data-filter]")];
+let todoFilter = "all";
+let todoBusy = false;
+let todoVersion = todoMain.dataset.version;
+let todoOpen = Number(todoMain.dataset.open);
+let todoTotal = Number(todoMain.dataset.total);
+let todoDone = Number(todoMain.dataset.done);
+let toastTimer = 0;
+
+function hydrateLabels(scope) {
+  for (const el of scope.querySelectorAll(".todo-item .label[data-raw]")) {
+    el.innerHTML = window.renderInline(el.getAttribute("data-raw"));
+  }
+}
+
 function applyTodoFilter() {
+  const items = [...todoContent.querySelectorAll(".todo-item")];
+  const sections = [...todoContent.querySelectorAll(".todo-section")];
   const q = todoSearch.value.trim().toLowerCase();
   let visible = 0;
-  for (const item of todoItems) {
+  for (const item of items) {
     const done = item.dataset.done === "true";
     const hit = (todoFilter === "all" || (todoFilter === "open" ? !done : done))
       && (!q || item.textContent.toLowerCase().includes(q));
     item.hidden = !hit;
     if (hit) visible++;
   }
-  for (const section of todoSections) {
+  for (const section of sections) {
     section.hidden = ![...section.querySelectorAll(".todo-item")].some((item) => !item.hidden);
   }
   todoEmpty.hidden = visible !== 0;
 }
+
+function setCounts(data) {
+  todoDone = data.done;
+  todoTotal = data.total;
+  todoOpen = data.open;
+  document.getElementById("todo-progress-bar").style.width = data.pct + "%";
+  document.getElementById("todo-done-count").textContent = data.done;
+  document.getElementById("todo-total-count").textContent = data.total;
+  document.getElementById("count-all").textContent = data.total;
+  document.getElementById("count-open").textContent = data.open;
+  document.getElementById("count-done").textContent = data.done;
+  todoMain.dataset.open = data.open;
+  todoMain.dataset.total = data.total;
+  todoMain.dataset.done = data.done;
+}
+
+function showToast(message) {
+  if (!message) return;
+  clearTimeout(toastTimer);
+  todoToast.textContent = message;
+  todoToast.hidden = false;
+  toastTimer = setTimeout(() => { todoToast.hidden = true; }, 4000);
+}
+
+async function refreshTodo(manual) {
+  if (todoBusy) return;
+  todoBusy = true;
+  try {
+    const response = await fetch("/api/todo", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!data.configured) return;
+    if (data.version !== todoVersion) {
+      const previousOpen = todoOpen;
+      todoContent.innerHTML = data.html;
+      hydrateLabels(todoContent);
+      setCounts(data);
+      applyTodoFilter();
+      todoVersion = data.version;
+      todoMain.dataset.version = data.version;
+      const delta = data.open - previousOpen;
+      if (delta > 0) showToast(CK_T("todo.added", delta));
+      else if (delta < 0) showToast(CK_T("todo.completed", -delta));
+      else showToast(CK_T("todo.updated"));
+    } else if (manual) {
+      showToast(CK_T("todo.refreshed"));
+    }
+  } finally {
+    todoBusy = false;
+  }
+}
+
 todoButtons.forEach((button) => button.addEventListener("click", () => {
   todoFilter = button.dataset.filter;
   todoButtons.forEach((other) => other.classList.toggle("on", other === button));
   applyTodoFilter();
 }));
 todoSearch.addEventListener("input", applyTodoFilter);
+document.getElementById("todo-refresh").addEventListener("click", () => refreshTodo(true));
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshTodo(false);
+});
+setInterval(() => { if (!document.hidden) refreshTodo(false); }, 5000);
+
+hydrateLabels(todoContent);
 applyTodoFilter();
 </script>
 </body></html>

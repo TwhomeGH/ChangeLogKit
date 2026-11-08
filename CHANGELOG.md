@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026.11.08 changelogkit 0.12.4 發佈
+
+**類型**: 功能 · **檔案**: `todo.py`、`server.py`、`assets/todo.html`、`backfill.py`、`cli.py`
+
+### 問題 - TODO 頁不會反映檔案變更；變更歷史缺少獨立排序工具
+
+### 修改 - TODO 自動更新／刷新與 changelog 排序
+
+- `/todo` 每 5 秒檢查內容 digest，更新清單、進度與篩選按鈕數量；新增／完成時顯示提示；右上角可手動重新整理。靜態頁仍是匯出快照。
+- 新增 `changelogkit sort [--apply]`，依標題日期／時間由新到舊；沒時間視為 `00:00`，無日期殿後。
+- 修正 `backfill-dates --sort --apply` 純排序不寫檔；排序忽略 HTML 註解與程式碼區塊內的 `##`。
+
+---
+
 ## 2026.11.06 changelogkit 0.12.3 發佈
 
 **類型**: 改善 · **檔案**: `assets/index.html`、`assets/index.js`、`history.py`、`cli.py`、`server.py`
