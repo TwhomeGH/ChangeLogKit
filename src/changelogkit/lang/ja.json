@@ -121,6 +121,7 @@
 
   "dev.title": "開発インデックス",
   "todo.title": "TODO",
+  "todo.sections": "セクション",
   "todo.all": "すべて",
   "todo.open": "未完了",
   "todo.done": "完了",

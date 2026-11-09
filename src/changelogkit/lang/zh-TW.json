@@ -121,6 +121,7 @@
 
   "dev.title": "開發索引",
   "todo.title": "待辦",
+  "todo.sections": "分類",
   "todo.all": "全部",
   "todo.open": "未完成",
   "todo.done": "已完成",

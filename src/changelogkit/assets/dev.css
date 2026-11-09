@@ -204,3 +204,20 @@ h3.group {
 /* 待辦更新提示（右下／底部置中，不打斷操作）。 */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--accent); color: var(--accent-fg); padding: 10px 16px; border-radius: 999px; box-shadow: var(--shadow); z-index: 30; font-size: 13px; max-width: min(90vw, 520px); text-align: center }
 .toast[hidden] { display: none }
+
+/* TODO 分類索引：可點的大分類 chips，與篩選／搜尋同步隱藏。 */
+.todo-index { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px }
+.todo-index a { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--fg); text-decoration: none; font-size: 13px }
+.todo-index a:hover { border-color: var(--accent) }
+.todo-index a.on { border-color: var(--accent); color: var(--accent); background: var(--line2) }
+.todo-index a .count { color: var(--mut); font-size: 12px }
+.todo-index a[hidden] { display: none }
+.todo-section { scroll-margin-top: 80px }
+
+/* 分類索引：收在 sticky appbar 的下拉，捲到任何位置都能換分類。 */
+.appbar .todo-index-wrap { position: relative; margin: 0; border: 0; background: transparent }
+.appbar .todo-index-wrap > summary { list-style: none; cursor: pointer; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; color: var(--fg); white-space: nowrap }
+.appbar .todo-index-wrap > summary::-webkit-details-marker { display: none }
+.appbar .todo-index-wrap > summary::after { content: " ▾"; color: var(--mut) }
+.appbar .todo-index-wrap[open] > summary { border-color: var(--accent) }
+.appbar .todo-index-wrap #todo-index { position: absolute; top: calc(100% + 6px); right: 0; width: min(520px, calc(100vw - 24px)); max-height: 55vh; overflow: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 10px; margin: 0; z-index: 30 }

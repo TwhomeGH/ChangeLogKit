@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026.11.09 changelogkit 0.12.5 發佈
+
+**類型**: 功能 · **檔案**: `assets/markdown.js`、`assets/todo.html`、`assets/static_todo.html`、`todo.py`、`theme.css`、`dev.css`
+
+### 問題 - 排版模式不解析 `[x]`；TODO 分類只能在頁面頂端選
+
+### 修改 - GFM task list 與 sticky appbar 分類
+
+- 排版／歷史／文件／檔案檢視支援 `- [ ]`／`- [x]`，顯示唯讀 checkbox 與完成樣式；原始碼模式仍保留原文。
+- TODO 分類移到 sticky appbar 的「分類 (N)」下拉；面板可捲動、點擊跳轉、active 高亮；篩選／搜尋同步隱藏分類並更新數量；靜態頁同樣有。
+
+---
+
 ## 2026.11.08 changelogkit 0.12.4 發佈
 
 **類型**: 功能 · **檔案**: `todo.py`、`server.py`、`assets/todo.html`、`backfill.py`、`cli.py`

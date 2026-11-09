@@ -210,6 +210,7 @@ class TodoTests(unittest.TestCase):
         out = todo.render(data)
         self.assertIn("todo-item done", out)
         self.assertIn("(1/1)", out)
+        self.assertIn('id="todo-sec-0"', out)
         self.assertNotIn("ignored", out)
 
     def test_missing_file_is_empty(self):
@@ -482,6 +483,8 @@ class ExportTests(unittest.TestCase):
             page = (out / "development" / "todo.html").read_text(encoding="utf-8")
             self.assertIn("(1/2)", page)
             self.assertIn("todo-item done", page)
+            self.assertIn('id="todo-index"', page)
+            self.assertIn('id="todo-sec-0"', page)
             self.assertIn("../development/todo.html", page)
             self.assertIn("../docs/app/TODO.html", page)
             self.assertTrue((out / "docs" / "app" / "TODO.html").is_file())

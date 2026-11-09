@@ -76,13 +76,13 @@ def has_tasks(data):
 def render(data):
     """把解析結果轉成唯讀任務清單 HTML（動態與靜態共用）。"""
     out = []
-    for section in data.get("sections") or []:
+    for index, section in enumerate(data.get("sections") or []):
         items = section.get("items") or []
         if not items:
             continue
         done = sum(1 for item in items if item["done"])
         title = section.get("title") or i18n.t("todo.untitled")
-        out.append('<section class="todo-section" data-section>')
+        out.append('<section class="todo-section" id="todo-sec-%d" data-section>' % index)
         out.append('<h2>%s <span class="count">(%d/%d)</span></h2>' % (html.escape(title), done, len(items)))
         out.append("<ul>")
         for item in items:

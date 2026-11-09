@@ -17,6 +17,10 @@
   <a href="/development" data-i18n="nav.dev">{{t.nav.dev}}</a>
   <a href="/about" data-i18n="nav.about">{{t.nav.about}}</a>
   <span class="spacer"></span>
+  <details class="todo-index-wrap" id="todo-index-wrap">
+    <summary><span data-i18n="todo.sections">{{t.todo.sections}}</span> (<span id="todo-index-count">{{sections}}</span>)</summary>
+    <nav id="todo-index" class="todo-index" aria-label="{{t.todo.sections}}" data-i18n-aria="todo.sections"></nav>
+  </details>
   <button id="todo-refresh" aria-label="{{t.todo.refresh}}" data-i18n-aria="todo.refresh" title="{{t.todo.refresh}}" data-i18n-title="todo.refresh">↻</button>
   <button id="locale" type="button">🌐</button>
   <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
@@ -61,6 +65,38 @@ function hydrateLabels(scope) {
   }
 }
 
+function renderIndex() {
+  const nav = document.getElementById("todo-index");
+  nav.innerHTML = "";
+  for (const section of todoContent.querySelectorAll(".todo-section")) {
+    const heading = section.querySelector("h2");
+    if (!heading || !section.id) continue;
+    const link = document.createElement("a");
+    link.href = "#" + section.id;
+    link.innerHTML = heading.innerHTML;
+    nav.appendChild(link);
+  }
+  document.getElementById("todo-index-count").textContent = nav.children.length;
+  markActiveIndex();
+}
+
+function markActiveIndex() {
+  const links = [...document.querySelectorAll("#todo-index a")];
+  if (!links.length) return;
+  let current = "";
+  for (const section of todoContent.querySelectorAll(".todo-section")) {
+    if (section.hidden) continue;
+    if (section.getBoundingClientRect().top <= 130) current = section.id;
+    else break;
+  }
+  links.forEach((link) => {
+    const on = link.getAttribute("href") === "#" + current;
+    link.classList.toggle("on", on);
+    if (on) link.setAttribute("aria-current", "location");
+    else link.removeAttribute("aria-current");
+  });
+}
+
 function applyTodoFilter() {
   const items = [...todoContent.querySelectorAll(".todo-item")];
   const sections = [...todoContent.querySelectorAll(".todo-section")];
@@ -76,7 +112,13 @@ function applyTodoFilter() {
   for (const section of sections) {
     section.hidden = ![...section.querySelectorAll(".todo-item")].some((item) => !item.hidden);
   }
+  const visibleIds = new Set(sections.filter((section) => !section.hidden).map((section) => section.id));
+  document.querySelectorAll("#todo-index a").forEach((link) => {
+    link.hidden = !visibleIds.has(link.getAttribute("href").slice(1));
+  });
+  document.getElementById("todo-index-count").textContent = visibleIds.size;
   todoEmpty.hidden = visible !== 0;
+  markActiveIndex();
 }
 
 function setCounts(data) {
@@ -115,6 +157,7 @@ async function refreshTodo(manual) {
       todoContent.innerHTML = data.html;
       hydrateLabels(todoContent);
       setCounts(data);
+      renderIndex();
       applyTodoFilter();
       todoVersion = data.version;
       todoMain.dataset.version = data.version;
@@ -136,13 +179,22 @@ todoButtons.forEach((button) => button.addEventListener("click", () => {
   applyTodoFilter();
 }));
 todoSearch.addEventListener("input", applyTodoFilter);
+document.getElementById("todo-index").addEventListener("click", (event) => {
+  if (event.target.closest("a")) document.getElementById("todo-index-wrap").open = false;
+});
+document.addEventListener("click", (event) => {
+  const wrap = document.getElementById("todo-index-wrap");
+  if (wrap && wrap.open && !wrap.contains(event.target)) wrap.open = false;
+});
 document.getElementById("todo-refresh").addEventListener("click", () => refreshTodo(true));
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) refreshTodo(false);
 });
 setInterval(() => { if (!document.hidden) refreshTodo(false); }, 5000);
+window.addEventListener("scroll", markActiveIndex, { passive: true });
 
 hydrateLabels(todoContent);
+renderIndex();
 applyTodoFilter();
 </script>
 </body></html>

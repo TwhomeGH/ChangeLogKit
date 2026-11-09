@@ -595,6 +595,7 @@ def export(out_dir, branch="main"):
                 total=str(todo_data["total"]),
                 done=str(todo_data["done"]),
                 open_count=str(todo_data["open"]),
+                sections=str(sum(1 for s in todo_data["sections"] if s.get("items"))),
                 pct=str(pct),
                 source_url=_esc("../" + _doc_url(index.default_repo(), todo_rel)),
                 footer=footer,

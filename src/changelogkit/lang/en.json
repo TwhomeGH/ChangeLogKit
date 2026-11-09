@@ -121,6 +121,7 @@
 
   "dev.title": "Dev index",
   "todo.title": "TODO",
+  "todo.sections": "Sections",
   "todo.all": "All",
   "todo.open": "Open",
   "todo.done": "Done",

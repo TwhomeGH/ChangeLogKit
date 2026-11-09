@@ -84,6 +84,7 @@ class Handler(BaseHTTPRequestHandler):
                     total=str(data["total"]),
                     done=str(data["done"]),
                     open_count=str(data["open"]),
+                    sections=str(sum(1 for s in data["sections"] if s.get("items"))),
                     pct=str(pct),
                     version=todo.version(cfg.todo),
                     source_url=html.escape(source),

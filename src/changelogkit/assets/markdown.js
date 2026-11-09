@@ -46,8 +46,17 @@
     }
     const emit = (node) => {
       const tag = node.ordered ? "ol" : "ul";
-      return `<${tag}>` + node.children.map((c) =>
-        `<li>${inline(c.text, resolve)}${c.children.length ? emit(c) : ""}</li>`).join("") + `</${tag}>`;
+      return `<${tag}>` + node.children.map((c) => {
+        const task = c.text.match(/^\[([ xX])\]\s+(.*)$/);
+        if (task) {
+          const done = task[1].toLowerCase() === "x";
+          return `<li class="task${done ? " done" : ""}">`
+            + `<input type="checkbox" disabled${done ? " checked" : ""}> `
+            + `<span class="task-label">${inline(task[2], resolve)}</span>`
+            + `${c.children.length ? emit(c) : ""}</li>`;
+        }
+        return `<li>${inline(c.text, resolve)}${c.children.length ? emit(c) : ""}</li>`;
+      }).join("") + `</${tag}>`;
     };
     return emit(root);
   }

@@ -157,3 +157,8 @@ footer.built {
 .community .action { margin-top: auto; padding-top: 14px }
 .community .action p { margin: 0 }
 .community .action a { font-weight: 650 }
+
+/* Markdown GFM task list：唯讀 checkbox 與完成樣式（歷史／文件／檔案檢視共用）。 */
+.rendered li.task { list-style: none; margin-left: -1.2em }
+.rendered li.task > input[type="checkbox"] { width: 15px; height: 15px; margin: 0 6px 0 0; padding: 0; border: 0; border-radius: 3px; background: none; box-shadow: none; accent-color: var(--accent); vertical-align: -2px }
+.rendered li.task.done .task-label { color: var(--mut); text-decoration: line-through }
