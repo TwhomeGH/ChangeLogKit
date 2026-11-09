@@ -795,6 +795,34 @@ class IndexTests(unittest.TestCase):
             self.assertEqual(len(foos), 1)
             self.assertEqual(foos[0]["file"], "Sources/foo.d.ts")
 
+    def test_safe_file_missing_explains_path(self):
+        with TempRepo():
+            with self.assertRaises(ValueError) as ctx:
+                index.safe_file("app", "Docs/missing.md")
+            message = str(ctx.exception)
+            self.assertIn("檔案不存在", message)
+            self.assertIn("Docs/missing.md", message)
+
+    def test_bad_feature_keeps_other_index_data(self):
+        with TempRepo() as repo:
+            features = repo.root / "Docs" / "development" / "features.json"
+            features.parent.mkdir(parents=True)
+            features.write_text(
+                '{"features":[{"name":"Broken","files":["Docs/missing.md"]}]}',
+                encoding="utf-8",
+            )
+            config.reset()
+            config.load(repo.root)
+            with self.assertRaises(ValueError) as ctx:
+                index.validate()
+            message = str(ctx.exception)
+            self.assertIn("Broken", message)
+            self.assertIn("Docs/missing.md", message)
+            data = index.snapshot()
+            self.assertEqual(data["features"], [])
+            self.assertIn("Broken", data["featureError"])
+            self.assertTrue(data["documents"])
+
     def test_glob_re(self):
         dist = index._glob_re("**/dist/**")
         self.assertTrue(dist.match("a/b/dist/c.js"))

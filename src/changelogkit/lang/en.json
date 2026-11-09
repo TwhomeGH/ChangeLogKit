@@ -122,6 +122,7 @@
   "dev.title": "Dev index",
   "todo.title": "TODO",
   "todo.sections": "Sections",
+  "dev.feature_error": "Feature catalog error",
   "todo.all": "All",
   "todo.open": "Open",
   "todo.done": "Done",

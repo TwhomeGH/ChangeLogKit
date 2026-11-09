@@ -301,6 +301,11 @@ function render() {
   if (tab === "documents" && (data.docWarnings || []).length) {
     box.insertAdjacentHTML("beforeend", docWarningsHtml(data.docWarnings));
   }
+  if (tab === "features" && data.featureError) {
+    box.insertAdjacentHTML("beforeend",
+      '<div class="docwarn"><strong>' + CK_T("dev.feature_error") + "</strong><p>" +
+      esc(data.featureError) + "</p></div>");
+  }
   if (!rows.length) {
     box.insertAdjacentHTML("beforeend", '<p class="empty">' + CK_T("dev.no_data") + "</p>");
     updateStatus(); return;

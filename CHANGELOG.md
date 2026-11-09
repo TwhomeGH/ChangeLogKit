@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026.11.09 changelogkit 0.12.6 發佈
+
+**類型**: 修正 · **檔案**: `index.py`、`assets/dev.js`
+
+### 問題 - 功能清單引用失效檔案時只顯示「檔案不在索引範圍」，且整個開發索引空白
+
+### 修改 - 明確錯誤與局部失敗
+
+- `safe_file` 現在區分來源不存在、檔案不存在、超出來源根目錄、超過 2 MB、副檔名不支援、未納入索引（可能被 `.gitignore`／exclude 排除）。
+- 功能驗證會帶上功能名稱與路徑；單一功能設定失效時，功能分頁顯示警告，其他分頁照常載入。
+
+---
+
 ## 2026.11.09 changelogkit 0.12.5 發佈
 
 **類型**: 功能 · **檔案**: `assets/markdown.js`、`assets/todo.html`、`assets/static_todo.html`、`todo.py`、`theme.css`、`dev.css`

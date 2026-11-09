@@ -87,12 +87,23 @@ def files(root):
 
 def safe_file(repo, name):
     """檔案檢視僅允許索引內檔案，並阻擋路徑穿越及連到根目錄外的 symlink。"""
+    if not name:
+        raise ValueError("未指定檔案路徑")
     root = roots().get(repo)
-    if root is None or name not in files(root):
-        raise ValueError("檔案不在索引範圍")
+    if root is None:
+        raise ValueError("來源 %r 不存在（可用：%s）" % (repo, "、".join(roots()) or "無"))
     path = (root / name).resolve()
-    if not path.is_relative_to(root.resolve()) or not path.is_file() or path.stat().st_size > 2_000_000:
-        raise ValueError("檔案不可讀取或超過 2 MB")
+    if not path.is_relative_to(root.resolve()):
+        raise ValueError("檔案在來源根目錄外：%s" % name)
+    if not path.is_file():
+        raise ValueError("檔案不存在：%s" % name)
+    if path.stat().st_size > 2_000_000:
+        raise ValueError("檔案超過 2 MB，無法在瀏覽器檢視：%s" % name)
+    if name not in files(root):
+        suffix = Path(name).suffix.lower()
+        if suffix and suffix not in SUPPORTED_SUFFIXES and suffix != ".md":
+            raise ValueError("副檔名 %s 不在索引範圍（僅原始碼與 Markdown）：%s" % (suffix, name))
+        raise ValueError("檔案未納入索引（可能被 .gitignore／exclude 排除，或不在 source 內）：%s" % name)
     return path
 
 
@@ -123,7 +134,10 @@ def validate():
             raise ValueError("重複功能 ID：" + fid)
         seen.add(fid)
         for path in list(feature.get("files") or []) + list(feature.get("docs") or []):
-            safe_file(repo, path)
+            try:
+                safe_file(repo, path)
+            except ValueError as error:
+                raise ValueError("功能「%s」：%s" % (name, error)) from error
         item = dict(feature)
         item["id"] = fid
         item.setdefault("summary", "")
@@ -320,8 +334,15 @@ def documents():
 def snapshot():
     """即時取得版本和近期提交；不把 Git 修改檔案推測成新增功能。"""
     recent = config.load().recent_commits
+    feature_error = ""
+    try:
+        features = validate()
+    except ValueError as error:
+        features = []
+        feature_error = str(error)
     data = {
-        "features": validate(),
+        "features": features,
+        "featureError": feature_error,
         "repos": [],
         "symbols": [],
         "documents": [],
