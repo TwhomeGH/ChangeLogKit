@@ -12,8 +12,8 @@
 
 ## 遷移（之後再說）
 
-- [ ] 讓 ReplyKit 的 `Scripts/changelog/` 改用 `changelogkit`（各 repo 加 `.changelog.toml`；刪 vendored 副本或留薄殼）。
-- [ ] 讓 HaishinKit fork 的 `Tools/changelog/` 改用 `changelogkit`。
+- [x] 讓 ReplyKit 的 `Scripts/changelog/` 改用 `changelogkit`（各 repo 加 `.changelog.toml`；刪 vendored 副本或留薄殼）。
+- [x] 讓 HaishinKit fork 的 `Tools/changelog/` 改用 `changelogkit`。
 
 ## 已完成（供對照）
 
