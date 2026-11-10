@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026.11.11 changelogkit 0.12.7 發佈
+
+**類型**: 修正 · **檔案**: `history.py`、`Docs/usage.md`
+
+### 問題 - add 的摘要結尾標點被帶進 Markdown 標題，觸發 markdownlint MD026
+
+### 修改 - 組標題時自動移除結尾標點
+
+- `history.build_block` 產生的 `##`／`### 問題`／`### 根因`／`### 修改` 標題會移除末尾的 `.,;:!?。，；：！？`；內文與條列維持原樣。
+- `…`、`—` 不在 MD026 範圍內，保留不動；CLI `add` 與網頁 GUI 共用同一條路徑。
+
+---
+
 ## 2026.11.09 changelogkit 0.12.6 發佈
 
 **類型**: 修正 · **檔案**: `index.py`、`assets/dev.js`

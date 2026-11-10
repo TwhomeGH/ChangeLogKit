@@ -663,6 +663,54 @@ class HistoryTests(unittest.TestCase):
         self.assertIn("- 其他項目", block)
         self.assertLess(block.index("細節一"), block.index("- 其他項目"))
 
+    def test_build_block_strips_md026_punctuation(self):
+        block = history.build_block(
+            "2026.06.01",
+            "標題句號。",
+            "修復",
+            "a.swift",
+            problem="症狀摘要。\n細節句。",
+            root_cause="根因摘要！",
+            changes=["核心改動？", "其他改動。"],
+        )
+        self.assertIn("## 2026.06.01 標題句號\n", block)
+        self.assertIn("### 問題 - 症狀摘要\n", block)
+        self.assertIn("細節句。", block)  # 內文標點保留
+        self.assertIn("### 根因 - 根因摘要\n", block)
+        self.assertIn("### 修改 - 核心改動\n", block)
+        self.assertIn("- 其他改動。", block)  # 條列標點保留
+        for line in block.splitlines():
+            if line.startswith("#"):
+                self.assertNotRegex(line, r"[.,;:!?。，；：！？]$")
+
+    def test_heading_text_keeps_non_md026_marks(self):
+        # MD026 不涵蓋省略號與破折號，不應誤刪。
+        block = history.build_block("2026.06.02", "等等…", "功能", "", problem="真的嗎—")
+        self.assertIn("## 2026.06.02 等等…", block)
+        self.assertIn("### 問題 - 真的嗎—", block)
+
+    def test_add_cli_strips_heading_punctuation(self):
+        with TempRepo():
+            cli.main(
+                [
+                    "add",
+                    "CLI 句號。",
+                    "--problem",
+                    "症狀。",
+                    "--cause",
+                    "根因；",
+                    "--change",
+                    "改動:",
+                    "--change",
+                    "其他。",
+                ]
+            )
+            raw = history.parse_entries()[0]["raw"]
+            self.assertIn("### 問題 - 症狀\n", raw)
+            self.assertIn("### 根因 - 根因\n", raw)
+            self.assertIn("### 修改 - 改動\n", raw)
+            self.assertIn("- 其他。", raw)
+
     def test_add_cli_body(self):
         with TempRepo():
             cli.main(

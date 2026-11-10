@@ -20,6 +20,8 @@ changelogkit docs-init                         # 印出可貼上的 docs TOML �
 
 `add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - …` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列；`--change-detail` 在修改摘要下補一段多行說明。Web 表單分「修改摘要」（單行）、「修改細節」（段落）、「其他修改」（每行一項）。只給標題時插入空骨架。
 
+摘要末尾的 `.,;:!?。，；：！？` 會自動移除（markdownlint MD026）；`…`、`—` 不在規則內，會保留；內文與條列不受影響。
+
 未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。
 
 全域旗標 **`--locale zh-TW|zh-CN|ja|en`** 可切換 **CLI 說明與網頁語系**（預設跟隨系統：`zh*` 依 Hant／Hans 判為 `zh-TW`／`zh-CN`、`ja*` → `ja`、其餘 → `en`）。

@@ -94,17 +94,32 @@ def _heading_indices(lines):
 # ─────────────────────────── 組版 ───────────────────────────
 
 
+# markdownlint MD026 定義的標題結尾標點（實測不含「、」「…」「—」）。
+_HEADING_TRAILING_PUNCT = ".,;:!?。，；：！？"
+
+
+def _heading_text(text):
+    """把文字整理成可放進 Markdown 標題的形式。
+
+    只移除標題末尾會被 markdownlint MD026 判錯的標點；內文與條列不動。
+    若整段文字只有標點，則保留原字串，避免產生空標題。
+    """
+    value = str(text or "").strip()
+    return value.rstrip(_HEADING_TRAILING_PUNCT).rstrip() or value
+
+
 def _summary_body(text):
     """把多行文字拆成 (摘要, 其餘內文)；摘要取第一個非空行。
 
     摘要會成為 ``### 問題 - <摘要>`` / ``### 根因 - <摘要>`` 標題的一部分，
-    因此必須是能區分各筆紀錄的短句，避免 markdownlint MD024（重複標題）。
+    因此必須是能區分各筆紀錄的短句，避免 markdownlint MD024（重複標題）；
+    標題末尾的標點也會移除，避免 MD026。
     """
     text = (text or "").strip()
     if not text:
         return "", ""
     parts = text.splitlines()
-    return parts[0].strip(), "\n".join(parts[1:]).strip()
+    return _heading_text(parts[0]), "\n".join(parts[1:]).strip()
 
 
 def _norm_refs(refs):
@@ -133,9 +148,10 @@ def build_block(
         changes = changes.splitlines()
     changes = [c.strip() for c in (changes or []) if c and c.strip()]
     refs = _norm_refs(refs)
-    head = "## %s %s" % (date_str, title)
+    head_title = _heading_text(title)
+    head = "## %s %s" % (date_str, head_title)
     if time_str:
-        head = "## %s %s %s" % (date_str, time_str, title)
+        head = "## %s %s %s" % (date_str, time_str, head_title)
     lines = [head, ""]
     meta = "**類型**: %s" % (type_ or "修復")
     if file_:
@@ -153,7 +169,7 @@ def build_block(
     # 修改：第一項當標題摘要，其餘為條列；細節另成一段。
     detail = str(change_detail or "").strip()
     if changes:
-        summary, rest = changes[0], changes[1:]
+        summary, rest = _heading_text(changes[0]), changes[1:]
         lines.append("### 修改 - %s" % summary)
         if detail:
             lines += ["", detail]
