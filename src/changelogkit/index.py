@@ -17,7 +17,7 @@ import subprocess
 from pathlib import Path, PurePosixPath
 from urllib.parse import parse_qs
 
-from . import assets, config, docs as docmeta, i18n, todo as todo_meta
+from . import assets, config, docs as docmeta, i18n
 from .globs import regex as _glob_re
 from .scanners import SUPPORTED_LANGUAGES, SUPPORTED_SUFFIXES, scan_symbols
 from .scanners.common import link
@@ -396,11 +396,9 @@ def snapshot():
 
 
 def todo_link():
-    """有設定 TODO 且有項目時，回傳導覽列連結；否則空字串。"""
+    """有 TODO 檔就回傳導覽列連結；沒有任務項目時由 ``/todo`` 頁說明格式。"""
     cfg = config.load()
     if not cfg.todo or not cfg.todo.is_file():
-        return ""
-    if not todo_meta.has_tasks(todo_meta.parse(cfg.todo)):
         return ""
     return '<a href="/todo" data-i18n="nav.todo">%s</a>' % html.escape(i18n.t("nav.todo"))
 

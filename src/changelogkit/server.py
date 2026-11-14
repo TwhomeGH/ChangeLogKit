@@ -73,6 +73,11 @@ class Handler(BaseHTTPRequestHandler):
             rel = index.rel_path(cfg.todo) or cfg.todo.name
             source = "/development/file?" + urlencode({"repo": index.default_repo(), "path": rel})
             pct = round(data["done"] / data["total"] * 100) if data["total"] else 0
+            hint = (
+                ""
+                if data["total"]
+                else '<p class="docwarn" id="todo-hint">%s</p>' % html.escape(i18n.t("todo.no_tasks"))
+            )
             return self._send(
                 200,
                 assets.render(
@@ -86,6 +91,7 @@ class Handler(BaseHTTPRequestHandler):
                     open_count=str(data["open"]),
                     sections=str(sum(1 for s in data["sections"] if s.get("items"))),
                     pct=str(pct),
+                    todo_hint=hint,
                     version=todo.version(cfg.todo),
                     source_url=html.escape(source),
                 ),

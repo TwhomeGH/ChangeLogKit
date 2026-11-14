@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026.11.14 changelogkit 0.12.8 發佈
+
+**類型**: 修正 · **檔案**: `index.py`、`server.py`、`export.py`、`assets/todo.html`、`assets/static_todo.html`
+
+### 問題 - 找到 TODO 檔但沒有任務語法時，入口完全消失，使用者無從得知原因
+
+### 修改 - 顯示入口與格式提示
+
+- TODO 檔存在就顯示導覽連結；沒有 `- [ ]`／`- [x]` 時，`/todo` 與靜態頁顯示格式提示，不再靜默隱藏。
+- 靜態站同樣產生 `development/todo.html`；動態頁在檔案變更後也會同步顯示／隱藏提示。
+
+---
+
 ## 2026.11.11 changelogkit 0.12.7 發佈
 
 **類型**: 修正 · **檔案**: `history.py`、`Docs/usage.md`

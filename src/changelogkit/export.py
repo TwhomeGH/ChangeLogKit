@@ -16,6 +16,7 @@ import re
 import shutil
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 from urllib.parse import quote
 
 from . import assets, buildinfo, community, config, docs as docmeta, history, i18n, index
@@ -480,14 +481,11 @@ def export(out_dir, branch="main"):
     )
     blob_base_json = json.dumps(blob_base, ensure_ascii=False)
     hist_rel = index.rel_path(cfg.history) or ""
+    todo_path = cfg.todo if cfg.todo and cfg.todo.is_file() else None
     todo_data = (
-        todo_meta.parse(cfg.todo)
-        if cfg.todo and cfg.todo.is_file()
-        else {"sections": [], "total": 0, "done": 0, "open": 0}
+        todo_meta.parse(todo_path) if todo_path else {"sections": [], "total": 0, "done": 0, "open": 0}
     )
-    if not todo_meta.has_tasks(todo_data):
-        todo_data = {"sections": [], "total": 0, "done": 0, "open": 0}
-    todo_enabled = bool(todo_data["total"])
+    todo_enabled = todo_path is not None
 
     def todo_link(base):
         """靜態頁導覽的待辦連結；沒有待辦時空字串。"""
@@ -583,8 +581,14 @@ def export(out_dir, branch="main"):
     )
     _write_commits(out, data["repos"], footer, todo_link)
     if todo_enabled:
-        todo_rel = index.rel_path(cfg.todo) or cfg.todo.name
+        todo_file = cast(Path, todo_path)
+        todo_rel = index.rel_path(todo_file) or todo_file.name
         pct = round(todo_data["done"] / todo_data["total"] * 100) if todo_data["total"] else 0
+        todo_hint = (
+            ""
+            if todo_data["total"]
+            else '<p class="docwarn" id="todo-hint">%s</p>' % _esc(i18n.t("todo.no_tasks"))
+        )
         (out / "development" / "todo.html").write_text(
             assets.render(
                 "static_todo.html",
@@ -597,6 +601,7 @@ def export(out_dir, branch="main"):
                 open_count=str(todo_data["open"]),
                 sections=str(sum(1 for s in todo_data["sections"] if s.get("items"))),
                 pct=str(pct),
+                todo_hint=todo_hint,
                 source_url=_esc("../" + _doc_url(index.default_repo(), todo_rel)),
                 footer=footer,
                 base="../",

@@ -135,6 +135,7 @@
   "todo.completed": "{0} 件完了しました",
   "todo.updated": "TODO リストを更新しました",
   "todo.refreshed": "再読み込みしました",
+  "todo.no_tasks": "TODO ファイルは見つかりましたが、タスク項目がありません。`- [ ]`／`- [x]` で項目をマークしてください。",
   "dev.hint": "機能の状態はカタログで管理。API はソースの宣言位置（DocC ではない）。検索はシンボルとドキュメントを対象にします。",
   "dev.search": "音声、RTMP、関数名を検索…",
   "dev.repo_all": "すべてのソース",

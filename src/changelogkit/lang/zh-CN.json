@@ -135,6 +135,7 @@
   "todo.completed": "已完成 {0} 项",
   "todo.updated": "待办清单已更新",
   "todo.refreshed": "已刷新",
+  "todo.no_tasks": "已找到待办文件，但没有任务项。请用 `- [ ]`／`- [x]` 标记要跟踪的项目。",
   "dev.hint": "功能接入状态由清单维护；API 是源代码声明定位，尚非 DocC。搜索涵盖符号与文档内容。",
   "dev.search": "搜索音频、RTMP、函数名称…",
   "dev.repo_all": "全部来源",

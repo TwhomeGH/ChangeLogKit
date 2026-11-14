@@ -34,6 +34,7 @@
       · <a href="{{source_url}}" data-i18n="todo.source">{{t.todo.source}}</a>
     </div>
   </section>
+{{todo_hint}}
   <div class="todo-tools">
     <input id="todo-search" type="search" placeholder="{{t.todo.search}}"
            data-i18n-ph="todo.search" aria-label="{{t.todo.search}}" data-i18n-aria="todo.search">
@@ -109,7 +110,7 @@ function applyTodoFilter() {
     link.hidden = !visibleIds.has(link.getAttribute("href").slice(1));
   });
   document.getElementById("todo-index-count").textContent = visibleIds.size;
-  todoEmpty.hidden = visible !== 0;
+  todoEmpty.hidden = visible !== 0 || todoItems.length === 0;
   markActiveIndex();
 }
 

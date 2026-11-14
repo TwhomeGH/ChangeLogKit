@@ -135,6 +135,7 @@
   "todo.completed": "{0} completed",
   "todo.updated": "TODO list updated",
   "todo.refreshed": "Refreshed",
+  "todo.no_tasks": "TODO file found, but it has no tasks. Mark items with `- [ ]` or `- [x]`.",
   "dev.hint": "Feature status comes from the catalog; API is source scanning, not DocC. Search covers both and documents.",
   "dev.search": "Search audio, RTMP, function names...",
   "dev.repo_all": "All sources",

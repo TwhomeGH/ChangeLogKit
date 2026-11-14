@@ -491,6 +491,19 @@ class ExportTests(unittest.TestCase):
             dev = (out / "development" / "index.html").read_text(encoding="utf-8")
             self.assertIn("../development/todo.html", dev)
 
+    def test_empty_todo_shows_link_and_hint(self):
+        with TempRepo() as repo:
+            (repo.root / "TODO.md").write_text("# TODO\n\n- plain note\n", encoding="utf-8")
+            config.reset()
+            config.load(repo.root)
+            self.assertIn("/todo", index.todo_link())
+            out = repo.root / "_site"
+            export.export(out)
+            page = (out / "development" / "todo.html").read_text(encoding="utf-8")
+            self.assertIn('id="todo-hint"', page)
+            dev = (out / "development" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("../development/todo.html", dev)
+
     def test_static_pages_use_stable_urls_and_split_repos(self):
         with TempRepo() as repo:
             api = repo.root / "Docs" / "api"

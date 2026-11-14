@@ -68,11 +68,6 @@ def parse_text(text):
     return {"sections": sections, "total": total, "done": done, "open": total - done}
 
 
-def has_tasks(data):
-    """解析結果是否至少有一個待辦項目。"""
-    return bool(data.get("total"))
-
-
 def render(data):
     """把解析結果轉成唯讀任務清單 HTML（動態與靜態共用）。"""
     out = []
