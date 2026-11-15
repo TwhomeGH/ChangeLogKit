@@ -88,7 +88,6 @@
     rendered.innerHTML = window.renderMarkdown(rawLines.join("\n"), resolveHref);
     hasTOC = window.renderTOC(rendered, tocList, toc);
     if (tocBtn) tocBtn.hidden = !hasTOC;
-    if (hasTOC) window.watchTOC(rendered, tocList, document.querySelector(".wrap"));
     // 文件內的 #L 行號連結：切回原始碼模式再跳行（就地，不重載）。
     rendered.addEventListener("click", (e) => {
       const a = e.target.closest ? e.target.closest("a") : null;
@@ -98,6 +97,9 @@
     modeBtn.hidden = false;
     let mode = "rendered";
     setMode(mode);
+    /* setMode 之後 rendered 才可見；在此之前量到的標題位置全是 0，
+       scroll-spy 會把最後一項誤判成目前章節。 */
+    if (hasTOC) window.watchTOC(rendered, tocList, document.querySelector(".wrap"));
     modeBtn.addEventListener("click", () => { mode = mode === "rendered" ? "source" : "rendered"; setMode(mode); });
   } else {
     highlight(fromHash());

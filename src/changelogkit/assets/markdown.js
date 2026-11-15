@@ -205,9 +205,28 @@
     };
     btn.addEventListener("click", () => setOpen(!expanded()));
     if (close) close.addEventListener("click", () => setOpen(false));
+    const nav = panel.querySelector("nav") || panel;
     panel.addEventListener("click", (e) => {
-      const link = e.target.closest ? e.target.closest("a") : null;
-      if (link) setOpen(false);
+      const link = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+      if (!link) return;
+      const raw = link.getAttribute("href").slice(1);
+      let id = raw;
+      try { id = decodeURIComponent(raw); } catch (_) { /* 保留原字串 */ }
+      const target = document.getElementById(id);
+      if (target) {
+        /* 目錄跳轉不進瀏覽器歷史，否則返回鍵要逐段退。 */
+        e.preventDefault();
+        nav.dataset.lock = id;
+        nav.querySelectorAll("a").forEach((item) => {
+          const on = item === link;
+          item.classList.toggle("active", on);
+          if (on) item.setAttribute("aria-current", "location");
+          else item.removeAttribute("aria-current");
+        });
+        target.scrollIntoView({ block: "start", behavior: "auto" });
+        try { history.replaceState(null, "", "#" + id); } catch (_) { /* 忽略不支援的環境 */ }
+      }
+      setOpen(false);
     });
     addEventListener("resize", () => {
       if (innerWidth >= 1100) setOpen(false);   /* 回到桌面版時收起抽屜 */
@@ -223,17 +242,29 @@
     const update = () => {
       frame = 0;
       const offset = (appbar ? appbar.getBoundingClientRect().bottom : 0) + 12;
+      const viewportBottom = scroller
+        ? scroller.getBoundingClientRect().bottom
+        : window.innerHeight;
       let active = links[0];
+      let best = Infinity;
       for (const link of links) {
         const id = link.getAttribute("href").slice(1);
         const head = document.getElementById(id);
         if (!head) continue;
-        if (head.getBoundingClientRect().top <= offset) active = link;
-        else break;
+        const top = head.getBoundingClientRect().top;
+        if (top > viewportBottom - 24) break;
+        /* 取「最接近頂端門檻」的可視標題；只取最後一個已通過門檻者，
+           會在下一個標題剛好可視時仍亮上一段。 */
+        const distance = Math.abs(top - offset);
+        if (distance < best) {
+          best = distance;
+          active = link;
+        }
       }
-      const box = scroller || document.scrollingElement || document.documentElement;
-      if (box && box.scrollHeight - box.scrollTop - box.clientHeight < 8) {
-        active = links[links.length - 1];
+      const locked = nav.dataset.lock;
+      if (locked) {
+        const link = links.find((item) => item.getAttribute("href").slice(1) === locked);
+        if (link) active = link;
       }
       links.forEach((link) => {
         const on = link === active;
@@ -245,7 +276,20 @@
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     (scroller || window).addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
-    update();
+    /* 點目錄後先鎖住該項，避免程式捲動觸發 scroll-spy 又跳回上一段；
+       真正由使用者滾動／按鍵時才解鎖。 */
+    const unlock = () => { delete nav.dataset.lock; schedule(); };
+    const unlockKeys = new Set(["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "]);
+    for (const event of ["wheel", "touchstart", "pointerdown"]) {
+      (scroller || window).addEventListener(event, unlock, { passive: true });
+    }
+    window.addEventListener("keydown", (event) => { if (unlockKeys.has(event.key)) unlock(); });
+    let initialHash = location.hash.slice(1);
+    try { initialHash = decodeURIComponent(initialHash); } catch (_) { /* 保留原字串 */ }
+    if (initialHash && links.some((link) => link.getAttribute("href").slice(1) === initialHash)) {
+      nav.dataset.lock = initialHash;
+    }
+    schedule();   /* 等版面完成再量標題位置 */
   };
 
   /* ── 連結解析：所有渲染點共用的唯一來源 ─────────────────────

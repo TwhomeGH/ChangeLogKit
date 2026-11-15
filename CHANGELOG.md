@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.15 changelogkit 0.12.9 發佈
+
+**類型**: 修正 · **檔案**: `assets/markdown.js`、`assets/file.js`、`assets/file.css`
+
+### 問題 - 點目錄會累積瀏覽器歷史，返回鍵要逐段退；目錄高亮可能停在錯的章節
+
+### 修改 - 目錄跳轉不進歷史，scroll-spy 以最近可見章節為準
+
+- 目錄連結改用 `scrollIntoView` ＋ `history.replaceState`；連續點多個章節後，返回鍵直接回上一頁。
+- 修正初次載入時在 `rendered` 尚未顯示前量測標題、導致最後一項被誤判為目前章節。
+- scroll-spy 改取「最接近頂端門檻」的可視標題；點擊的章節會暫時鎖定，直到使用者真正滾動或按鍵才交還自動判斷。
+- 檔案檢視的 `.wrap` 不再套用 appbar 高度的 `scroll-margin`，避免跳轉停在上一段。
+
+---
+
 ## 2026.11.14 changelogkit 0.12.8 發佈
 
 **類型**: 修正 · **檔案**: `index.py`、`server.py`、`export.py`、`assets/todo.html`、`assets/static_todo.html`

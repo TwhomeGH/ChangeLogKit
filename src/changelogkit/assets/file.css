@@ -21,6 +21,8 @@
 /* Markdown 排版檢視（外框版面；內容樣式在 theme.css） */
 .wrap > [hidden] { display: none }
 .rendered { max-width: 920px; margin: 0 auto; padding: 22px 22px 64px; line-height: 1.75 }
+/* 檔案檢視的 appbar 在 .wrap 外，不需要再預留 appbar 高度，否則目錄跳轉會停在上一段。 */
+.wrap .rendered h1, .wrap .rendered h2, .wrap .rendered h3, .wrap .rendered h4 { scroll-margin-top: 8px }
 
 /* 文件頁：桌面 sticky 側欄；手機用浮動按鈕開抽屜。 */
 .doclayout { display: flex; justify-content: center; align-items: flex-start; gap: 28px; max-width: 1180px; margin: 0 auto; padding: 0 22px }
