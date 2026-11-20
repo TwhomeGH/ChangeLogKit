@@ -71,6 +71,7 @@
   "nav.dev": "開発インデックス",
   "nav.about": "このツールについて",
   "nav.docs": "ドキュメント",
+  "nav.api": "API ドキュメント",
   "btn.edit": "編集",
   "btn.delete": "削除",
   "btn.save": "保存",

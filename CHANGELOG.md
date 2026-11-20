@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026.11.21 changelogkit 0.12.11 發佈
+
+**類型**: 功能 · **檔案**: `apidocs.py`、`config.py`、`server.py`、`export.py`、`index.py`
+
+### 問題 - 外部 API 文件（Doxygen／Sphinx／Go doc 等）只能另開網站，無法從 changelogkit 進入
+
+### 修改 - 可選的多個 API 文件站掛載
+
+- 新增 `[[tool.changelog.api]]`，可同時設定多個 API 文件站；`html` 掛載本機 HTML，`url` 直連外部站。
+- 動態站提供 `/api-docs/<mount>/...` 唯讀路由；靜態站可外連或在 `embed = true` 時複製到 `api-docs/`。
+- 多個站點收成「API 文件」下拉；`kind` 為選填的 adapter 提示，不影響純掛載。
+- 拒絕 API 產物位於匯出目錄內，避免靜態匯出清理時刪掉 Doxygen 產物。
+- 路徑逃逸、重複 id／mount、缺檔與不合法設定都會被阻擋或警告，不影響其他頁面。
+
+---
+
 ## 2026.11.21 changelogkit 0.12.10 發佈
 
 **類型**: 修正 · **檔案**: `history.py`、`backfill.py`、`Docs/usage.md`

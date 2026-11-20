@@ -9,6 +9,7 @@ TOML 解析：Python 3.11+ 用標準庫 ``tomllib``；3.10 用 ``tomli``（pypro
 """
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -59,6 +60,23 @@ class DocEntry:
     group: str = ""
 
 
+@dataclass(frozen=True)
+class ApiDoc:
+    """一個選填的外部 API 文件站（``[[tool.changelog.api]]``）。
+
+    ``kind`` 只是未來深連結 adapter 的提示；掛載本身只依賴 ``html``／``url``。
+    """
+
+    id: str
+    title: str | dict = ""
+    kind: str = "html"
+    html: Path | None = None
+    url: str = ""
+    mount: str = ""
+    embed: bool = False
+    order: int = 100
+
+
 @dataclass
 class Config:
     """一次執行所使用、已解析的設定。"""
@@ -79,6 +97,8 @@ class Config:
     recent_commits: int = 20  # 開發索引列出的 commit 數（1–200）
     project: str = ""  # 分頁標題的專案名（預設 repo 目錄名）
     todo: Path | None = None  # 選填：待辦 markdown（存在才顯示入口）
+    api: list = field(default_factory=list)  # 選填：外部 API 文件站（ApiDoc）
+    api_warnings: list = field(default_factory=list)  # API 設定問題（不致命）
 
 
 def _find_root(start):
@@ -193,6 +213,87 @@ def _doc_entries(raw):
     return entries
 
 
+_API_SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+
+def _api_docs(root, raw):
+    """解析 ``[[tool.changelog.api]]``，回傳 ``(ApiDoc 清單, 警告)``。
+
+    掛載核心不依賴 ``kind``：只要有 ``html`` 或 ``url`` 就是一個可用的 API
+    文件站。設定錯誤只警告並略過該項，讓其他頁面照常運作。
+    """
+    warnings = []
+    if isinstance(raw, dict):
+        raw = [raw]
+    if not isinstance(raw, (list, tuple)):
+        return [], ["API 設定必須是 [[tool.changelog.api]] 陣列"]
+    docs, seen_ids, seen_mounts = [], set(), set()
+    for item in raw:
+        if not isinstance(item, dict):
+            warnings.append("API 設定項目不是表，已略過")
+            continue
+        ident = str(item.get("id") or "").strip()
+        if not ident or not _API_SLUG.fullmatch(ident):
+            warnings.append("API 文件項目缺少合法 id，已略過")
+            continue
+        if ident in seen_ids:
+            warnings.append("API 文件 id 重複：%s，已略過" % ident)
+            continue
+        mount = str(item.get("mount") or ident).strip().strip("/")
+        if not mount or not _API_SLUG.fullmatch(mount):
+            warnings.append("API 文件 %s 的 mount 不合法，已略過" % ident)
+            continue
+        if mount in seen_mounts:
+            warnings.append("API 文件 mount 重複：%s，已略過" % mount)
+            continue
+        html_value = item.get("html")
+        html_path = _resolve(root, str(html_value).strip()) if html_value else None
+        url = str(item.get("url") or "").strip()
+        if url.lower().startswith("javascript:"):
+            warnings.append("API 文件 %s 的 url 不合法，已略過" % ident)
+            continue
+        if not html_path and not url:
+            warnings.append("API 文件 %s 沒有 html 或 url，已略過" % ident)
+            continue
+        if html_path is not None and html_path.resolve() == root.resolve():
+            warnings.append("API 文件 %s 的 html 不可指向 repo 根目錄，已略過" % ident)
+            continue
+        if html_path is not None and not html_path.is_dir():
+            message = "API 文件 %s 的 html 不存在或不是目錄：%s" % (ident, html_path)
+            if not url:
+                warnings.append(message + "，已略過")
+                continue
+            warnings.append(message + "；仍使用外部 url")
+            html_path = None
+        kind = str(item.get("kind") or "html").strip().lower()
+        if kind == "docc" and html_path is not None:
+            warnings.append("API 文件 %s 使用 DocC；.doccarchive 不是一般 HTML，建議改設 url" % ident)
+        try:
+            order = int(item.get("order", 100))
+        except (TypeError, ValueError):
+            order = 100
+        embed = item.get("embed") is True
+        if embed and html_path is None:
+            warnings.append("API 文件 %s 設了 embed 但沒有可複製的 html，已改為外連" % ident)
+            embed = False
+        seen_ids.add(ident)
+        seen_mounts.add(mount)
+        docs.append(
+            ApiDoc(
+                id=ident,
+                title=_text(item.get("title")) or ident,
+                kind=kind,
+                html=html_path,
+                url=url,
+                mount=mount,
+                embed=embed,
+                order=order,
+            )
+        )
+    docs.sort(key=lambda doc: (doc.order, doc.id))
+    return docs, warnings
+
+
 def _from_table(root, table):
     """由 ``[tool.changelog]`` 表建出 :class:`Config`。"""
     history = root / table.get("history", DEFAULT_HISTORY)
@@ -221,6 +322,7 @@ def _from_table(root, table):
         todo = _resolve(root, todo_value.strip())
     else:
         todo = _auto_todo(root)
+    api, api_warnings = _api_docs(root, table.get("api", []))
     return Config(
         root=root,
         title=table.get("title") or root.name,
@@ -238,6 +340,8 @@ def _from_table(root, table):
         docs_unlisted=str(docs_table.get("unlisted") or "other").strip().lower(),
         docs_auto=auto,
         recent_commits=recent,
+        api=api,
+        api_warnings=api_warnings,
     )
 
 

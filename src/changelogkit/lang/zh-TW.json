@@ -71,6 +71,7 @@
   "nav.dev": "開發索引",
   "nav.about": "關於",
   "nav.docs": "文件",
+  "nav.api": "API 文件",
   "btn.edit": "編輯",
   "btn.delete": "刪除",
   "btn.save": "儲存",

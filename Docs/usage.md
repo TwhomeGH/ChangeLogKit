@@ -147,6 +147,50 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 >
 > API 卡片去重：同一個 repo、同目錄且同檔名基底的 `.d.ts` 與 `.js`／`.mjs`／`.cjs`，若同名同種類，只保留 `.d.ts`；不同目錄或不同種類（例如 interface／class）不會互刪。
 
+## 外部 API 文件（選填）
+
+可以把 Doxygen、Sphinx、Go doc、pdoc 等產生的 HTML，或多個外部 API 站掛進 changelogkit。沒有設定時完全維持現狀；`kind` 只是未來深連結 adapter 的提示，**純掛載不需要指定**。
+
+```toml
+[[tool.changelog.api]]
+id = "cpp"
+title = "C++ API"
+html = "build/doxygen/html"       # 本機 HTML 產物
+mount = "cpp"                     # /api-docs/cpp/
+order = 10
+# kind = "doxygen"                # 選填；目前只用於提示
+
+[[tool.changelog.api]]
+id = "python"
+title = "Python API"
+html = "docs/_build/html"
+mount = "python"
+order = 20
+
+[[tool.changelog.api]]
+id = "swift"
+title = "Swift API"
+url = "https://example.com/documentation/"  # 外部站，不複製
+order = 30
+```
+
+| 欄位 | 必要 | 說明 |
+| --- | --- | --- |
+| `id` | 是 | 唯一識別；不可重複 |
+| `title` | 否 | 導覽顯示名稱（預設 `id`） |
+| `html` | 二選一 | 本機 HTML 目錄；Doxygen 的 `HTML_OUTPUT` 目錄 |
+| `url` | 二選一 | 外部 API 文件網址；設定後靜態站直接外連 |
+| `mount` | 否 | 掛載路徑 `/api-docs/<mount>/`（預設 `id`，不可重複） |
+| `kind` | 否 | 目前可省略；之後 Doxygen／Sphinx 深連結 adapter 會用到 |
+| `embed` | 否 | 靜態匯出是否把 `html` 複製到 `api-docs/<mount>/`（預設 `false`） |
+| `order` | 否 | 導覽排序（預設 `100`） |
+
+- 動態 `serve`：`/api-docs/<mount>/...` 唯讀掛載，只服務 `html` 目錄內的真實檔案；`..` 與符號連結逃逸會被拒絕。
+- 靜態 `export`：有 `url` 時直接外連；沒有 `url` 但 `embed = true` 時才複製。兩者都沒有時，靜態站不顯示入口並在 stderr 警告。
+- 多個項目會收成「API 文件」下拉；單一項目直接顯示該站標題。
+- `html` 不可位於靜態匯出目錄內（例如 `export _site` 而 `html = "_site/api"`），否則匯出前的清理會刪掉 API 產物；工具會直接報錯，請改到獨立目錄。
+- Doxygen 的 `.doccarchive`／DocC 不是一般 HTML；目前請用 `url` 指向已託管的文件。tagfile／`objects.inv` 的符號深連結留到後續版本。
+
 ## 排序與回填日期
 
 ```powershell

@@ -71,6 +71,7 @@
   "nav.dev": "Dev index",
   "nav.about": "About",
   "nav.docs": "Documents",
+  "nav.api": "API docs",
   "btn.edit": "Edit",
   "btn.delete": "Delete",
   "btn.save": "Save",

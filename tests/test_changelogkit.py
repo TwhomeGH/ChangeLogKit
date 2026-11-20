@@ -24,7 +24,20 @@ _DEV_SPEC = importlib.util.spec_from_file_location(
 dev_tool = importlib.util.module_from_spec(_DEV_SPEC)
 _DEV_SPEC.loader.exec_module(dev_tool)
 
-from changelogkit import assets, backfill, cli, community, config, docs, export, history, i18n, index, todo  # noqa: E402
+from changelogkit import (  # noqa: E402
+    apidocs,
+    assets,
+    backfill,
+    cli,
+    community,
+    config,
+    docs,
+    export,
+    history,
+    i18n,
+    index,
+    todo,
+)
 
 SAMPLE = """# 變更歷史
 
@@ -100,6 +113,131 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(cfg.history, repo.root / "Docs/ChangeHistory.md")
             self.assertEqual(cfg.community, repo.root / "Docs/community.md")
             self.assertEqual([s.name for s in cfg.sources], ["app"])
+
+    def test_api_docs_config_and_order(self):
+        with TempRepo() as repo:
+            html = repo.root / "build" / "doxygen" / "html"
+            html.mkdir(parents=True)
+            (html / "index.html").write_text("<html>doxygen</html>", encoding="utf-8")
+            (repo.root / ".changelog.toml").write_text(
+                TOML
+                + """
+[[tool.changelog.api]]
+id = "cpp"
+title = "C++ API"
+html = "build/doxygen/html"
+order = 20
+
+[[tool.changelog.api]]
+id = "python"
+title = "Python API"
+url = "https://example.com/api/"
+kind = "sphinx"
+order = 10
+""",
+                encoding="utf-8",
+            )
+            config.reset()
+            cfg = config.load(repo.root)
+            self.assertEqual([doc.id for doc in cfg.api], ["python", "cpp"])
+            cpp = cfg.api[1]
+            self.assertEqual(cpp.html, html.resolve())
+            self.assertEqual(cpp.mount, "cpp")
+            self.assertFalse(cpp.embed)
+            self.assertEqual(cfg.api_warnings, [])
+
+    def test_api_docs_invalid_entries_are_warnings(self):
+        with TempRepo() as repo:
+            (repo.root / ".changelog.toml").write_text(
+                TOML
+                + """
+[[tool.changelog.api]]
+id = "missing"
+
+[[tool.changelog.api]]
+id = "dup"
+url = "https://one.example/"
+
+[[tool.changelog.api]]
+id = "dup"
+url = "https://two.example/"
+""",
+                encoding="utf-8",
+            )
+            config.reset()
+            cfg = config.load(repo.root)
+            self.assertEqual([doc.id for doc in cfg.api], ["dup"])
+            self.assertGreaterEqual(len(cfg.api_warnings), 2)
+
+    def test_api_nav_and_traversal(self):
+        with TempRepo() as repo:
+            html = repo.root / "build" / "api"
+            html.mkdir(parents=True)
+            (html / "index.html").write_text("<html>api</html>", encoding="utf-8")
+            (repo.root / "secret.txt").write_text("secret", encoding="utf-8")
+            doc = config.ApiDoc(
+                id="cpp",
+                title="C++ API",
+                html=html,
+                mount="cpp",
+                embed=True,
+            )
+            nav = apidocs.nav_html([doc], "/")
+            self.assertIn("/api-docs/cpp/", nav)
+            self.assertIn("C++ API", nav)
+            self.assertIsNotNone(apidocs.resolve_asset(doc, "index.html"))
+            self.assertIsNone(apidocs.resolve_asset(doc, "../secret.txt"))
+
+            external = config.ApiDoc(id="swift", title="Swift API", url="https://swift.example/")
+            self.assertIn("https://swift.example/", apidocs.nav_html([external]))
+
+    def test_static_export_api_mount_and_external_link(self):
+        with TempRepo() as repo:
+            html = repo.root / "build" / "api"
+            html.mkdir(parents=True)
+            (html / "index.html").write_text("<html>api</html>", encoding="utf-8")
+            (repo.root / ".changelog.toml").write_text(
+                TOML
+                + """
+[[tool.changelog.api]]
+id = "cpp"
+title = "C++ API"
+html = "build/api"
+embed = true
+
+[[tool.changelog.api]]
+id = "py"
+title = "Python API"
+url = "https://python.example/api/"
+""",
+                encoding="utf-8",
+            )
+            config.reset()
+            config.load(repo.root)
+            out = repo.root / "site"
+            export.export(out)
+            self.assertTrue((out / "api-docs" / "cpp" / "index.html").is_file())
+            dev = (out / "development" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("api-docs/cpp/", dev)
+            self.assertIn("https://python.example/api/", dev)
+
+    def test_static_export_rejects_api_output_inside_site(self):
+        with TempRepo() as repo:
+            (repo.root / "site" / "api").mkdir(parents=True)
+            (repo.root / ".changelog.toml").write_text(
+                TOML
+                + """
+[[tool.changelog.api]]
+id = "cpp"
+html = "site/api"
+embed = true
+""",
+                encoding="utf-8",
+            )
+            config.reset()
+            config.load(repo.root)
+            with self.assertRaises(ValueError):
+                export.export(repo.root / "site")
 
     def test_todo_path(self):
         with TempRepo() as repo:

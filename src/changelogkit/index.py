@@ -17,7 +17,7 @@ import subprocess
 from pathlib import Path, PurePosixPath
 from urllib.parse import parse_qs
 
-from . import assets, config, docs as docmeta, i18n
+from . import apidocs, assets, config, docs as docmeta, i18n
 from .globs import regex as _glob_re
 from .scanners import SUPPORTED_LANGUAGES, SUPPORTED_SUFFIXES, scan_symbols
 from .scanners.common import link
@@ -348,6 +348,7 @@ def snapshot():
         "documents": [],
         "languages": SUPPORTED_LANGUAGES,
         "recentCommits": recent,
+        "apiWarnings": config.load().api_warnings,
     }
     for repo, root in roots().items():
         data["repos"].append(
@@ -403,6 +404,11 @@ def todo_link():
     return '<a href="/todo" data-i18n="nav.todo">%s</a>' % html.escape(i18n.t("nav.todo"))
 
 
+def api_nav():
+    """有設定 API 文件站時回傳導覽列項目（動態頁使用站根絕對路徑）。"""
+    return apidocs.nav_html(config.load().api, "/")
+
+
 def _file_page(repo, name, line):
     """組出檔案檢視頁（含行號、目標行與語法上色用的 .code 容器）。"""
     source = safe_file(repo, name).read_text(encoding="utf-8", errors="replace")
@@ -420,6 +426,7 @@ def _file_page(repo, name, line):
         content=content,
         project=html.escape(config.load().project),
         todo_link=todo_link(),
+        api_nav=api_nav(),
         i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
         **i18n.subs(),
     )
@@ -436,6 +443,7 @@ def route(path, query):
                     i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
                     project=html.escape(config.load().project),
                     todo_link=todo_link(),
+                    api_nav=api_nav(),
                     **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",

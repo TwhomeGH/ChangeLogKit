@@ -106,8 +106,30 @@ button.primary:hover { filter: brightness(1.07); background: var(--accent) }
 }
 .locale-menu .lchip:hover { background: var(--line2); color: var(--fg) }
 .locale-menu .lchip.on { background: var(--accent); color: var(--accent-fg) }
+/* API 文件站下拉：單一項目直接顯示連結，多項目收在 summary 內。 */
+.navdrop { position: relative; display: inline-flex }
+.navdrop > summary {
+  list-style: none; cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  color: var(--fg); font-size: 13px; line-height: 1.3;
+}
+.navdrop > summary::-webkit-details-marker { display: none }
+.navdrop > summary::after { content: " ▾"; color: var(--mut) }
+.navdrop[open] > summary, .navdrop > summary:hover { background: var(--line2); color: var(--accent) }
+.navdrop-menu {
+  position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; min-width: 190px;
+  display: flex; flex-direction: column; padding: 6px; background: var(--card);
+  border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+}
+.navdrop-menu a {
+  display: block; padding: 7px 10px; border-radius: 6px; color: var(--fg);
+  text-decoration: none; white-space: nowrap;
+}
+.navdrop-menu a:hover { background: var(--line2); color: var(--accent) }
 .empty { color: var(--mut); padding: 30px; text-align: center }
-@media (max-width: 640px) { .appbar { gap: 6px } }
+@media (max-width: 640px) {
+  .appbar { gap: 6px }
+  .navdrop-menu { position: fixed; left: 12px; right: 12px; top: calc(var(--appbar-h, 53px) + 6px) }
+}
 
 /* 靜態頁尾：標示來源 commit 與產生時間。 */
 footer.built {

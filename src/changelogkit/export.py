@@ -14,12 +14,13 @@ import html
 import json
 import re
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import cast
 from urllib.parse import quote
 
-from . import assets, buildinfo, community, config, docs as docmeta, history, i18n, index
+from . import apidocs, assets, buildinfo, community, config, docs as docmeta, history, i18n, index
 from . import todo as todo_meta
 
 # 需要複製到輸出 assets/ 的檔案（其餘為 server 動態用，不需要）。
@@ -283,7 +284,7 @@ def _render_repo_list(repos):
     return "\n".join(parts)
 
 
-def _write_commits(out, repos, footer, todo_link=None):
+def _write_commits(out, repos, footer, todo_link=None, api_nav=None):
     """為每筆 commit 產生獨立頁面（完整 diff，不塞進列表頁）。"""
     for repo in repos:
         for commit in repo["commits"]:
@@ -314,6 +315,7 @@ def _write_commits(out, repos, footer, todo_link=None):
                     footer=footer,
                     base=base,
                     todo_link=(todo_link(base) if todo_link else ""),
+                    api_nav=(api_nav(base) if api_nav else ""),
                 ),
                 encoding="utf-8",
             )
@@ -348,7 +350,7 @@ def _render_symbols_page(data, blob_base):
     )
 
 
-def _write_docs(out, documents, footer, doc_pages_json, blob_base_json, todo_link=None):
+def _write_docs(out, documents, footer, doc_pages_json, blob_base_json, todo_link=None, api_nav=None):
     """為每份 Markdown 文件產生穩定的靜態頁 ``docs/<path>.html``。
 
     巢狀路徑要依深度改寫 ``base``／``site_base``，文件內的相對連結才會
@@ -389,6 +391,7 @@ def _write_docs(out, documents, footer, doc_pages_json, blob_base_json, todo_lin
                 doc_path=json.dumps(doc["name"], ensure_ascii=False),
                 doc_repo=json.dumps(doc.get("repo", ""), ensure_ascii=False),
                 todo_link=(todo_link(base) if todo_link else ""),
+                api_nav=(api_nav(base) if api_nav else ""),
             ),
             encoding="utf-8",
         )
@@ -405,6 +408,7 @@ def _write_about(
     blob_base_json,
     community_path,
     todo_link_html="",
+    api_nav_html="",
 ):
     """產生靜態「關於」頁 ``about/index.html``：changelogkit 版本、來源 commit、UI 語系、社群區塊。"""
     head = data["repos"][0]["head"] if data["repos"] else ""
@@ -442,6 +446,7 @@ def _write_about(
             doc_path=json.dumps(community_path, ensure_ascii=False),
             doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
             todo_link=todo_link_html,
+            api_nav=api_nav_html,
         ),
         encoding="utf-8",
     )
@@ -451,12 +456,29 @@ def export(out_dir, branch="main"):
     """把目前 repo 匯出成靜態站到 ``out_dir``；回傳輸出路徑（Path）。"""
     cfg = config.load()
     out = Path(out_dir).resolve()
+    # 先檢查 API 產物位置，避免 rmtree 把 Doxygen 輸出刪掉。
+    apidocs.assert_export_safe(cfg, out)
     if out.exists():
         shutil.rmtree(out)
     (out / "assets").mkdir(parents=True)
     (out / "development").mkdir()
     for name in STATIC_ASSETS:
         shutil.copyfile(assets.path(name), out / "assets" / name)
+    static_api = []
+    for doc in cfg.api:
+        if doc.url:
+            static_api.append(doc)
+        elif doc.embed and doc.html and doc.html.is_dir():
+            try:
+                apidocs.copy_provider(doc, out)
+                static_api.append(doc)
+            except (OSError, ValueError) as error:
+                print("warning: API 文件 %s 複製失敗：%s" % (doc.id, error), file=sys.stderr)
+        elif doc.html:
+            print(
+                "warning: API 文件 %s 未設定 url 或 embed=true，靜態站不顯示入口" % doc.id,
+                file=sys.stderr,
+            )
     blob_base = _github_base(branch)
     data = index.snapshot()
 
@@ -496,6 +518,10 @@ def export(out_dir, branch="main"):
             _esc(i18n.t("nav.todo")),
         )
 
+    def api_nav(base):
+        """靜態頁導覽的 API 文件連結；沒有可用站點時空字串。"""
+        return apidocs.nav_html(static_api, base)
+
     hist_content, count = _render_history(cfg)
     (out / "index.html").write_text(
         assets.render(
@@ -512,6 +538,7 @@ def export(out_dir, branch="main"):
             doc_path=json.dumps(hist_rel, ensure_ascii=False),
             doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
             todo_link=todo_link(""),
+            api_nav=api_nav(""),
         ),
         encoding="utf-8",
     )
@@ -534,6 +561,7 @@ def export(out_dir, branch="main"):
             doc_path=json.dumps(""),
             doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
             todo_link=todo_link("../"),
+            api_nav=api_nav("../"),
         ),
         encoding="utf-8",
     )
@@ -555,6 +583,7 @@ def export(out_dir, branch="main"):
             blob_base=blob_base_json,
             doc_path=json.dumps(""),
             todo_link=todo_link("../"),
+            api_nav=api_nav("../"),
         ),
         encoding="utf-8",
     )
@@ -576,10 +605,11 @@ def export(out_dir, branch="main"):
             count=str(cfg.recent_commits),
             more=more,
             todo_link=todo_link("../"),
+            api_nav=api_nav("../"),
         ),
         encoding="utf-8",
     )
-    _write_commits(out, data["repos"], footer, todo_link)
+    _write_commits(out, data["repos"], footer, todo_link, api_nav)
     if todo_enabled:
         todo_file = cast(Path, todo_path)
         todo_rel = index.rel_path(todo_file) or todo_file.name
@@ -605,11 +635,12 @@ def export(out_dir, branch="main"):
                 source_url=_esc("../" + _doc_url(index.default_repo(), todo_rel)),
                 footer=footer,
                 base="../",
+                api_nav=api_nav("../"),
             ),
             encoding="utf-8",
         )
 
-    _write_docs(out, data["documents"], footer, doc_pages_json, blob_base_json, todo_link)
+    _write_docs(out, data["documents"], footer, doc_pages_json, blob_base_json, todo_link, api_nav)
     community_html = community.html_block(community.load(), i18n.t("about.community_title"))
     _write_about(
         out,
@@ -622,6 +653,7 @@ def export(out_dir, branch="main"):
         blob_base_json,
         index.rel_path(cfg.community) or "",
         todo_link("../"),
+        api_nav("../"),
     )
 
     (out / ".nojekyll").write_text("", encoding="utf-8")

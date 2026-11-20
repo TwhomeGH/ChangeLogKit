@@ -71,6 +71,7 @@
   "nav.dev": "开发索引",
   "nav.about": "关于",
   "nav.docs": "文档",
+  "nav.api": "API 文档",
   "btn.edit": "编辑",
   "btn.delete": "删除",
   "btn.save": "保存",

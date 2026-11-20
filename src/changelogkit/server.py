@@ -10,10 +10,12 @@
 
 import html
 import json
+import mimetypes
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
-from . import assets, buildinfo, community, config, history, i18n, index, todo
+from . import apidocs, assets, buildinfo, community, config, history, i18n, index, todo
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -40,9 +42,31 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, OSError):
             return self._send(404, b"", "text/plain; charset=utf-8")
 
+    def _serve_api_doc(self, path):
+        """提供 ``/api-docs/<mount>/...``：只讀取設定目錄內的真實檔案。"""
+        path = unquote(path)
+        for doc in config.load().api:
+            bare = "/api-docs/%s" % doc.mount
+            if path == bare:
+                self.send_response(302)
+                self.send_header("Location", bare + "/")
+                self.end_headers()
+                return None
+            if not path.startswith(bare + "/"):
+                continue
+            rel = path[len(bare) + 1 :] or "index.html"
+            target = apidocs.resolve_asset(doc, rel)
+            if target is None:
+                return self._send(404, b"Not found", "text/plain; charset=utf-8")
+            ctype = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
+            return self._send(200, target.read_bytes(), ctype)
+        return self._send(404, b"Not found", "text/plain; charset=utf-8")
+
     # ── GET ──
     def do_GET(self):
         u = urlparse(self.path)
+        if u.path.startswith("/api-docs/"):
+            return self._serve_api_doc(u.path)
         if u.path.startswith("/development"):
             return self._send(*index.route(u.path, u.query))
         if u.path.startswith("/assets/"):
@@ -61,6 +85,7 @@ class Handler(BaseHTTPRequestHandler):
                     history_json=meta,
                     project=html.escape(config.load().project),
                     todo_link=index.todo_link(),
+                    api_nav=index.api_nav(),
                     **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",
@@ -94,6 +119,7 @@ class Handler(BaseHTTPRequestHandler):
                     todo_hint=hint,
                     version=todo.version(cfg.todo),
                     source_url=html.escape(source),
+                    api_nav=index.api_nav(),
                 ),
                 "text/html; charset=utf-8",
             )
@@ -139,6 +165,7 @@ class Handler(BaseHTTPRequestHandler):
                     community_json=meta,
                     project=html.escape(config.load().project),
                     todo_link=index.todo_link(),
+                    api_nav=index.api_nav(),
                     **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",
@@ -234,6 +261,8 @@ def serve(port=8710, open_browser=True):
         httpd = _Server(("127.0.0.1", 0), Handler)
     url = "http://127.0.0.1:%d/" % httpd.server_address[1]
     print("變更歷史 GUI: %s" % url)
+    for warning in config.load().api_warnings:
+        print("warning: %s" % warning, file=sys.stderr)
     print("（Ctrl+C 結束）")
     if open_browser:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
