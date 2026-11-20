@@ -590,6 +590,21 @@ class HistoryTests(unittest.TestCase):
             history.insert_block(history.build_block("2026.02.01", "新紀錄", "功能", "b.swift"))
             self.assertEqual(history.parse_entries()[0]["title"], "新紀錄")
 
+    def test_insert_block_with_body_subheading_stays_one_entry(self):
+        with TempRepo():
+            history.insert_block(
+                history.build_block(
+                    "2026.02.03",
+                    "單筆紀錄",
+                    "修復",
+                    "",
+                    change_detail="## 結束直播\n- 內容",
+                )
+            )
+            titles = [entry["title"] for entry in history.parse_entries()]
+            self.assertEqual(titles[0], "單筆紀錄")
+            self.assertNotIn("結束直播", titles)
+
     def test_sort_lines_orders_by_time(self):
         lines = [
             "# History",
@@ -675,6 +690,34 @@ class HistoryTests(unittest.TestCase):
         self.assertIn("細節一\n細節二", block)
         self.assertIn("- 其他項目", block)
         self.assertLess(block.index("細節一"), block.index("- 其他項目"))
+
+    def test_build_block_demotes_body_headings(self):
+        block = history.build_block(
+            "2026.02.02",
+            "內文標題",
+            "修復",
+            "",
+            problem="問題摘要\n## 問題細節\n內容",
+            change_detail="# 大標\n## 中標\n- 項目",
+        )
+        self.assertIn("### 問題細節\n\n內容", block)
+        self.assertIn("### 大標\n\n### 中標\n\n- 項目", block)
+        self.assertEqual(sum(1 for line in block.splitlines() if line.startswith("## ")), 1)
+        entries = history.parse_entries(block)
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["title"], "內文標題")
+
+    def test_parse_entries_ignores_body_subheadings(self):
+        text = "# H\n\n## 2026.01.01 10:00 主紀錄\n\n## 結束直播\n\n- 內容\n\n## 2026.01.02 10:00 下一筆\n"
+        entries = history.parse_entries(text)
+        self.assertEqual([e["title"] for e in entries], ["主紀錄", "下一筆"])
+        self.assertIn("## 結束直播", entries[0]["raw"])
+
+    def test_parse_entries_keeps_undated_legacy_file(self):
+        text = "# H\n\n## 沒有日期的條目\n\n內容\n"
+        entries = history.parse_entries(text)
+        self.assertEqual(len(entries), 1)
+        self.assertIsNone(entries[0]["date"])
 
     def test_build_block_strips_md026_punctuation(self):
         block = history.build_block(

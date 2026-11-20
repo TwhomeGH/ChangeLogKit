@@ -50,7 +50,7 @@ def parse_entries(text=None):
     """
     text = read_history() if text is None else text
     lines = strip_comments(text).splitlines()
-    heads = [i for i, line in enumerate(lines) if line.startswith("## ")]
+    heads = _heading_indices(lines)
     entries = []
     for k, start in enumerate(heads):
         end = heads[k + 1] if k + 1 < len(heads) else len(lines)
@@ -77,9 +77,21 @@ def read_history():
 
 
 def _heading_indices(lines):
-    """真實（非註解內）的 ``'## '`` 標題行索引。"""
-    out, in_comment = [], False
+    """真實（非註解／程式碼區塊內）的紀錄標題索引。
+
+    只有 ``## YYYY.MM.DD`` 才是紀錄邊界；內文若出現 ``## 子標題``，
+    不能被當成另一筆紀錄。完全沒有日期標題的舊檔才 fallback 到所有
+    ``##``，讓 ``backfill`` 仍有機會補日期。
+    """
+    dated, all_heads = [], []
+    fence, in_comment = False, False
     for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith(("```", "~~~")):
+            fence = not fence
+            continue
+        if fence:
+            continue
         if "<!--" in line:
             in_comment = True
         if in_comment:
@@ -87,8 +99,10 @@ def _heading_indices(lines):
                 in_comment = False
             continue
         if line.startswith("## "):
-            out.append(i)
-    return out
+            all_heads.append(i)
+            if DATE_RE.match(line.rstrip()):
+                dated.append(i)
+    return dated or all_heads
 
 
 # ─────────────────────────── 組版 ───────────────────────────
@@ -120,6 +134,59 @@ def _summary_body(text):
         return "", ""
     parts = text.splitlines()
     return _heading_text(parts[0]), "\n".join(parts[1:]).strip()
+
+
+_HEADING_LINE = re.compile(r"^(#{1,6})(\s+.*)$")
+_FENCE_LINE = re.compile(r"^\s*(```|~~~)")
+
+
+def _normalize_body(text):
+    """把使用者內文中的標題降階到 ``###``，避免被解析成新紀錄。
+
+    紀錄本身是 ``##``；內文的 ``#``／``##`` 若原樣寫入，會和下一筆紀錄
+    同層，網頁與 CLI 都會把它們當成獨立紀錄。這裡只處理非程式碼區塊內的
+    標題，並補上標題前後空行（markdownlint MD022）。
+    """
+    lines = str(text or "").splitlines()
+    out, fence = [], None
+    for line in lines:
+        fence_match = _FENCE_LINE.match(line)
+        if fence_match:
+            marker = fence_match.group(1)
+            if fence is None:
+                fence = marker
+            elif fence == marker:
+                fence = None
+            out.append(line)
+            continue
+        if fence is None:
+            heading = _HEADING_LINE.match(line)
+            if heading:
+                if out and out[-1].strip():
+                    out.append("")
+                out.append("#" * max(3, len(heading.group(1))) + heading.group(2))
+                out.append("")
+                continue
+        out.append(line)
+
+    # 收斂連續空行（程式碼區塊內保留原樣）。
+    cleaned, fence, blank = [], None, 0
+    for line in out:
+        fence_match = _FENCE_LINE.match(line)
+        if fence_match:
+            marker = fence_match.group(1)
+            if fence is None:
+                fence = marker
+            elif fence == marker:
+                fence = None
+        if fence is None and line.strip() == "":
+            blank += 1
+            if blank > 1:
+                continue
+        else:
+            blank = 0
+        cleaned.append(line)
+    return "\n".join(cleaned).strip()
 
 
 def _norm_refs(refs):
@@ -164,10 +231,10 @@ def build_block(
             continue
         lines.append("### %s - %s" % (label, summary))
         if body:
-            lines += ["", body]
+            lines += ["", _normalize_body(body)]
         lines.append("")
     # 修改：第一項當標題摘要，其餘為條列；細節另成一段。
-    detail = str(change_detail or "").strip()
+    detail = _normalize_body(change_detail)
     if changes:
         summary, rest = _heading_text(changes[0]), changes[1:]
         lines.append("### 修改 - %s" % summary)

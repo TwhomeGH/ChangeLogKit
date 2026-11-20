@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.21 changelogkit 0.12.10 發佈
+
+**類型**: 修正 · **檔案**: `history.py`、`backfill.py`、`Docs/usage.md`
+
+### 問題 - 新增紀錄的內文若含 `##` 標題，會被解析成多筆紀錄
+
+### 修改 - 內文標題自動降為 `###`，紀錄邊界只認日期
+
+- `build_block` 會把問題／根因內文與修改細節中的 `#`／`##` 轉成 `###`，並補上標題前後空行。
+- `parse_entries`、`_heading_indices` 與 `backfill` 只把 `## YYYY.MM.DD` 當成紀錄邊界；內文的 `## 子標題` 留在同一筆 `raw` 中，不再拆成日期為空的紀錄。
+- 完全沒有日期標題的舊檔仍 fallback 到所有 `##`，讓 `backfill` 可以補日期。
+- 文件與四語系表單提示同步說明子標題會自動轉為 `###`。
+
+---
+
 ## 2026.11.15 changelogkit 0.12.9 發佈
 
 **類型**: 修正 · **檔案**: `assets/markdown.js`、`assets/file.js`、`assets/file.css`

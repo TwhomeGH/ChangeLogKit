@@ -53,8 +53,12 @@ def _strip_subs(lines):
 
 
 def _entry_heads(lines):
-    """真正的 ``## `` 標題索引；忽略 HTML 註解與程式碼區塊內的同型字串。"""
-    heads, fence, in_comment = [], False, False
+    """紀錄標題索引；忽略 HTML 註解與程式碼區塊內的同型字串。
+
+    有日期標題時只認日期標題，避免內文的 ``## 子標題`` 被當成另一筆；
+    完全沒有日期標題的舊檔才 fallback 到所有 ``##``，讓回填仍可運作。
+    """
+    dated, all_heads, fence, in_comment = [], [], False, False
     for index, line in enumerate(lines):
         stripped = line.strip()
         if stripped.startswith(("```", "~~~")):
@@ -69,8 +73,10 @@ def _entry_heads(lines):
                 in_comment = False
             continue
         if line.startswith("## "):
-            heads.append(index)
-    return heads
+            all_heads.append(index)
+            if DATED.match(line):
+                dated.append(index)
+    return dated or all_heads
 
 
 def _sort_key(line):
