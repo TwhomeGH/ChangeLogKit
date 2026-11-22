@@ -120,6 +120,8 @@ class Handler(BaseHTTPRequestHandler):
                     version=todo.version(cfg.todo),
                     source_url=html.escape(source),
                     api_nav=index.api_nav(),
+                    todo_repo=json.dumps(index.default_repo(), ensure_ascii=False),
+                    todo_path=json.dumps(rel, ensure_ascii=False),
                 ),
                 "text/html; charset=utf-8",
             )

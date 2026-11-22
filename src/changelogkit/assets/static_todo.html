@@ -5,7 +5,7 @@
 <title>{{project}} · {{t.todo.title}}</title>
 <meta name="generator" content="changelogkit">
 <script src="{{base}}assets/theme.js"></script>
-<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}"; window.CK_SITE_BASE = {{site_base}}; window.CK_DOC_PAGES = {{doc_pages}}; window.CK_BLOB_BASE = {{blob_base}}; window.CK_TODO_REPO = {{todo_repo}}; window.CK_TODO_PATH = {{todo_path}};</script>
 <script src="{{base}}assets/i18n.js"></script>
 <script src="{{base}}assets/highlight.js"></script>
 <script src="{{base}}assets/markdown.js"></script>
@@ -53,9 +53,11 @@ const todoEmpty = document.getElementById("todo-empty");
 const todoButtons = [...document.querySelectorAll("[data-filter]")];
 let todoFilter = "all";
 
+const todoResolver = window.markdownStaticResolver(window.CK_TODO_PATH || "", window.CK_TODO_REPO || "");
+
 function hydrateLabels(scope) {
   for (const el of scope.querySelectorAll(".todo-item .label[data-raw]")) {
-    el.innerHTML = window.renderInline(el.getAttribute("data-raw"));
+    el.innerHTML = window.renderInline(el.getAttribute("data-raw"), todoResolver);
   }
 }
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026.11.22 changelogkit 0.12.12 發佈
+
+**類型**: 修正 · **檔案**: `assets/todo.html`、`assets/static_todo.html`、`server.py`、`export.py`
+
+### 問題 - TODO 項目中的相對連結以網站根目錄解析，點擊後跳到錯誤位置
+
+### 修改 - 以 TODO 檔所在目錄解析連結
+
+- 動態 `/todo` 與靜態 `development/todo.html` 都注入 TODO 的來源 repo／路徑，改用共用的 `markdownResolver`／`markdownStaticResolver`。
+- `./文件.md`、`../CHANGES.md` 等相對連結現在會接到正確的檔案檢視或站內文件頁；靜態站找不到文件頁時退回 GitHub blob。
+- 補上靜態 TODO 的 `CK_DOC_PAGES`／`CK_BLOB_BASE`／`CK_SITE_BASE` 脈絡，與文件頁一致。
+
+---
+
 ## 2026.11.21 changelogkit 0.12.11 發佈
 
 **類型**: 功能 · **檔案**: `apidocs.py`、`config.py`、`server.py`、`export.py`、`index.py`

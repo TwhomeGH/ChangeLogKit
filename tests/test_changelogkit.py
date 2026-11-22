@@ -612,7 +612,9 @@ class ExportTests(unittest.TestCase):
 
     def test_static_todo_page(self):
         with TempRepo() as repo:
-            (repo.root / "TODO.md").write_text("# TODO\n\n## A\n- [ ] one\n- [x] two\n", encoding="utf-8")
+            (repo.root / "TODO.md").write_text(
+                "# TODO\n\n## A\n- [ ] 見 [文件](./Docs/a.md)\n- [x] two\n", encoding="utf-8"
+            )
             config.reset()
             config.load(repo.root)
             out = repo.root / "_site"
@@ -625,6 +627,9 @@ class ExportTests(unittest.TestCase):
             self.assertIn('id="todo-sec-0"', page)
             self.assertIn("../development/todo.html", page)
             self.assertIn("../docs/app/TODO.html", page)
+            self.assertIn("CK_TODO_PATH", page)
+            self.assertIn("markdownStaticResolver", page)
+            self.assertIn("[文件](./Docs/a.md)", page)
             self.assertTrue((out / "docs" / "app" / "TODO.html").is_file())
             dev = (out / "development" / "index.html").read_text(encoding="utf-8")
             self.assertIn("../development/todo.html", dev)
