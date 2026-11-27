@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026.11.27 changelogkit 0.13.2 發佈
+## 2026.11.27 11:27 changelogkit 0.13.2 發佈
 
 **類型**: 功能 · **檔案**: `assets/theme.js`、`export.py`、`Docs/pages.md`、`Docs/usage.md`
 
@@ -15,7 +15,7 @@
 
 ---
 
-## 2026.11.27 changelogkit 0.13.1 發佈
+## 2026.11.27 11:19 changelogkit 0.13.1 發佈
 
 **類型**: 修正 · **檔案**: `config.py`、`export.py`、`pyproject.toml`、`Docs/usage.md`、`Docs/pages.md`
 
@@ -30,7 +30,7 @@
 
 ---
 
-## 2026.11.27 changelogkit 0.13.0 發佈
+## 2026.11.27 10:16 changelogkit 0.13.0 發佈
 
 **類型**: 功能 · **檔案**: `server.py`、`cli.py`、`assets/index.js`、`export.py`、`Docs/usage.md`、`Docs/pages.md`
 
@@ -45,7 +45,7 @@
 
 ---
 
-## 2026.11.22 changelogkit 0.12.12 發佈
+## 2026.11.22 20:33 changelogkit 0.12.12 發佈
 
 **類型**: 修正 · **檔案**: `assets/todo.html`、`assets/static_todo.html`、`server.py`、`export.py`
 
@@ -59,7 +59,7 @@
 
 ---
 
-## 2026.11.21 changelogkit 0.12.11 發佈
+## 2026.11.21 07:55 changelogkit 0.12.11 發佈
 
 **類型**: 功能 · **檔案**: `apidocs.py`、`config.py`、`server.py`、`export.py`、`index.py`
 
