@@ -33,9 +33,13 @@ jobs:
           pdoc -o build/api src/changelogkit
           test -f build/api/index.html
       - name: Export static site
+        env:
+          # GITHUB_TOKEN 不是 Actions 的預設環境變數；workflow health 需要它查 action.yml。
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           changelogkit export _site --branch main
           test -f _site/api-docs/python/index.html
+          test -f _site/development/workflows.html
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:

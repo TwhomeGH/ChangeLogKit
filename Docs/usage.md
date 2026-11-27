@@ -193,7 +193,11 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 repo 有 `.github/workflows` 時會自動提供 `/workflows` 頁面與靜態站 `development/workflows.html`。本地掃描 action 參照不需要 token；runtime 查詢需要 GitHub 認證：
 
 - 本機優先使用已登入的 `gh api`（`gh auth login` 即可）。
-- CI 使用標準 `GITHUB_TOKEN`／`GH_TOKEN`。
+- CI 使用標準 `GITHUB_TOKEN`／`GH_TOKEN`；GitHub Actions **不會自動把它放進環境變數**，請在 export step 加：
+  ```yaml
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ```
 - **不要在 `.changelog.toml` 放 token**。
 - 沒有認證或查詢失敗時，runtime 顯示 `unknown`，頁面仍可用。
 

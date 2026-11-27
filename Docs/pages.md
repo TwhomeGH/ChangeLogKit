@@ -40,6 +40,7 @@ _site/
 
 - workflow 用 `actions/checkout` 的 `fetch-depth: 0`（列 commits／diff 需要完整歷史）。
 - 目標 repo 建議安裝最新 tag（`pip install "git+https://github.com/TwhomeGH/ChangeLogKit.git@<tag>"`）；工具自身 repo 可用 `pip install -e .`。
+- 若要啟用 Workflow 健康檢查的 runtime 查詢，export step 需設定 `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`；Actions 預設不會把它放進環境。
 - **啟用**：repo Settings → Pages → **Source = GitHub Actions**。
 - 首次部署後網址為 `https://<owner>.github.io/<repo>/`。
 
