@@ -33,7 +33,7 @@
       "label": "changelogkit: pytest",
       "type": "process",
       "command": "python",
-      "args": ["-m", "pytest", "-q"],
+      "args": ["-m", "pytest", "-v", "--tb=short"],
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {

@@ -73,7 +73,7 @@ repo 內的 `.vscode/launch.json`／`tasks.json` 已預設使用工作區 `src/`
 - **Terminal → Run Task**
   - `changelogkit: generate Python API (pdoc)`：輸出到 `build/api`
   - `changelogkit: export static site`：輸出到 `_site`
-  - `changelogkit: pytest`
+  - `changelogkit: pytest`：使用 `-v --tb=short`，會列出測試名稱；`-q` 只顯示點狀進度與摘要
 
 `pdoc` 在 `dev` extra 內；若使用乾淨虛擬環境，先 `pip install -e ".[dev]"`。這裡刻意用 pdoc 而不是 `pydoc -w`：pdoc 會產生模組索引、搜尋與可交叉連結的多頁 API 文件，適合掛進靜態站；`pydoc -w` 只適合臨時文字／單頁檢視。
 

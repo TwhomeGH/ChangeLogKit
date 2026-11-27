@@ -34,7 +34,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "pytest",
-      "args": ["-q"],
+      "args": ["-v", "--tb=short"],
       "cwd": "${workspaceFolder}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/src",
