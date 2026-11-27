@@ -26,7 +26,9 @@ changelogkit workflows [--json] [--check]       # 掃描 GitHub Actions action r
 
 摘要末尾的 `.,;:!?。，；：！？` 會自動移除（markdownlint MD026）；`…`、`—` 不在規則內，會保留；內文與條列不受影響。
 
-未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。
+未安裝時用 `python -m changelogkit …`（`PYTHONPATH` 指向 `src/`）。0.14.2 以後的 wheel 也隨附
+`changelogkit/docs/usage.md` 與 `pages.md`；可用安裝該套件的 Python 讀取
+`pathlib.Path(changelogkit.__file__).parent / "docs" / "usage.md"`，不需要另拉原始碼。
 
 全域旗標 **`--locale zh-TW|zh-CN|ja|en`** 可切換 **CLI 說明與網頁語系**（預設跟隨系統：`zh*` 依 Hant／Hans 判為 `zh-TW`／`zh-CN`、`ja*` → `ja`、其餘 → `en`）。
 

@@ -107,6 +107,12 @@ FEATURES = [
         "commands": ["capabilities"],
     },
     {
+        "id": "docs.bundled",
+        "since": "0.14.2",
+        "summary": "Wheel includes usage and pages docs under changelogkit/docs/.",
+        "surfaces": ["package"],
+    },
+    {
         "id": "workflows.health",
         "since": "0.14.0",
         "summary": "Scan GitHub Actions refs and optionally check action runtimes for EOL Node.",

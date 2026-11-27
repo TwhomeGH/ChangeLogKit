@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026.11.27 17:10 changelogkit 0.14.2 發佈
+
+**類型**: 修正 · **檔案**: `pyproject.toml`、`Docs/usage.md`、`capabilities.py`
+
+### 問題 - 已安裝的使用者沒有 `Docs/usage.md`，技能只能假設需要原始碼
+
+### 修改 - wheel 隨附使用者文件
+
+- wheel 透過 hatch `force-include` 打包 `Docs/usage.md` 與 `Docs/pages.md` 到 `changelogkit/docs/`，不複製來源檔。
+- 安裝版可用 `python -c "import changelogkit, pathlib; ..."` 找到文件；舊版或讀不到時仍以 `--help`／`capabilities` 為準。
+- 新增 `docs.bundled` 能力標記，技能可判斷 0.14.2+ 是否隨附文件。
+
+---
+
 ## 2026.11.27 14:49 changelogkit 0.14.1 發佈
 
 **類型**: 修正 · **檔案**: `server.py`

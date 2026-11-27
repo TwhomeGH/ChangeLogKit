@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "changelogkit"
-version = "0.14.1"
+version = "0.14.2"
 description = "本機變更歷史 GUI 與開發索引：解析 ChangeHistory.md、唯讀索引 Git／文件／API 宣告"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -49,8 +49,13 @@ Documentation = "https://github.com/TwhomeGH/ChangeLogKit/tree/main/Docs"
 [tool.hatch.build.targets.wheel]
 packages = ["src/changelogkit"]
 
+# 讓已安裝的 wheel 也帶一份使用者文件；不複製檔案，直接從 repo 的 Docs 打包。
+[tool.hatch.build.targets.wheel.force-include]
+"Docs/usage.md" = "changelogkit/docs/usage.md"
+"Docs/pages.md" = "changelogkit/docs/pages.md"
+
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "examples", "README.md"]
+include = ["src", "Docs", "tests", "examples", "README.md"]
 
 [tool.ruff]
 target-version = "py310"
