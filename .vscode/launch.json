@@ -1,0 +1,61 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "changelogkit: serve (source)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "changelogkit",
+      "args": ["serve", "--no-browser"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PYTHONUTF8": "1"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "changelogkit: serve (LAN, read-only)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "changelogkit",
+      "args": ["serve", "--host", "0.0.0.0", "--no-browser"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PYTHONUTF8": "1"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "pytest: all",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-q"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PYTHONUTF8": "1"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "pdoc: preview Python API",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pdoc",
+      "args": ["src/changelogkit"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PYTHONUTF8": "1"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

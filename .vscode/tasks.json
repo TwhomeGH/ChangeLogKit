@@ -1,0 +1,47 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "changelogkit: generate Python API (pdoc)",
+      "type": "process",
+      "command": "python",
+      "args": ["-m", "pdoc", "-o", "build/api", "src/changelogkit"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/src",
+          "PYTHONUTF8": "1"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "changelogkit: export static site",
+      "type": "process",
+      "command": "python",
+      "args": ["-m", "changelogkit", "export", "_site"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/src",
+          "PYTHONUTF8": "1"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "changelogkit: pytest",
+      "type": "process",
+      "command": "python",
+      "args": ["-m", "pytest", "-q"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/src",
+          "PYTHONUTF8": "1"
+        }
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -61,6 +61,22 @@ python tools\dev.py -- docs --help
 
 Python 沒有 PowerShell 的 `Get-Help`；等價的是 `--help`、`python -m pydoc tools.dev`（顯示模組 docstring 與範例），或在 REPL 用 `help(tools.dev)`。`Docs/usage.md` 只寫流程與範例，精確旗標以 `--help` 為準。
 
+### VSCode 快速自檢
+
+repo 內的 `.vscode/launch.json`／`tasks.json` 已預設使用工作區 `src/`，不需要先安裝成 site-packages：
+
+- **Run and Debug**
+  - `changelogkit: serve (source)`：本機 GUI，debugpy 進入點是 `python -m changelogkit serve`
+  - `changelogkit: serve (LAN, read-only)`：`--host 0.0.0.0`，供平板／手機查看
+  - `pytest: all`
+  - `pdoc: preview Python API`：直接預覽 pdoc，不先產生靜態檔
+- **Terminal → Run Task**
+  - `changelogkit: generate Python API (pdoc)`：輸出到 `build/api`
+  - `changelogkit: export static site`：輸出到 `_site`
+  - `changelogkit: pytest`
+
+`pdoc` 在 `dev` extra 內；若使用乾淨虛擬環境，先 `pip install -e ".[dev]"`。這裡刻意用 pdoc 而不是 `pydoc -w`：pdoc 會產生模組索引、搜尋與可交叉連結的多頁 API 文件，適合掛進靜態站；`pydoc -w` 只適合臨時文字／單頁檢視。
+
 靜態檢查（CI 也會跑）：
 
 ```powershell
