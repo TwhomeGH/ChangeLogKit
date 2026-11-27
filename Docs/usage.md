@@ -123,6 +123,7 @@ changelogkit serve --host 0.0.0.0
 [tool.changelog]
 title    = "My Project 變更歷史"                # 網頁主標題（預設＝repo 目錄名）
 project  = "My Project"                        # 選填：分頁標題的專案名（預設＝repo 目錄名）
+timezone = "Asia/Taipei"                       # 選填：靜態頁尾時間（local／UTC／IANA／±HH:MM）
 history  = "Docs/ChangeHistory.md"             # 變更歷史 markdown
 todo     = "TODO.md"                           # 選填；預設自動偵測 TODO.md
 features = "Docs/development/features.json"    # 選填：功能清單
@@ -145,6 +146,7 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 | --- | --- | --- |
 | `title` | repo 目錄名 | 頁面主標題 |
 | `project` | repo 目錄名 | 分頁標題的專案名（`<專案> · <頁面>`） |
+| `timezone` | `local` | 靜態頁尾時間的時區；`local`／`UTC`／IANA（如 `Asia/Taipei`）／`+08:00` |
 | `history` | `Docs/ChangeHistory.md` | 變更歷史檔（必要） |
 | `todo` | 自動偵測 `TODO.md`（root／`Docs`） | 待辦 markdown；指定路徑可覆寫，`false` 可關閉 |
 | `features` | `Docs/development/features.json` | 功能清單（不存在則功能分頁留空） |

@@ -126,6 +126,28 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(cfg.history, repo.root / "Docs/ChangeHistory.md")
             self.assertEqual(cfg.community, repo.root / "Docs/community.md")
             self.assertEqual([s.name for s in cfg.sources], ["app"])
+            self.assertEqual(cfg.timezone, "local")
+
+    def test_timezone_option(self):
+        with TempRepo() as repo:
+            (repo.root / ".changelog.toml").write_text(
+                TOML + 'timezone = "Asia/Taipei"\n',
+                encoding="utf-8",
+            )
+            config.reset()
+            self.assertEqual(config.load(repo.root).timezone, "Asia/Taipei")
+
+    def test_build_stamp_includes_utc_offset(self):
+        previous = os.environ.get("SOURCE_DATE_EPOCH")
+        os.environ["SOURCE_DATE_EPOCH"] = "0"
+        try:
+            self.assertEqual(export._build_stamp("UTC"), "1970-01-01 00:00 +00:00")
+            self.assertEqual(export._build_stamp("+08:00"), "1970-01-01 08:00 +08:00")
+        finally:
+            if previous is None:
+                del os.environ["SOURCE_DATE_EPOCH"]
+            else:
+                os.environ["SOURCE_DATE_EPOCH"] = previous
 
     def test_api_docs_config_and_order(self):
         with TempRepo() as repo:

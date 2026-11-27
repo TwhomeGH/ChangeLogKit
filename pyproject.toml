@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "changelogkit"
-version = "0.13.0"
+version = "0.13.1"
 description = "本機變更歷史 GUI 與開發索引：解析 ChangeHistory.md、唯讀索引 Git／文件／API 宣告"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,7 +26,10 @@ classifiers = [
   "Topic :: Software Development :: Version Control :: Git",
 ]
 # tomllib 是 Python 3.11+ 的標準庫；3.10 需要 tomli 讀 .changelog.toml。
-dependencies = ["tomli>=2; python_version < '3.11'"]
+dependencies = [
+  "tomli>=2; python_version < '3.11'",
+  "tzdata>=2024.1; platform_system == 'Windows'",
+]
 
 [project.optional-dependencies]
 dev = ["ruff>=0.14,<0.15"]

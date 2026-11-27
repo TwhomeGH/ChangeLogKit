@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.27 changelogkit 0.13.1 發佈
+
+**類型**: 修正 · **檔案**: `config.py`、`export.py`、`pyproject.toml`、`Docs/usage.md`、`Docs/pages.md`
+
+### 問題 - 靜態頁尾時間沒有時區，在 UTC CI 產生時看起來像本地時間
+
+### 修改 - 頁尾一律帶 UTC 位移，並可設定時區
+
+- `[tool.changelog] timezone` 支援 `local`（預設）、`UTC`、IANA 名稱（如 `Asia/Taipei`）與 `±HH:MM`。
+- 頁尾改為 `YYYY-MM-DD HH:MM +08:00` 形式，CI 與本機時間不會再被誤讀。
+- `SOURCE_DATE_EPOCH` 仍可固定時間；轉換會套用設定的時區。
+- Windows 加上 `tzdata` 相依，讓 IANA 時區可用。
+
+---
+
 ## 2026.11.27 changelogkit 0.13.0 發佈
 
 **類型**: 功能 · **檔案**: `server.py`、`cli.py`、`assets/index.js`、`export.py`、`Docs/usage.md`、`Docs/pages.md`

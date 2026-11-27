@@ -16,7 +16,8 @@ import os
 import re
 import shutil
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pathlib import Path
 from typing import cast
 from urllib.parse import quote
@@ -53,12 +54,44 @@ def _doc_url(repo, name):
     return "docs/" + quote(str(repo), safe="") + "/" + stem + ".html"
 
 
-def _build_stamp():
+_OFFSET_RE = re.compile(r"^([+-])(\d{1,2}):?(\d{2})$")
+
+
+def _timezone_for(name):
+    """解析 ``local``／``UTC``／IANA 名稱／``±HH:MM``；未知值退回本機。"""
+    value = str(name or "local").strip()
+    if value.lower() in ("", "local"):
+        return datetime.now().astimezone().tzinfo or timezone.utc
+    if value.upper() in ("UTC", "Z"):
+        return timezone.utc
+    match = _OFFSET_RE.fullmatch(value)
+    if match:
+        sign = 1 if match.group(1) == "+" else -1
+        offset = timedelta(hours=int(match.group(2)), minutes=int(match.group(3)))
+        return timezone(sign * offset)
+    try:
+        return ZoneInfo(value)
+    except (ZoneInfoNotFoundError, ValueError):
+        print("warning: 未知 timezone %r，改用本機時區" % value, file=sys.stderr)
+        return datetime.now().astimezone().tzinfo or timezone.utc
+
+
+def _stamp_text(when):
+    """頁尾時間一律帶 UTC 位移，避免 CI（UTC）與本機時間看起來互相矛盾。"""
+    offset = when.utcoffset() or timedelta(0)
+    total = int(offset.total_seconds())
+    sign = "+" if total >= 0 else "-"
+    hours, remainder = divmod(abs(total), 3600)
+    return when.strftime("%Y-%m-%d %H:%M") + " %s%02d:%02d" % (sign, hours, remainder // 60)
+
+
+def _build_stamp(timezone_name="local"):
     """靜態站頁尾時間；CI 可用 ``SOURCE_DATE_EPOCH`` 讓輸出可重現。"""
+    tz = _timezone_for(timezone_name)
     epoch = os.environ.get("SOURCE_DATE_EPOCH", "").strip()
     if epoch.isdigit():
-        return datetime.fromtimestamp(int(epoch)).strftime("%Y-%m-%d %H:%M")
-    return datetime.now().strftime("%Y-%m-%d %H:%M")
+        return _stamp_text(datetime.fromtimestamp(int(epoch), tz))
+    return _stamp_text(datetime.now(tz))
 
 
 def _site_base(rel):
@@ -500,7 +533,7 @@ def export(out_dir, branch="main"):
         where = "%s@%s" % (_esc(cfg.root.name), head[:7])
     else:
         where = "（無 git 資訊）"
-    footer = i18n.t("static.built_by", src=where, time=_build_stamp())
+    footer = i18n.t("static.built_by", src=where, time=_build_stamp(cfg.timezone))
 
     # 站內連結脈絡：文件相對路徑 → 穩定文件頁；其餘退回 GitHub blob。
     doc_pages_json = json.dumps(

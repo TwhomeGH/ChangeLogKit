@@ -96,6 +96,7 @@ class Config:
     docs_auto: bool = True  # 未命中設定時依資料夾自動分類
     recent_commits: int = 20  # 開發索引列出的 commit 數（1–200）
     project: str = ""  # 分頁標題的專案名（預設 repo 目錄名）
+    timezone: str = "local"  # 靜態頁尾時間的時區（local／UTC／IANA／±HH:MM）
     todo: Path | None = None  # 選填：待辦 markdown（存在才顯示入口）
     api: list = field(default_factory=list)  # 選填：外部 API 文件站（ApiDoc）
     api_warnings: list = field(default_factory=list)  # API 設定問題（不致命）
@@ -116,6 +117,7 @@ def _default_config(root):
         root=root,
         title=root.name,
         project=root.name,
+        timezone="local",
         todo=_auto_todo(root),
         history=root / DEFAULT_HISTORY,
         features=root / DEFAULT_FEATURES,
@@ -327,6 +329,7 @@ def _from_table(root, table):
         root=root,
         title=table.get("title") or root.name,
         project=str(table.get("project") or "").strip() or root.name,
+        timezone=str(table.get("timezone") or "local").strip() or "local",
         todo=todo,
         history=history,
         features=features,
