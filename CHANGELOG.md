@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026.11.27 14:49 changelogkit 0.14.1 發佈
+
+**類型**: 修正 · **檔案**: `server.py`
+
+### 問題 - 瀏覽器中斷請求時，socketserver 印出 WinError 10053 traceback
+
+### 修改 - 安靜處理 client disconnect
+
+- `_send()` 捕捉 `ConnectionAbortedError`、`ConnectionResetError`、`BrokenPipeError`，設定 `close_connection` 後返回。
+- 瀏覽器重新整理、關閉分頁或網路中斷不再印出整段 socketserver traceback；不影響其他請求。
+
+---
+
 ## 2026.11.27 13:45 changelogkit 0.14.0 發佈
 
 **類型**: 功能 · **檔案**: `workflows.py`、`config.py`、`index.py`、`server.py`、`export.py`、`cli.py`、`assets/workflows.html`
