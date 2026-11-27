@@ -82,7 +82,7 @@ repo 內的 `.vscode/launch.json`／`tasks.json` 已預設使用工作區 `src/`
 > - 錯誤 tag 的 `check_version.py` 回 `SystemExit: 1`
 > - `test_static_export_rejects_api_output_inside_site` 的 `ValueError`（由 `assertRaises` 接收）
 >
-> debugger 停在這些例外是預期行為，不是測試失敗。日常自檢請用 `Terminal → Run Task → changelogkit: pytest`；若要 debug 全套，請在「中斷點」面板取消勾選 **Raised Exceptions**（保留 Uncaught 即可）。launch 設定已關閉子程序除錯，避免第一類例外。
+> debugger 停在這些例外是預期行為，不是測試失敗。日常自檢請用 `Terminal → Run Task → changelogkit: pytest`；若要 debug 全套，請在「中斷點」面板取消勾選 **Raised Exceptions**、**Uncaught Exceptions** 與 **User Uncaught Exceptions**。VSCode debugger 有時會在例外被 `assertRaises` 接住前就停下；這不是測試失敗。launch 設定已關閉子程序除錯，避免 `check_version.py` 的子程序例外。
 
 靜態檢查（CI 也會跑）：
 
