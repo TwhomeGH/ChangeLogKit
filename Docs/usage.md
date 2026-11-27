@@ -77,6 +77,8 @@ repo 內的 `.vscode/launch.json`／`tasks.json` 已預設使用工作區 `src/`
 
 `pdoc` 在 `dev` extra 內；若使用乾淨虛擬環境，先 `pip install -e ".[dev]"`。這裡刻意用 pdoc 而不是 `pydoc -w`：pdoc 會產生模組索引、搜尋與可交叉連結的多頁 API 文件，適合掛進靜態站；`pydoc -w` 只適合臨時文字／單頁檢視。
 
+> `pytest: all` 是 debug 模式。測試中會有刻意讓 `check_version.py` 回 exit 1 的案例（驗證錯誤 tag 必須被拒絕）；若 debugger 停在 `SystemExit: 1`，那是預期行為，不是測試失敗。日常自檢請用 `Terminal → Run Task → changelogkit: pytest`；launch 設定已關閉子程序除錯，避免停在該預期例外。
+
 靜態檢查（CI 也會跑）：
 
 ```powershell

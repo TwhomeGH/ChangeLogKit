@@ -55,7 +55,8 @@
         "PYTHONUTF8": "1"
       },
       "console": "integratedTerminal",
-      "justMyCode": false
+      "justMyCode": false,
+      "subProcess": false
     }
   ]
 }
