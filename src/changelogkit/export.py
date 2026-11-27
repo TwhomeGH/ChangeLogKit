@@ -12,6 +12,7 @@
 
 import html
 import json
+import os
 import re
 import shutil
 import sys
@@ -50,6 +51,14 @@ def _doc_url(repo, name):
     """文件頁 URL（站根相對；source 與路徑逐段 percent-encode）。"""
     stem = "/".join(quote(part, safe="") for part in _doc_stem(name).split("/"))
     return "docs/" + quote(str(repo), safe="") + "/" + stem + ".html"
+
+
+def _build_stamp():
+    """靜態站頁尾時間；CI 可用 ``SOURCE_DATE_EPOCH`` 讓輸出可重現。"""
+    epoch = os.environ.get("SOURCE_DATE_EPOCH", "").strip()
+    if epoch.isdigit():
+        return datetime.fromtimestamp(int(epoch)).strftime("%Y-%m-%d %H:%M")
+    return datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
 def _site_base(rel):
@@ -491,7 +500,7 @@ def export(out_dir, branch="main"):
         where = "%s@%s" % (_esc(cfg.root.name), head[:7])
     else:
         where = "（無 git 資訊）"
-    footer = i18n.t("static.built_by", src=where, time=datetime.now().strftime("%Y-%m-%d %H:%M"))
+    footer = i18n.t("static.built_by", src=where, time=_build_stamp())
 
     # 站內連結脈絡：文件相對路徑 → 穩定文件頁；其餘退回 GitHub blob。
     doc_pages_json = json.dumps(

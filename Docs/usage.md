@@ -4,7 +4,7 @@
 
 ```bash
 changelogkit                       # 等同 serve：啟動本機網頁 GUI
-changelogkit serve [--port 8710] [--no-browser]
+changelogkit serve [--port 8710] [--host 127.0.0.1] [--allow-write] [--no-browser]
 changelogkit add "標題" [--type 修復] [--file a/b.swift] \
     [--problem "問題摘要"] [--cause "根因摘要"] [--change "修改摘要"（可重複）] \
     [--change-detail "修改細節（可多行）"] \
@@ -84,6 +84,18 @@ python tools\check_version.py --tag v0.11.1
 | `/development/file?repo=app&path=…` | 檔案檢視：行號、語法上色；`.md` 預設排版檢視 |
 
 > 變更歷史與文件內部的**相對連結會自動改寫成站內連結**（詳見「變更歷史格式」），不需手寫 `/development/file?...`。
+
+### 從平板／其他裝置連線
+
+預設只綁 `127.0.0.1`，其他裝置無法連線。要從同一個區網的平板或手機開啟：
+
+```powershell
+changelogkit serve --host 0.0.0.0
+```
+
+啟動訊息會列出本機與區網網址（例如 `http://192.168.1.10:8710/`）；Windows 防火牆若詢問，需允許該連接埠的私人網路存取。
+
+非 loopback 綁定**預設唯讀**：新增／編輯／刪除會回 403。這是刻意的安全預設，因為工具沒有登入驗證；只在信任的區網使用，不要對外公開。確定需要從其他裝置寫入時才加 `--allow-write`。
 
 ## 靜態站（export）
 

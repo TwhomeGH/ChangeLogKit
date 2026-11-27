@@ -11,6 +11,7 @@
 import html
 import json
 import mimetypes
+import socket
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlencode, urlparse
@@ -19,6 +20,9 @@ from . import apidocs, assets, buildinfo, community, config, history, i18n, inde
 
 
 class Handler(BaseHTTPRequestHandler):
+    # 非 loopback 綁定時預設唯讀，避免無驗證的寫入 API 暴露在區網。
+    allow_write = True
+
     def log_message(self, *a):
         """靜音：避免每個請求都印到終端機。"""
         pass
@@ -212,6 +216,15 @@ class Handler(BaseHTTPRequestHandler):
 
     # ── POST ──
     def do_POST(self):
+        if not self.allow_write:
+            # 先讀完 body，避免 keep-alive 連線把下一個請求解析錯。
+            length = int(self.headers.get("Content-Length", "0"))
+            if length:
+                self.rfile.read(length)
+            return self._send(
+                403,
+                json.dumps({"ok": False, "error": i18n.t("serve.read_only_error")}, ensure_ascii=False),
+            )
         u = urlparse(self.path)
         n = int(self.headers.get("Content-Length", "0"))
         try:
@@ -252,20 +265,80 @@ class _Server(ThreadingHTTPServer):
     allow_reuse_address = False
 
 
-def serve(port=8710, open_browser=True):
-    """啟動本機伺服器；埠被占用或被 Windows 保留時改用系統自動配置。"""
+def writable_for(host, allow_write=None):
+    """是否允許寫入：loopback 預設可寫，其他介面預設唯讀。"""
+    loopback = (host or "127.0.0.1").strip() in ("127.0.0.1", "localhost", "::1")
+    return loopback if allow_write is None else bool(allow_write)
+
+
+def _lan_addresses():
+    """找出目前主機可從區網連到的 IPv4 位址（可能為空）。"""
+    addresses = []
+
+    def add(value):
+        if value and value not in addresses and not value.startswith("127."):
+            addresses.append(value)
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            # UDP connect 不會送出封包；只用來取得預設路由所用的本機位址。
+            probe.connect(("8.8.8.8", 80))
+            add(probe.getsockname()[0])
+    except OSError:
+        pass
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            add(info[4][0])
+    except OSError:
+        pass
+    return [ip for ip in addresses if not ip.startswith("169.254.")]
+
+
+def serve(port=8710, open_browser=True, host="127.0.0.1", allow_write=None):
+    """啟動本機伺服器；埠被占用或被 Windows 保留時改用系統自動配置。
+
+    ``host="0.0.0.0"`` 會監聽所有 IPv4 介面，供同一個區網的平板／手機連線。
+    非 loopback 綁定預設唯讀；要允許新增／編輯／刪除需明確傳入
+    ``allow_write=True``。
+    """
     import threading
     import webbrowser
 
+    bind = (host or "127.0.0.1").strip()
+    loopback = bind in ("127.0.0.1", "localhost", "::1")
+    writable = writable_for(bind, allow_write)
+    Handler.allow_write = writable
     try:
-        httpd = _Server(("127.0.0.1", port), Handler)
+        httpd = _Server((bind, port), Handler)
     except OSError:
-        httpd = _Server(("127.0.0.1", 0), Handler)
-    url = "http://127.0.0.1:%d/" % httpd.server_address[1]
-    print("變更歷史 GUI: %s" % url)
+        try:
+            httpd = _Server((bind, 0), Handler)
+        except OSError as error:
+            print("無法啟動伺服器（%s:%s）：%s" % (bind, port, error), file=sys.stderr)
+            raise SystemExit(1) from error
+    actual = httpd.server_address[1]
+    local_host = bind if not loopback else "127.0.0.1"
+    if bind in ("0.0.0.0", "::"):
+        local_host = "127.0.0.1"
+    url = "http://%s:%d/" % (local_host, actual)
+    print("變更歷史 GUI: %s" % url, flush=True)
+    if not loopback:
+        for ip in _lan_addresses():
+            print("區域網路: http://%s:%d/" % (ip, actual), flush=True)
+        print(
+            "警告: 這是沒有登入驗證的本機工具；只應在信任的區網使用，勿對外公開。",
+            file=sys.stderr,
+            flush=True,
+        )
+        if writable:
+            print("警告: 已允許區網寫入（新增／編輯／刪除）。", file=sys.stderr, flush=True)
+        else:
+            print("區網預設唯讀；需要寫入請加 --allow-write。", file=sys.stderr, flush=True)
+    elif bind == "127.0.0.1":
+        print("僅限本機；要從平板／其他裝置連線請加 --host 0.0.0.0。", flush=True)
     for warning in config.load().api_warnings:
-        print("warning: %s" % warning, file=sys.stderr)
-    print("（Ctrl+C 結束）")
+        print("warning: %s" % warning, file=sys.stderr, flush=True)
+    print("（Ctrl+C 結束）", flush=True)
     if open_browser:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
     try:

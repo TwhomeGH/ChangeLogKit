@@ -238,6 +238,13 @@ def main(argv=None):
 
     sv = sub.add_parser("serve", help=i18n.t("cli.serve.help"))
     sv.add_argument("--port", type=int, default=8710, help=i18n.t("cli.serve.port"))
+    sv.add_argument("--host", default="127.0.0.1", help=i18n.t("cli.serve.host"))
+    sv.add_argument(
+        "--allow-write",
+        action="store_true",
+        default=None,
+        help=i18n.t("cli.serve.allow_write"),
+    )
     sv.add_argument("--no-browser", action="store_true", help=i18n.t("cli.serve.no_browser"))
 
     a = sub.add_parser("add", help=i18n.t("cli.add.help"))
@@ -294,7 +301,12 @@ def main(argv=None):
 
     args = p.parse_args(argv)
     if args.cmd in (None, "serve"):
-        server.serve(getattr(args, "port", 8710), not getattr(args, "no_browser", False))
+        server.serve(
+            getattr(args, "port", 8710),
+            not getattr(args, "no_browser", False),
+            getattr(args, "host", "127.0.0.1"),
+            getattr(args, "allow_write", None),
+        )
     elif args.cmd == "add":
         cmd_add(args)
     elif args.cmd == "list":

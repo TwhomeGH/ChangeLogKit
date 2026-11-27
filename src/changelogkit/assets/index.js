@@ -8,6 +8,24 @@ function esc(s) {
   ));
 }
 
+/* POST 並把伺服器錯誤轉成可顯示的訊息（例如區網唯讀模式回 403）。 */
+async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let message = res.statusText;
+    try {
+      const data = await res.json();
+      if (data && data.error) message = data.error;
+    } catch (_) { /* 保留 statusText */ }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
 /* Tab 縮排／Shift-Tab 反縮排（2 空白，與 #raw 的 tab-size 一致）。
    多行選取時逐行縮排；用 execCommand insertText 以保留原生復原（Ctrl+Z）。 */
 const INDENT = "  ";
@@ -75,8 +93,9 @@ function renderView(e) {
       setTimeout(() => { armed = false; $("#del").textContent = CK_T("btn.delete"); $("#del").classList.remove("danger"); }, 3000);
       return;
     }
-    fetch("/api/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ i: e.i }) })
-      .then(() => { sel = null; $("#detail").innerHTML = '<div class="empty">' + CK_T("history.deleted") + "</div>"; load(); });
+    postJSON("/api/delete", { i: e.i })
+      .then(() => { sel = null; $("#detail").innerHTML = '<div class="empty">' + CK_T("history.deleted") + "</div>"; load(); })
+      .catch((err) => alert(err.message));
   };
 }
 
@@ -105,9 +124,13 @@ function renderEdit(e) {
   sync(); ta.focus();
   $("#cancel-edit").onclick = () => renderView(e);
   $("#save").onclick = async () => {
-    await fetch("/api/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ i: e.i, raw: ta.value }) });
-    const ne = await (await fetch("/api/entry?i=" + e.i)).json(); ne.i = e.i;
-    await load(); renderView(ne);
+    try {
+      await postJSON("/api/save", { i: e.i, raw: ta.value });
+      const ne = await (await fetch("/api/entry?i=" + e.i)).json(); ne.i = e.i;
+      await load(); renderView(ne);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 }
 
@@ -176,8 +199,12 @@ $("#submit").onclick = async () => {
     change_detail: detail,
     refs: collectRefs(),
   };
-  await fetch("/api/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  $("#modal").hidden = true; await load(); show(0);
+  try {
+    await postJSON("/api/add", body);
+    $("#modal").hidden = true; await load(); show(0);
+  } catch (err) {
+    $("#form-err").textContent = err.message;
+  }
 };
 
 load();

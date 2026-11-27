@@ -36,6 +36,7 @@ from changelogkit import (  # noqa: E402
     history,
     i18n,
     index,
+    server,
     todo,
 )
 
@@ -101,6 +102,18 @@ class TempRepo:
     def __exit__(self, *exc):
         config.reset()
         self._tmp.cleanup()
+
+
+class ServerTests(unittest.TestCase):
+    def test_writable_defaults_to_loopback_only(self):
+        self.assertTrue(server.writable_for("127.0.0.1"))
+        self.assertTrue(server.writable_for("localhost"))
+        self.assertFalse(server.writable_for("0.0.0.0"))
+        self.assertFalse(server.writable_for("192.168.1.10"))
+
+    def test_writable_can_be_enabled_for_lan(self):
+        self.assertTrue(server.writable_for("0.0.0.0", True))
+        self.assertFalse(server.writable_for("127.0.0.1", False))
 
 
 class ConfigTests(unittest.TestCase):

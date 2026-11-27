@@ -69,6 +69,8 @@ python -m venv .venv
 ```bash
 changelogkit                 # 等同 serve：啟動本機網頁 GUI
 changelogkit serve --port 8710 --no-browser
+changelogkit serve --host 0.0.0.0      # 同區網的平板／手機可連；預設唯讀
+changelogkit serve --host 0.0.0.0 --allow-write   # 確定要從其他裝置編輯時
 changelogkit add "修正 XXX" --type 修復 --file a/b.swift \
     --problem "症狀" --cause "根因" --change "核心改動"
 changelogkit list --grep RTMP

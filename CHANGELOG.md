@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.27 changelogkit 0.13.0 發佈
+
+**類型**: 功能 · **檔案**: `server.py`、`cli.py`、`assets/index.js`、`export.py`、`Docs/usage.md`、`Docs/pages.md`
+
+### 問題 - 預設只綁 loopback，平板／其他裝置無法開啟；靜態站沒有 CI 快取原則
+
+### 修改 - 可選 LAN 綁定與唯讀安全預設
+
+- `serve` 新增 `--host`（預設 `127.0.0.1`）；`--host 0.0.0.0` 會列出區網網址並提示防火牆與安全限制。
+- 非 loopback 綁定預設唯讀，新增／編輯／刪除回 403；需要時加 `--allow-write`。
+- 前端 POST 會顯示伺服器錯誤，不再把唯讀失敗誤認為儲存成功。
+- 靜態頁尾時間可用 `SOURCE_DATE_EPOCH` 固定，為 CI 快取／可重現輸出鋪路；`Docs/pages.md` 補上快取與增量原則，明確說明 Pages 仍是完整 artifact。
+
+---
+
 ## 2026.11.22 changelogkit 0.12.12 發佈
 
 **類型**: 修正 · **檔案**: `assets/todo.html`、`assets/static_todo.html`、`server.py`、`export.py`
