@@ -18,3 +18,12 @@ title = "架構與設計"
 color = "violet"
 order = 20
 paths = ["Docs/architecture.md"]
+
+# pdoc 產生的 Python API 參考；Pages workflow 先產生到 build/api，再由 export 複製。
+[[tool.changelog.api]]
+id    = "python"
+title = "Python API"
+html  = "build/api"
+mount = "python"
+embed = true
+order = 10

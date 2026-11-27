@@ -205,6 +205,7 @@ order = 30
 - 動態 `serve`：`/api-docs/<mount>/...` 唯讀掛載，只服務 `html` 目錄內的真實檔案；`..` 與符號連結逃逸會被拒絕。
 - 靜態 `export`：有 `url` 時直接外連；沒有 `url` 但 `embed = true` 時才複製。兩者都沒有時，靜態站不顯示入口並在 stderr 警告。
 - 多個項目會收成「API 文件」下拉；單一項目直接顯示該站標題。
+- 本專案自己的 Pages 用 `pdoc` 產生 Python API 參考到 `build/api`，再以 `embed = true` 掛到 `/api-docs/python/`。
 - `html` 不可位於靜態匯出目錄內（例如 `export _site` 而 `html = "_site/api"`），否則匯出前的清理會刪掉 API 產物；工具會直接報錯，請改到獨立目錄。
 - Doxygen 的 `.doccarchive`／DocC 不是一般 HTML；目前請用 `url` 指向已託管的文件。tagfile／`objects.inv` 的符號深連結留到後續版本。
 

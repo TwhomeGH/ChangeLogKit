@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.27 11:52 changelogkit 0.13.4 發佈
+
+**類型**: 建置 · **檔案**: `.changelog.toml`、`.github/workflows/pages.yml`、`pyproject.toml`、`Docs/usage.md`
+
+### 問題 - 自己的靜態站只有 API 宣告，沒有完整的 Python API 參考
+
+### 修改 - 用 pdoc 產生並掛載 Python API
+
+- `dev` extra 加入 `pdoc>=15,<16`。
+- Pages workflow 先執行 `pdoc -o build/api src/changelogkit`，再匯出靜態站。
+- `.changelog.toml` 新增 `[[tool.changelog.api]]`，以 `embed = true` 掛到 `/api-docs/python/`。
+- 實測導覽「Python API」可開啟 `pdoc` 頁面與模組文件。
+
+---
+
 ## 2026.11.27 11:40 changelogkit 0.13.3 發佈
 
 **類型**: 功能 · **檔案**: `capabilities.py`、`cli.py`、`Docs/usage.md`、skills
