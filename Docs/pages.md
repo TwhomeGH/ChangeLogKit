@@ -51,7 +51,7 @@ GitHub Pages 的部署 artifact **每次都是完整上傳**；`actions/cache` �
 1. **先量測** workflow 各步驟時間（尤其 `export`、Doxygen、artifact upload），不要憑感覺加快取。
 2. **快取工具與相依**：`setup-python` 的 pip 快取、固定 `CHANGELOGKIT_REF` tag、快取 `build/doxygen/html`（key 用 `Doxyfile` 與標頭檔 hash）。Doxygen 輸出常比重新安裝快。
 3. **避免重複複製 API 產物**：`embed = true` 會把整個 Doxygen HTML（可達數十 MB）複製進 `_site`。如果 API 站可獨立託管，優先用 `url` 外連；否則把 Doxygen 輸出直接放到最終站內，避免「產生一次、再複製一次」。
-4. **要快取 `_site` 前，先讓輸出可重現**：`export` 的頁尾時間可用 `SOURCE_DATE_EPOCH` 固定（例如設為來源 commit 時間），否則每次產物都不同。頁尾會附 UTC 位移；若 CI 是 UTC、想顯示本地時間，設定 `[tool.changelog] timezone = "Asia/Taipei"`。還需要一份 manifest 記錄「輸入 → 輸出」，才能安全跳過未變更頁面並刪除已移除的文件；只還原整個 `_site` 而不清理，會留下已刪除的文件頁。
+4. **要快取 `_site` 前，先讓輸出可重現**：`export` 的頁尾時間可用 `SOURCE_DATE_EPOCH` 固定（例如設為來源 commit 時間），否則每次產物都不同。頁尾以 `<time datetime="…Z">` 保留 UTC 時間，瀏覽器會顯示觀看者本地時間；沒有 JS 時才顯示伺服器端的 UTC 位移。若要把時間固定成某個專案時區，設定 `[tool.changelog] timezone = "Asia/Taipei"`。還需要一份 manifest 記錄「輸入 → 輸出」，才能安全跳過未變更頁面並刪除已移除的文件；只還原整個 `_site` 而不清理，會留下已刪除的文件頁。
 5. **增量匯出**（尚未內建）應是 opt-in：先寫 manifest、比對輸入 hash、只重建變更的文件／歷史／commit 頁，最後只刪除 manifest 有記錄且本次不再產生的檔案；預設仍保留完整清理模式。
 
 > 目前不建議直接把 `_site` 當 GitHub Actions cache：`export` 會先清空輸出，且沒有 manifest 與穩定的頁尾時間，還原快取不會帶來正確的增量效果。

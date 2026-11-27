@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.27 changelogkit 0.13.2 發佈
+
+**類型**: 功能 · **檔案**: `assets/theme.js`、`export.py`、`Docs/pages.md`、`Docs/usage.md`
+
+### 問題 - 靜態頁尾時間只能依建置機器或設定時區顯示，無法依觀看者裝置呈現
+
+### 修改 - 頁尾時間由瀏覽器本地化
+
+- 頁尾改為 `<time datetime="…Z" data-ck-time>`；`theme.js` 用 `Intl.DateTimeFormat` 轉成觀看者本地時間。
+- 沒有 JS 時仍顯示伺服器端含 UTC 位移的 fallback。
+- 設定 `[tool.changelog] timezone` 時視為固定時區，瀏覽器不再覆寫。
+- 保留 `SOURCE_DATE_EPOCH` 可重現輸出能力。
+
+---
+
 ## 2026.11.27 changelogkit 0.13.1 發佈
 
 **類型**: 修正 · **檔案**: `config.py`、`export.py`、`pyproject.toml`、`Docs/usage.md`、`Docs/pages.md`

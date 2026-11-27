@@ -85,13 +85,17 @@ def _stamp_text(when):
     return when.strftime("%Y-%m-%d %H:%M") + " %s%02d:%02d" % (sign, hours, remainder // 60)
 
 
-def _build_stamp(timezone_name="local"):
-    """靜態站頁尾時間；CI 可用 ``SOURCE_DATE_EPOCH`` 讓輸出可重現。"""
-    tz = _timezone_for(timezone_name)
+def _build_instant():
+    """產物時間（UTC）；CI 可用 ``SOURCE_DATE_EPOCH`` 讓輸出可重現。"""
     epoch = os.environ.get("SOURCE_DATE_EPOCH", "").strip()
     if epoch.isdigit():
-        return _stamp_text(datetime.fromtimestamp(int(epoch), tz))
-    return _stamp_text(datetime.now(tz))
+        return datetime.fromtimestamp(int(epoch), timezone.utc)
+    return datetime.now(timezone.utc)
+
+
+def _build_stamp(timezone_name="local"):
+    """靜態站頁尾的無 JS fallback 時間。"""
+    return _stamp_text(_build_instant().astimezone(_timezone_for(timezone_name)))
 
 
 def _site_base(rel):
@@ -533,7 +537,14 @@ def export(out_dir, branch="main"):
         where = "%s@%s" % (_esc(cfg.root.name), head[:7])
     else:
         where = "（無 git 資訊）"
-    footer = i18n.t("static.built_by", src=where, time=_build_stamp(cfg.timezone))
+    instant = _build_instant()
+    fixed_zone = str(cfg.timezone or "local").strip().lower() not in ("", "local")
+    time_html = '<time datetime="%s" data-ck-time%s>%s</time>' % (
+        instant.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        ' data-ck-time-fixed="1"' if fixed_zone else "",
+        _stamp_text(instant.astimezone(_timezone_for(cfg.timezone))),
+    )
+    footer = i18n.t("static.built_by", src=where, time=time_html)
 
     # 站內連結脈絡：文件相對路徑 → 穩定文件頁；其餘退回 GitHub blob。
     doc_pages_json = json.dumps(

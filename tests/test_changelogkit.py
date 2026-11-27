@@ -645,6 +645,28 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(export._doc_url("app", "Docs/my doc.md"), "docs/app/Docs/my%20doc.html")
         self.assertNotEqual(export._doc_url("app", "Docs/x.md"), export._doc_url("lib", "Docs/x.md"))
 
+    def test_static_footer_has_time_markup(self):
+        with TempRepo() as repo:
+            config.reset()
+            config.load(repo.root)
+            out = repo.root / "_site"
+            export.export(out)
+            page = (out / "index.html").read_text(encoding="utf-8")
+            self.assertRegex(
+                page,
+                r'<time datetime="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z" data-ck-time>',
+            )
+
+    def test_static_footer_respects_fixed_timezone(self):
+        with TempRepo() as repo:
+            (repo.root / ".changelog.toml").write_text(TOML + 'timezone = "UTC"\n', encoding="utf-8")
+            config.reset()
+            config.load(repo.root)
+            out = repo.root / "_site"
+            export.export(out)
+            page = (out / "index.html").read_text(encoding="utf-8")
+            self.assertRegex(page, r'data-ck-time-fixed="1"')
+
     def test_static_todo_page(self):
         with TempRepo() as repo:
             (repo.root / "TODO.md").write_text(
