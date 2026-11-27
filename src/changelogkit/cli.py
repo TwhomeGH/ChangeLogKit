@@ -5,6 +5,7 @@
 """
 
 import argparse
+import json
 import sys
 
 from . import (
@@ -17,6 +18,7 @@ from . import (
     history,
     i18n,
     server,
+    workflows,
 )
 
 
@@ -28,6 +30,37 @@ def _prescan_locale(argv):
         if token.startswith("--locale="):
             return token.split("=", 1)[1]
     return None
+
+
+def cmd_workflows(args):
+    """掃描 workflow actions；--check 遇到 EOL runtime 回 1。"""
+    data = workflows.report(config.load())
+    if args.json:
+        print(json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        for action in data["actions"]:
+            runtime = action["runtime"] or "—"
+            print(
+                "%-32s:%-4s %-34s %-10s %s"
+                % (
+                    action["workflow"],
+                    action["line"],
+                    action["uses"],
+                    runtime,
+                    action["status"],
+                )
+            )
+        print(
+            "workflows: %d actions · %d EOL · %d unknown"
+            % (
+                len(data["actions"]),
+                data["summary"].get("eol", 0),
+                data["summary"].get("unknown", 0),
+            )
+        )
+    if args.check and data["summary"].get("eol"):
+        return 1
+    return 0
 
 
 def cmd_capabilities(args):
@@ -289,6 +322,10 @@ def main(argv=None):
     cap = sub.add_parser("capabilities", help=i18n.t("cli.capabilities.help"))
     cap.add_argument("--json", action="store_true", help=i18n.t("cli.capabilities.json"))
 
+    wf = sub.add_parser("workflows", help=i18n.t("cli.workflows.help"))
+    wf.add_argument("--json", action="store_true", help=i18n.t("cli.workflows.json"))
+    wf.add_argument("--check", action="store_true", help=i18n.t("cli.workflows.check"))
+
     dc = sub.add_parser("docs", help=i18n.t("cli.docs.help"))
     dc.add_argument("--check", action="store_true", help=i18n.t("cli.docs.check"))
     dc.add_argument("--summary", action="store_true", help=i18n.t("cli.docs.summary"))
@@ -336,6 +373,10 @@ def main(argv=None):
         cmd_locales(args)
     elif args.cmd == "capabilities":
         cmd_capabilities(args)
+    elif args.cmd == "workflows":
+        code = cmd_workflows(args)
+        if code:
+            raise SystemExit(code)
     elif args.cmd == "docs":
         raise SystemExit(cmd_docs(args))
     elif args.cmd == "docs-init":

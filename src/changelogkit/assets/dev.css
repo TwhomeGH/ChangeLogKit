@@ -221,3 +221,17 @@ h3.group {
 .appbar .todo-index-wrap > summary::after { content: " ▾"; color: var(--mut) }
 .appbar .todo-index-wrap[open] > summary { border-color: var(--accent) }
 .appbar .todo-index-wrap #todo-index { position: absolute; top: calc(100% + 6px); right: 0; width: min(520px, calc(100vw - 24px)); max-height: 55vh; overflow: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 10px; margin: 0; z-index: 30 }
+
+/* Workflow 健康檢查：本地 action 參照與 runtime 狀態。 */
+.workflow-summary { margin: 12px 0 }
+.workflow-summary p { margin: 6px 0 }
+.workflow-table-wrap { overflow: auto; margin: 12px 0 30px }
+.workflow-table { width: 100%; border-collapse: collapse; font-size: 13px }
+.workflow-table th, .workflow-table td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top }
+.workflow-table th { background: var(--code); font-weight: 600 }
+.workflow-table code { overflow-wrap: anywhere }
+.wf-badge { display: inline-block; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; white-space: nowrap }
+.wf-ok { color: var(--ok, #2e7d32); border-color: currentColor }
+.wf-eol { color: var(--warn); border-color: currentColor }
+.wf-unknown { color: var(--mut); border-color: currentColor }
+.wf-local, .wf-docker, .wf-workflow { color: var(--accent); border-color: currentColor }

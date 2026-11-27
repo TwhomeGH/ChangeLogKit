@@ -106,6 +106,14 @@ FEATURES = [
         "surfaces": ["cli"],
         "commands": ["capabilities"],
     },
+    {
+        "id": "workflows.health",
+        "since": "0.14.0",
+        "summary": "Scan GitHub Actions refs and optionally check action runtimes for EOL Node.",
+        "surfaces": ["cli", "web", "static"],
+        "config": ["workflows"],
+        "commands": ["workflows"],
+    },
 ]
 
 COMMANDS = [
@@ -123,6 +131,7 @@ COMMANDS = [
     "sort",
     "community-init",
     "capabilities",
+    "workflows",
 ]
 
 CONFIG_KEYS = [

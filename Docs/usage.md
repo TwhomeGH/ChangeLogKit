@@ -17,6 +17,7 @@ changelogkit community-init                    # 產生「社群與開發交流�
 changelogkit docs [--check] [--summary]        # 檢查文件分類（錯誤回 1）
 changelogkit docs-init                         # 印出可貼上的 docs TOML 範本
 changelogkit capabilities [--json]              # 列出此安裝版本的已知功能
+changelogkit workflows [--json] [--check]       # 掃描 GitHub Actions action runtime
 ```
 
 `add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - …` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列；`--change-detail` 在修改摘要下補一段多行說明。Web 表單分「修改摘要」（單行）、「修改細節」（段落）、「其他修改」（每行一項）。只給標題時插入空骨架。
@@ -186,6 +187,24 @@ exclude  = ["**/dist/**", "**/*.min.js"]            # 排除（例如建置產�
 > glob 語法：`**` 跨目錄、`*` 單層、`?` 單字元。索引預設只看版本控管（含未忽略）的檔案；`include` 用於**選擇性**納入被忽略者（例如只看幾個已安裝套件的型別定義），`exclude` 用來排除建置產物。
 >
 > API 卡片去重：同一個 repo、同目錄且同檔名基底的 `.d.ts` 與 `.js`／`.mjs`／`.cjs`，若同名同種類，只保留 `.d.ts`；不同目錄或不同種類（例如 interface／class）不會互刪。
+
+## Workflow 健康檢查（GitHub Actions）
+
+repo 有 `.github/workflows` 時會自動提供 `/workflows` 頁面與靜態站 `development/workflows.html`。本地掃描 action 參照不需要 token；runtime 查詢需要 GitHub 認證：
+
+- 本機優先使用已登入的 `gh api`（`gh auth login` 即可）。
+- CI 使用標準 `GITHUB_TOKEN`／`GH_TOKEN`。
+- **不要在 `.changelog.toml` 放 token**。
+- 沒有認證或查詢失敗時，runtime 顯示 `unknown`，頁面仍可用。
+
+```toml
+[tool.changelog.workflows]
+enabled = true          # 有 workflow 目錄時自動啟用；false 可關閉
+runtime = true          # 設 false 只做本地掃描，不查 runtime
+# path = ".github/workflows"  # 選填：自訂目錄
+```
+
+`node12`／`node16`／`node20` 會標成 EOL Node；`node24`、composite、Docker 與重用 workflow 會顯示各自狀態。CLI 可用 `changelogkit workflows --check` 在 EOL runtime 時回傳 1。
 
 ## 外部 API 文件（選填）
 

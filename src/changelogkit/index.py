@@ -17,7 +17,7 @@ import subprocess
 from pathlib import Path, PurePosixPath
 from urllib.parse import parse_qs
 
-from . import apidocs, assets, config, docs as docmeta, i18n
+from . import apidocs, assets, config, docs as docmeta, i18n, workflows
 from .globs import regex as _glob_re
 from .scanners import SUPPORTED_LANGUAGES, SUPPORTED_SUFFIXES, scan_symbols
 from .scanners.common import link
@@ -409,6 +409,32 @@ def api_nav():
     return apidocs.nav_html(config.load().api, "/")
 
 
+def workflows_link():
+    """有 workflow 目錄時回傳健康檢查頁連結。"""
+    cfg = config.load()
+    if not cfg.workflows:
+        return ""
+    return '<a href="/workflows" data-i18n="nav.workflows">%s</a>' % html.escape(i18n.t("nav.workflows"))
+
+
+def workflows_page():
+    """動態 workflow 健康檢查頁；runtime 查詢失敗不影響頁面。"""
+    cfg = config.load()
+    data = workflows.report(cfg)
+    return assets.render(
+        "workflows.html",
+        title=html.escape(cfg.title),
+        project=html.escape(cfg.project),
+        content=workflows.render(data),
+        hint=html.escape(i18n.t("workflows.hint")),
+        project_title=html.escape(cfg.project),
+        todo_link=todo_link(),
+        api_nav=api_nav(),
+        i18n_json=json.dumps(i18n.js_dict(), ensure_ascii=False),
+        **i18n.subs(),
+    )
+
+
 def _file_page(repo, name, line):
     """組出檔案檢視頁（含行號、目標行與語法上色用的 .code 容器）。"""
     source = safe_file(repo, name).read_text(encoding="utf-8", errors="replace")
@@ -444,6 +470,7 @@ def route(path, query):
                     project=html.escape(config.load().project),
                     todo_link=todo_link(),
                     api_nav=api_nav(),
+                    workflows_link=workflows_link(),
                     **i18n.subs(),
                 ),
                 "text/html; charset=utf-8",

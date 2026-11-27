@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026.11.27 13:45 changelogkit 0.14.0 發佈
+
+**類型**: 功能 · **檔案**: `workflows.py`、`config.py`、`index.py`、`server.py`、`export.py`、`cli.py`、`assets/workflows.html`
+
+### 問題 - GitHub Actions 的 action runtime 不在 workflow 裡，舊 Node action 難以可視化追蹤
+
+### 修改 - Workflow 健康檢查頁與 CLI
+
+- 新增 `/workflows` 動態頁與 `development/workflows.html` 靜態頁，列出 workflow／行號／action／ref／runtime／狀態。
+- 本地掃描不需要 token；runtime 透過已登入的 `gh api` 或 CI 的 `GITHUB_TOKEN` 查詢，沒有認證時顯示 `unknown`，不中斷頁面。
+- `node12`／`node16`／`node20` 標成 EOL Node；支援 composite、Docker、本地 action 與重用 workflow。
+- 新增 `changelogkit workflows [--json] [--check]`；`--check` 在 EOL runtime 時回傳 1。
+- `.changelog.toml` 可用 `[tool.changelog.workflows]` 設定 `enabled`／`runtime`／`path`；不提供 token 欄位。
+
+---
+
 ## 2026.11.27 11:52 changelogkit 0.13.4 發佈
 
 **類型**: 建置 · **檔案**: `.changelog.toml`、`.github/workflows/pages.yml`、`pyproject.toml`、`Docs/usage.md`

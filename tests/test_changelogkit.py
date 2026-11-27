@@ -39,6 +39,7 @@ from changelogkit import (  # noqa: E402
     index,
     server,
     todo,
+    workflows,
 )
 
 SAMPLE = """# 變更歷史
@@ -294,6 +295,21 @@ embed = true
             with self.assertRaises(ValueError):
                 export.export(repo.root / "site")
 
+    def test_workflows_auto_and_disable(self):
+        with TempRepo() as repo:
+            workflow = repo.root / ".github" / "workflows" / "ci.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text("name: CI\n", encoding="utf-8")
+            config.reset()
+            self.assertEqual(config.load(repo.root).workflows, workflow.parent)
+
+            (repo.root / ".changelog.toml").write_text(
+                TOML + "[tool.changelog.workflows]\nenabled = false\n",
+                encoding="utf-8",
+            )
+            config.reset()
+            self.assertIsNone(config.load(repo.root).workflows)
+
     def test_todo_path(self):
         with TempRepo() as repo:
             self.assertIsNone(config.load().todo)
@@ -358,6 +374,81 @@ embed = true
             self.assertEqual(cfg.doc_groups[0].id, "dev")
             self.assertEqual(cfg.doc_groups[0].paths, ("Docs/**",))
             self.assertEqual(cfg.doc_entries[0].note, "安裝")
+
+
+class WorkflowTests(unittest.TestCase):
+    def test_scan_and_runtime_enrichment(self):
+        with TempRepo() as repo:
+            path = repo.root / ".github" / "workflows" / "ci.yml"
+            path.parent.mkdir(parents=True)
+            path.write_text(
+                "jobs:\n"
+                "  build:\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@v5\n"
+                "      - uses: owner/custom@v1\n"
+                "      - uses: owner/repo/.github/workflows/reuse.yml@v1\n"
+                "      - uses: docker://alpine:3\n"
+                "      # uses: ignored/commented@v1\n",
+                encoding="utf-8",
+            )
+            config.reset()
+            cfg = config.load(repo.root)
+            data = workflows.scan(cfg)
+            self.assertEqual(len(data["actions"]), 4)
+            self.assertEqual(data["actions"][0]["kind"], "action")
+            self.assertEqual(data["actions"][2]["kind"], "workflow")
+            self.assertEqual(data["actions"][3]["kind"], "docker")
+            original = workflows._runtime
+            workflows._runtime = lambda repo, path, ref: ("node20", "")
+            try:
+                workflows.enrich(cfg, data)
+            finally:
+                workflows._runtime = original
+            self.assertEqual(data["actions"][0]["status"], "eol")
+            self.assertEqual(workflows.classify("node24"), "ok")
+            self.assertEqual(workflows.classify("node20"), "eol")
+
+    def test_workflows_cli_json(self):
+        with TempRepo() as repo:
+            workflow = repo.root / ".github" / "workflows" / "ci.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text(
+                "jobs:\n  build:\n    steps:\n      - uses: actions/checkout@v5\n", encoding="utf-8"
+            )
+            (repo.root / ".changelog.toml").write_text(
+                TOML + "[tool.changelog.workflows]\nruntime = false\n",
+                encoding="utf-8",
+            )
+            config.reset()
+            config.load(repo.root)
+            output = io.StringIO()
+            with redirect_stdout(output):
+                cli.main(["workflows", "--json"])
+            data = json.loads(output.getvalue())
+            self.assertEqual(data["actions"][0]["uses"], "actions/checkout@v5")
+            self.assertEqual(data["actions"][0]["status"], "unknown")
+
+    def test_workflows_page_and_export(self):
+        with TempRepo() as repo:
+            workflow = repo.root / ".github" / "workflows" / "ci.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text(
+                "jobs:\n  build:\n    steps:\n      - uses: actions/checkout@v5\n", encoding="utf-8"
+            )
+            (repo.root / ".changelog.toml").write_text(
+                TOML + "[tool.changelog.workflows]\nruntime = false\n",
+                encoding="utf-8",
+            )
+            config.reset()
+            config.load(repo.root)
+            page = index.workflows_page()
+            self.assertIn("actions/checkout@v5", page)
+            out = repo.root / "_site"
+            export.export(out)
+            self.assertTrue((out / "development" / "workflows.html").is_file())
+            dev = (out / "development" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("development/workflows.html", dev)
 
 
 class DevToolTests(unittest.TestCase):

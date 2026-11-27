@@ -100,6 +100,9 @@ class Config:
     todo: Path | None = None  # 選填：待辦 markdown（存在才顯示入口）
     api: list = field(default_factory=list)  # 選填：外部 API 文件站（ApiDoc）
     api_warnings: list = field(default_factory=list)  # API 設定問題（不致命）
+    workflows: Path | None = None  # 選填：GitHub Actions workflow 目錄
+    workflow_runtime: bool = True  # 是否查詢 action runtime
+    workflow_warnings: list = field(default_factory=list)  # workflow 設定問題
 
 
 def _find_root(start):
@@ -119,6 +122,7 @@ def _default_config(root):
         project=root.name,
         timezone="local",
         todo=_auto_todo(root),
+        workflows=_auto_workflows(root),
         history=root / DEFAULT_HISTORY,
         features=root / DEFAULT_FEATURES,
         community=root / DEFAULT_COMMUNITY,
@@ -143,6 +147,12 @@ def _find_named(directory, name):
     except OSError:
         pass
     return None
+
+
+def _auto_workflows(root):
+    """repo 有 GitHub Actions workflow 目錄時自動啟用。"""
+    path = root / ".github" / "workflows"
+    return path if path.is_dir() else None
 
 
 def _auto_todo(root):
@@ -325,6 +335,28 @@ def _from_table(root, table):
     else:
         todo = _auto_todo(root)
     api, api_warnings = _api_docs(root, table.get("api", []))
+    workflow_warnings = []
+    workflow_table = table.get("workflows", None)
+    workflow_runtime = True
+    if workflow_table is False:
+        workflows = None
+    elif isinstance(workflow_table, str):
+        workflows = _resolve(root, workflow_table.strip())
+    elif isinstance(workflow_table, dict):
+        enabled = workflow_table.get("enabled", True) is not False
+        workflow_runtime = workflow_table.get("runtime", True) is not False
+        value = workflow_table.get("path")
+        if not enabled:
+            workflows = None
+        elif isinstance(value, str) and value.strip():
+            workflows = _resolve(root, value.strip())
+        else:
+            workflows = _auto_workflows(root)
+    else:
+        workflows = _auto_workflows(root)
+    if workflows is not None and not workflows.is_dir():
+        workflow_warnings.append("workflow 目錄不存在或不是目錄：%s" % workflows)
+        workflows = None
     return Config(
         root=root,
         title=table.get("title") or root.name,
@@ -345,6 +377,9 @@ def _from_table(root, table):
         recent_commits=recent,
         api=api,
         api_warnings=api_warnings,
+        workflows=workflows,
+        workflow_runtime=workflow_runtime,
+        workflow_warnings=workflow_warnings,
     )
 
 

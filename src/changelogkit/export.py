@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import cast
 from urllib.parse import quote
 
-from . import apidocs, assets, buildinfo, community, config, docs as docmeta, history, i18n, index
+from . import apidocs, assets, buildinfo, community, config, docs as docmeta, history, i18n, index, workflows
 from . import todo as todo_meta
 
 # 需要複製到輸出 assets/ 的檔案（其餘為 server 動態用，不需要）。
@@ -575,6 +575,15 @@ def export(out_dir, branch="main"):
         """靜態頁導覽的 API 文件連結；沒有可用站點時空字串。"""
         return apidocs.nav_html(static_api, base)
 
+    def workflows_link(base):
+        """靜態頁導覽的 workflow 健康檢查連結。"""
+        if not cfg.workflows:
+            return ""
+        return '<a href="%sdevelopment/workflows.html" data-i18n="nav.workflows">%s</a>' % (
+            base,
+            _esc(i18n.t("nav.workflows")),
+        )
+
     hist_content, count = _render_history(cfg)
     (out / "index.html").write_text(
         assets.render(
@@ -613,6 +622,24 @@ def export(out_dir, branch="main"):
             blob_base=blob_base_json,
             doc_path=json.dumps(""),
             doc_repo=json.dumps(index.default_repo(), ensure_ascii=False),
+            todo_link=todo_link("../"),
+            api_nav=api_nav("../"),
+            workflows_link=workflows_link("../"),
+        ),
+        encoding="utf-8",
+    )
+
+    workflow_data = workflows.report(cfg)
+    (out / "development" / "workflows.html").write_text(
+        assets.render(
+            "static_workflows.html",
+            **i18n.subs(),
+            title=_esc(cfg.title),
+            project=_esc(cfg.project),
+            hint=_esc(i18n.t("workflows.hint")),
+            content=workflows.render(workflow_data),
+            footer=footer,
+            base="../",
             todo_link=todo_link("../"),
             api_nav=api_nav("../"),
         ),

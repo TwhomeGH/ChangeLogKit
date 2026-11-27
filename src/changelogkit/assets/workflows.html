@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="{{lang_html}}"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n-doc="workflows.title" data-project="{{project}}">{{project}} · {{t.workflows.title}}</title>
+<script src="/assets/theme.js"></script>
+<script>window.CK_LOCALES = {{CK_LOCALES}}; window.CK_LOCALE = "{{CK_LOCALE}}";</script>
+<script src="/assets/i18n.js"></script>
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/dev.css">
+</head><body>
+<header class="appbar">
+  <h1 data-i18n="workflows.title">{{t.workflows.title}}</h1>
+  <a href="/" data-i18n="nav.history">{{t.nav.history}}</a>
+  <a href="/development" data-i18n="nav.dev">{{t.nav.dev}}</a>
+  <a href="/about" data-i18n="nav.about">{{t.nav.about}}</a>
+  {{todo_link}}
+  {{api_nav}}
+  <span class="spacer"></span>
+  <button id="locale" type="button">🌐</button>
+  <button id="theme" aria-label="{{t.btn.theme}}" data-i18n-aria="btn.theme" title="{{t.btn.theme}}" data-i18n-title="btn.theme">🌙</button>
+</header>
+<main>
+  <p class="muted" data-i18n="workflows.hint">{{hint}}</p>
+  {{content}}
+</main>
+</body></html>

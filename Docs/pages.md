@@ -16,6 +16,7 @@ _site/
   development/repos.html        # 近期改動列表
   development/commits/…         # 單筆 commit 的完整 diff
   development/todo.html         # 待辦快照（有 TODO 檔時）
+  development/workflows.html    # GitHub Actions action／runtime 健康檢查
   docs/<來源>/<路徑>.html       # 每份 Markdown 的檢視頁
   about/index.html              # 關於頁
   assets/…                      # 網頁資產（相對路徑引用）

@@ -155,6 +155,8 @@ class Handler(BaseHTTPRequestHandler):
                 ),
                 "application/json; charset=utf-8",
             )
+        if u.path == "/workflows":
+            return self._send(200, index.workflows_page(), "text/html; charset=utf-8")
         if u.path == "/about":
             # 社群區塊：未設定或無檔時為空字串（不顯示）；卡片說明的連結以該檔目錄為基準。
             block = community.html_block(community.load(), i18n.t("about.community_title"))
