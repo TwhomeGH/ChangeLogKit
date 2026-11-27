@@ -28,6 +28,8 @@
   "cli.show.query": "Index or keyword",
   "cli.languages.help": "List supported programming languages",
   "cli.locales.help": "List supported UI languages",
+  "cli.capabilities.help": "List known features supported by this installation",
+  "cli.capabilities.json": "Machine-readable JSON (for skills and scripts)",
   "cli.docs.help": "Check document grouping or print a starter config",
   "cli.docs.check": "Validate and list resolved groups (default)",
   "cli.docs.summary": "Only show group counts",

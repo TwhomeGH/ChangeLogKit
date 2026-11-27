@@ -28,6 +28,8 @@
   "cli.show.query": "番号またはキーワード",
   "cli.languages.help": "対応プログラミング言語を一覧",
   "cli.locales.help": "対応 UI 言語を一覧",
+  "cli.capabilities.help": "このインストールで利用できる既知の機能を一覧",
+  "cli.capabilities.json": "機械可読 JSON（スキル／スクリプト用）",
   "cli.docs.help": "ドキュメント分類を検査、または開始設定を出力",
   "cli.docs.check": "解決後のグループを検証・一覧（既定）",
   "cli.docs.summary": "グループ数だけ表示",

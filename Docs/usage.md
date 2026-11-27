@@ -16,6 +16,7 @@ changelogkit sort [--apply]                    # 依標題日期／時間排序�
 changelogkit community-init                    # 產生「社群與開發交流」範本（Docs/community.md）
 changelogkit docs [--check] [--summary]        # 檢查文件分類（錯誤回 1）
 changelogkit docs-init                         # 印出可貼上的 docs TOML 範本
+changelogkit capabilities [--json]              # 列出此安裝版本的已知功能
 ```
 
 `add` 的標題是唯一的位置參數；內文用 `--problem`／`--cause`／`--change` 提供。各節第一行是摘要（會接在 `### 問題 - …` 等標題後），其餘行是細節；`--change` 可重複，第一筆當摘要、其餘轉成條列；`--change-detail` 在修改摘要下補一段多行說明。Web 表單分「修改摘要」（單行）、「修改細節」（段落）、「其他修改」（每行一項）。只給標題時插入空骨架。
@@ -30,7 +31,9 @@ changelogkit docs-init                         # 印出可貼上的 docs TOML �
 
 > 新增／修改字串時，`tests/test_changelogkit.py` 的 `I18nKeyTests` 會檢查：程式／HTML／JS 用到的 key 是否都已定義，以及各語系是否缺 key（語系漂移）——CI 會擋下少翻。
 
-查詢類子命令：`languages`（列出**程式語言**：API 宣告掃描涵蓋範圍）與 `locales`（列出 **UI 語系**，`*` 標示目前生效者）。
+查詢類子命令：`languages`（列出**程式語言**：API 宣告掃描涵蓋範圍）、`locales`（列出 **UI 語系**，`*` 標示目前生效者）與 `capabilities`（列出此安裝版本的已知功能）。
+
+`capabilities --json` 是給技能／腳本使用的機器可讀清單；它只描述穩定的功能邊界，不取代 `--help` 與本文件。清單未列出的功能不代表不存在，應以實際版本的 `--help`／原始碼為準。
 
 ## 本機開發（用工作區原始碼）
 

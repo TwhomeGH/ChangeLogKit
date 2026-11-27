@@ -7,7 +7,17 @@
 import argparse
 import sys
 
-from . import backfill, buildinfo, community, config, export as static_export, history, i18n, server
+from . import (
+    backfill,
+    buildinfo,
+    capabilities,
+    community,
+    config,
+    export as static_export,
+    history,
+    i18n,
+    server,
+)
 
 
 def _prescan_locale(argv):
@@ -18,6 +28,11 @@ def _prescan_locale(argv):
         if token.startswith("--locale="):
             return token.split("=", 1)[1]
     return None
+
+
+def cmd_capabilities(args):
+    """印出目前版本的能力清單；``--json`` 供技能與腳本解析。"""
+    print(capabilities.dumps() if args.json else capabilities.render())
 
 
 def cmd_add(args):
@@ -271,6 +286,8 @@ def main(argv=None):
 
     sub.add_parser("languages", help=i18n.t("cli.languages.help"))
     sub.add_parser("locales", help=i18n.t("cli.locales.help"))
+    cap = sub.add_parser("capabilities", help=i18n.t("cli.capabilities.help"))
+    cap.add_argument("--json", action="store_true", help=i18n.t("cli.capabilities.json"))
 
     dc = sub.add_parser("docs", help=i18n.t("cli.docs.help"))
     dc.add_argument("--check", action="store_true", help=i18n.t("cli.docs.check"))
@@ -317,6 +334,8 @@ def main(argv=None):
         cmd_languages(args)
     elif args.cmd == "locales":
         cmd_locales(args)
+    elif args.cmd == "capabilities":
+        cmd_capabilities(args)
     elif args.cmd == "docs":
         raise SystemExit(cmd_docs(args))
     elif args.cmd == "docs-init":

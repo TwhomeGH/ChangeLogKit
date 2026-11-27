@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.11.27 11:40 changelogkit 0.13.3 發佈
+
+**類型**: 功能 · **檔案**: `capabilities.py`、`cli.py`、`Docs/usage.md`、skills
+
+### 問題 - 功能持續增加，技能無法可靠知道目前安裝版本具備哪些能力
+
+### 修改 - `capabilities --json` 能力清單與技能探測步驟
+
+- 新增 `changelogkit capabilities [--json]`：列出已知功能、命令與設定鍵。
+- `features` 含 `since` 的項目可判斷最低版本；清單明確標示不是完整規格。
+- setup 技能改為先執行 `capabilities --json`；缺少功能時改查 `--help`／Docs／原始碼，不假設支援。
+- 舊版沒有 `capabilities` 時，技能會退回 `--help`／Docs 並提示升級。
+
+---
+
 ## 2026.11.27 11:27 changelogkit 0.13.2 發佈
 
 **類型**: 功能 · **檔案**: `assets/theme.js`、`export.py`、`Docs/pages.md`、`Docs/usage.md`

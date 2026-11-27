@@ -28,6 +28,8 @@
   "cli.show.query": "編號或關鍵字",
   "cli.languages.help": "列出支援的程式語言",
   "cli.locales.help": "列出支援的 UI 語系",
+  "cli.capabilities.help": "列出此安裝版本支援的已知功能",
+  "cli.capabilities.json": "機器可讀 JSON（供技能與腳本使用）",
   "cli.docs.help": "檢查文件分類，或印出起始設定",
   "cli.docs.check": "驗證並列出解析後的群組（預設）",
   "cli.docs.summary": "只顯示群組數量",

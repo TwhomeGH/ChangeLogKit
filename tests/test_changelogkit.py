@@ -28,6 +28,7 @@ from changelogkit import (  # noqa: E402
     apidocs,
     assets,
     backfill,
+    capabilities,
     cli,
     community,
     config,
@@ -102,6 +103,25 @@ class TempRepo:
     def __exit__(self, *exc):
         config.reset()
         self._tmp.cleanup()
+
+
+class CapabilitiesTests(unittest.TestCase):
+    def test_snapshot_lists_recent_features(self):
+        data = capabilities.snapshot()
+        ids = {feature["id"] for feature in data["features"]}
+        for expected in ("history.core", "api.docs", "serve.lan", "static.footer-local", "capabilities"):
+            self.assertIn(expected, ids)
+        self.assertEqual(data["tool"], "changelogkit")
+        self.assertEqual(data["schema"], 1)
+        self.assertIn("capabilities", data["commands"])
+
+    def test_cli_capabilities_json(self):
+        output = io.StringIO()
+        with redirect_stdout(output):
+            cli.main(["capabilities", "--json"])
+        data = json.loads(output.getvalue())
+        self.assertEqual(data["version"], capabilities.snapshot()["version"])
+        self.assertTrue(any(feature["id"] == "static.export" for feature in data["features"]))
 
 
 class ServerTests(unittest.TestCase):
